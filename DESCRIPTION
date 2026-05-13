@@ -1,0 +1,36 @@
+Package: enemduR
+Title: Infrastructure Tools for Reproducible ENEMDU Microdata Analysis
+Version: 0.0.1.9000
+Authors@R: 
+    person(given = "Alejandro",
+           family = "Yerovi",
+           role = c("aut", "cre"),
+           email = "yerovi84@hotmail.com")
+Description: Structured analytical infrastructure for reading, standardizing,
+    validating, diagnosing, and progressively deriving indicators from ENEMDU
+    microdata. The package is designed to support monthly, quarterly, and annual
+    ENEMDU workflows while preserving a strict separation between analytical core
+    logic and future presentation helpers for Quarto. It includes metadata-driven
+    support for survey representativity scope, complex survey design declaration,
+    and precision assessment contracts based on official methodological criteria.
+License: GPL-3
+Depends: 
+    R (>= 4.2.0)
+Encoding: UTF-8
+LazyData: true
+Imports:
+    glue,
+    haven,
+    janitor,
+    readr,
+    rlang,
+    survey,
+    tibble
+Suggests:
+    knitr,
+    rmarkdown,
+    roxygen2,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0

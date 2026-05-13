@@ -1,0 +1,19 @@
+survey_type,domain_level,is_design_domain,requires_precision_evaluation,description
+mensual,nacional,TRUE,FALSE,Dominio de diseño para ENEMDU mensual.
+mensual,urbano_rural,TRUE,FALSE,Dominio de diseño para ENEMDU mensual.
+mensual,ciudad_5,FALSE,TRUE,No es dominio de diseño para ENEMDU mensual.
+mensual,provincia_24,FALSE,TRUE,No es dominio de diseño para ENEMDU mensual.
+mensual,canton,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.
+mensual,subpoblacion_sociodemografica,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.
+trimestral,nacional,TRUE,FALSE,Dominio de diseño para ENEMDU trimestral.
+trimestral,urbano_rural,TRUE,FALSE,Dominio de diseño para ENEMDU trimestral.
+trimestral,ciudad_5,TRUE,FALSE,Dominio de diseño para ENEMDU trimestral.
+trimestral,provincia_24,FALSE,TRUE,No es dominio de diseño para ENEMDU trimestral.
+trimestral,canton,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.
+trimestral,subpoblacion_sociodemografica,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.
+anual,nacional,TRUE,FALSE,Dominio de diseño para ENEMDU anual.
+anual,urbano_rural,TRUE,FALSE,Dominio de diseño para ENEMDU anual.
+anual,ciudad_5,TRUE,FALSE,Dominio de diseño para ENEMDU anual.
+anual,provincia_24,TRUE,FALSE,Dominio de diseño para ENEMDU anual.
+anual,canton,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.
+anual,subpoblacion_sociodemografica,FALSE,TRUE,Dominio de análisis; requiere evaluación de precisión.

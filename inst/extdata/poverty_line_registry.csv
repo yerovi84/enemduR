@@ -1,0 +1,3 @@
+period,period_type,line_type,line_value,currency,ipc_value,base_line_value,base_period,update_method,source_status,source_note,valid_from,valid_to,notes
+TEMPLATE,template,poverty,,USD,,,ECV_2006,official_or_user_supplied,pending_review,Pending official INEC poverty line for the analytical period,,,This template row documents the required structure; it must not be used for calculation.
+TEMPLATE,template,extreme_poverty,,USD,,31.92,ECV_2006,official_or_user_supplied,pending_review,Pending official INEC extreme poverty line for the analytical period,,,The methodological file states an ECV 2006 reference for extreme poverty updated with IPC; actual period values must be supplied or registered.

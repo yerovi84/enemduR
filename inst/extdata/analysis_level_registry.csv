@@ -1,0 +1,5 @@
+analysis_level,description,default_scale_adjustment_required,notes
+person,Indicador identificado y medido a nivel de persona,FALSE,No requiere ajuste interno por tamaño de hogar.
+household,Indicador identificado y medido a nivel de hogar,FALSE,Debe estimarse en base de hogares cuando corresponda.
+household_repeated_person,Indicador identificado a nivel de hogar pero repetido en registros de personas,TRUE,Requiere evaluar ajuste interno por tamaño de hogar para diagnósticos de representatividad.
+head_of_household,Indicador asociado a jefatura del hogar,FALSE,Debe validarse el universo de jefes de hogar antes de estimar.

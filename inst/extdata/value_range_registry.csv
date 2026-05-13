@@ -1,0 +1,29 @@
+variable,variable_group,min_value,max_value,min_inclusive,max_inclusive,allowed_values,ignore_codes,severity,source_status,description
+fexp,design,0,,FALSE,TRUE,,NA,error,project_internal,El factor de expansión debe ser positivo para registros analíticamente válidos.
+upm,design,,,,TRUE,,NA,error,project_internal,La UPM debe existir; el rango específico depende del diseño de cada base.
+estrato,design,,,,TRUE,,NA,error,project_internal,El estrato debe existir; el rango específico depende del diseño de cada base.
+hsize,derived_household,1,,TRUE,TRUE,,NA,error,project_internal,El tamaño del hogar debe ser positivo.
+p02,demographic,,,TRUE,TRUE,1|2,NA,warning,official,Sexo según sintaxis de pobreza extrema: Hombre igual 1 y Mujer igual 2.
+p63,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Ingreso patronos o cuenta propia; códigos de 9s se ignoran para validación de rango.
+p64b,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto para consumo del hogar; códigos de 9s se ignoran para validación de rango.
+p65,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto gastado en funcionamiento del negocio; códigos de 9s se ignoran para validación de rango.
+p66,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Ingreso de asalariados o empleados domésticos; códigos de 9s se ignoran para validación de rango.
+p67,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Descuentos de asalariados; códigos de 9s se ignoran para validación de rango.
+p68b,income_labor_main,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Ingreso en especies o servicios; códigos de 9s se ignoran para validación de rango.
+p69,income_labor_secondary,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Ingreso ocupación secundaria; códigos de 9s se ignoran para validación de rango.
+p70b,income_labor_secondary,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Pago en especies o consumo del hogar por trabajo secundario; códigos de 9s se ignoran para validación de rango.
+p71a,income_non_labor,,,TRUE,TRUE,1|2,NA,warning,official,Recibe ingresos derivados de capital e inversiones.
+p71b,income_non_labor,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido por derivados de capital e inversiones; códigos de 9s se ignoran para validación de rango.
+p72a,income_non_labor,,,TRUE,TRUE,1|2,NA,warning,official,Recibe ingresos por jubilación orfandad viudez enfermedad divorcio o cesantía.
+p72b,income_non_labor,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido por jubilación orfandad viudez enfermedad divorcio o cesantía; códigos de 9s se ignoran para validación de rango.
+p73a,income_non_labor,,,TRUE,TRUE,1|2,NA,warning,official,Recibe ingresos por regalos o donaciones dentro del país.
+p73b,income_non_labor,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido por regalos o donaciones dentro del país; códigos de 9s se ignoran para validación de rango.
+p74a,income_non_labor,,,TRUE,TRUE,1|2,NA,warning,official,Recibe ingresos del exterior.
+p74b,income_non_labor,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido desde el exterior; códigos de 9s se ignoran para validación de rango.
+p75,income_transfer,,,TRUE,TRUE,1|2,NA,warning,official,Recibe Bono de Desarrollo Humano.
+p76,income_transfer,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido por Bono de Desarrollo Humano; códigos de 9s se ignoran para validación de rango.
+p78,income_transfer,0,999999,TRUE,FALSE,,999|9999|99999|999999,warning,official,Monto recibido por bono JGL; códigos de 9s se ignoran para validación de rango.
+ingrl,derived_income,-1,999999,TRUE,FALSE,,999999,warning,official,Ingreso laboral derivado admite -1 como categoría especial de gasta más de lo que gana.
+ingrltot,derived_income,0,999999,TRUE,FALSE,,999999,warning,official,Ingreso total individual derivado previo a recodificación final.
+ingtot,derived_income,0,,TRUE,TRUE,,NA,warning,project_internal,Ingreso total del hogar derivado debe ser no negativo cuando es calculable.
+ingtot_pc,derived_income,0,,FALSE,TRUE,,NA,warning,official,Ingreso per cápita familiar debe ser positivo para análisis de pobreza por ingresos.

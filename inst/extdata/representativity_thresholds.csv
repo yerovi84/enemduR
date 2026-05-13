@@ -1,0 +1,6 @@
+threshold_id,value,unit,applies_to,decision_rule,source_note
+min_effective_n,60,count,all,If effective_n is below 60 then inference is not recommended,INEC methodological document based on household survey precision evaluation.
+min_degrees_freedom,9,count,all,If degrees of freedom are below 9 then inference is not recommended,INEC methodological document based on household survey precision evaluation.
+cv_reliable_max,0.15,ratio,mean_total_other,If cv is less than or equal to 0.15 then estimate is reliable,INEC methodological document based on household survey precision evaluation.
+cv_reduced_max,0.30,ratio,mean_total_other,If cv is greater than 0.15 and less than or equal to 0.30 then estimate has reduced precision; if greater than 0.30 inference is not recommended,INEC methodological document based on household survey precision evaluation.
+unit_interval_se_rule,NA,formula,proportion_ratio_0_1,For proportions and ratios in [0,1], compare standard error with maximum tolerable standard error based on estimated p,INEC methodological document based on household survey precision evaluation.

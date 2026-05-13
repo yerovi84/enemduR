@@ -1,0 +1,12 @@
+check_id,check_type,severity,analysis_level,required_vars,rule_type,message
+core_design_vars,structure,error,person,"upm|estrato|fexp",required_vars,La base debe contener variables de diseño muestral: upm estrato y fexp.
+household_id_for_hsize,structure,error,household_repeated_person,"idhogar",required_vars,Para construir hsize debe existir identificador de hogar.
+income_main_labor_vars,structure,warning,person,"p63|p64b|p65|p66|p67|p68b",required_vars,Para construir ingreso principal se esperan variables p63 p64b p65 p66 p67 p68b.
+income_secondary_labor_vars,structure,warning,person,"p69|p70b",required_vars,Para construir ingreso secundario se esperan variables p69 y p70b.
+income_non_labor_vars,structure,warning,person,"p71a|p71b|p72a|p72b|p73a|p73b|p74a|p74b",required_vars,Para construir ingresos no laborales se esperan variables de capital transferencias y remesas.
+income_transfer_vars,structure,warning,person,"p75|p76",required_vars,Para construir BDH se esperan variables p75 y p76.
+weight_positive,content,error,person,"fexp",positive_numeric,El factor de expansión fexp debe ser numérico y positivo para registros válidos.
+hsize_positive,content,error,household_repeated_person,"hsize",positive_numeric,El tamaño del hogar hsize debe ser numérico y positivo.
+income_nonresponse_codes,content,warning,person,"p63|p64b|p65|p66|p67|p68b|p69|p70b|p71b|p72b|p73b|p74b|p76",nonresponse_codes,Los códigos 999 99999 y 999999 deben tratarse como no respuesta según el contrato operativo.
+representativity_design_scope,metadata,warning,person,"survey_type",domain_scope,La representatividad depende del tipo de encuesta: mensual trimestral o anual.
+household_repeated_person_scale,metadata,warning,household_repeated_person,"idhogar|hsize",scale_adjustment_required,Indicadores identificados a nivel hogar y repetidos a nivel persona requieren evaluación de ajuste interno por tamaño del hogar.

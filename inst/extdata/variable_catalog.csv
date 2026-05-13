@@ -1,0 +1,39 @@
+variable,canonical_name,aliases,variable_group,analysis_level,required_core,type_expected,description,source_note,role,default_income_inclusion,optional_income_inclusion,comparison_ready
+upm,upm,,design,person,TRUE,integer,Unidad primaria de muestreo usada para declarar el diseño muestral,Documento metodológico de precisión en encuestas de hogares,design_variable,FALSE,FALSE,FALSE
+estrato,estrato,,design,person,TRUE,integer,Estrato muestral usado para declarar el diseño muestral,Documento metodológico de precisión en encuestas de hogares,design_variable,FALSE,FALSE,FALSE
+fexp,fexp,,design,person,TRUE,numeric,Factor de expansión o peso muestral,Documento metodológico de precisión en encuestas de hogares,weight_variable,FALSE,FALSE,FALSE
+idhogar,idhogar,id_hogar,identifier,household_repeated_person,TRUE,character,Identificador de hogar usado para construir tamaño del hogar,Sintaxis oficial de pobreza extrema por ingresos,household_identifier,FALSE,FALSE,FALSE
+p02,p02,sexo,demographic,person,FALSE,integer,Sexo de la persona,Sintaxis oficial de pobreza extrema por ingresos,classification_variable,FALSE,FALSE,FALSE
+p63,p63,,income_labor_main,person,FALSE,numeric,Ingresos patronos o cuenta propia,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p64b,p64b,,income_labor_main,person,FALSE,numeric,Monto para consumo del hogar,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p65,p65,,income_labor_main,person,FALSE,numeric,Monto gastado en funcionamiento del negocio,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p66,p66,,income_labor_main,person,FALSE,numeric,Ingreso de asalariados o empleados domésticos,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p67,p67,,income_labor_main,person,FALSE,numeric,Descuentos de asalariados,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p68b,p68b,,income_labor_main,person,FALSE,numeric,Ingreso en especies o servicios de asalariados,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p69,p69,,income_labor_secondary,person,FALSE,numeric,Ingreso ocupación secundaria asalariados e independientes,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p70b,p70b,,income_labor_secondary,person,FALSE,numeric,Pago en especies o consumo del hogar por trabajo secundario,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p71a,p71a,,income_non_labor,person,FALSE,integer,Recibe ingresos derivados de capital e inversiones,Sintaxis oficial de pobreza extrema por ingresos,income_condition,TRUE,FALSE,FALSE
+p71b,p71b,,income_non_labor,person,FALSE,numeric,Monto recibido por derivados de capital e inversiones,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p72a,p72a,,income_non_labor,person,FALSE,integer,Recibe ingresos por jubilación orfandad viudez enfermedad divorcio o cesantía,Sintaxis oficial de pobreza extrema por ingresos,income_condition,TRUE,FALSE,FALSE
+p72b,p72b,,income_non_labor,person,FALSE,numeric,Monto recibido por jubilación orfandad viudez enfermedad divorcio o cesantía,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p73a,p73a,,income_non_labor,person,FALSE,integer,Recibe ingresos por regalos o donaciones dentro del país,Sintaxis oficial de pobreza extrema por ingresos,income_condition,TRUE,FALSE,FALSE
+p73b,p73b,,income_non_labor,person,FALSE,numeric,Monto recibido por regalos o donaciones dentro del país,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p74a,p74a,,income_non_labor,person,FALSE,integer,Recibe ingresos en dinero o especies del exterior,Sintaxis oficial de pobreza extrema por ingresos,income_condition,TRUE,FALSE,FALSE
+p74b,p74b,,income_non_labor,person,FALSE,numeric,Monto recibido desde el exterior,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p75,p75,,income_transfer,person,FALSE,integer,Recibe Bono de Desarrollo Humano,Sintaxis oficial de pobreza extrema por ingresos,income_condition,TRUE,FALSE,FALSE
+p76,p76,,income_transfer,person,FALSE,numeric,Monto recibido por Bono de Desarrollo Humano,Sintaxis oficial de pobreza extrema por ingresos,income_component,TRUE,FALSE,FALSE
+p78,p78,,income_transfer_optional,person,FALSE,numeric,Monto recibido por bono JGL,Sintaxis oficial de pobreza extrema por ingresos,optional_bonus_analysis,FALSE,TRUE,TRUE
+ingr,ingr,,derived_income,person,FALSE,numeric,Ingreso de trabajo principal derivado,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+ingrls,ingrls,,derived_income,person,FALSE,numeric,Ingreso de ocupación secundaria derivado,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+ingrl,ingrl,,derived_income,person,FALSE,numeric,Ingreso laboral derivado,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+ingrltot,ingrltot,,derived_income,person,FALSE,numeric,Ingreso total individual derivado previo a agregación por hogar,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+ingtot,ingtot,,derived_income,household_repeated_person,FALSE,numeric,Ingreso total del hogar derivado,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+hsize,hsize,npersona,derived_household,household_repeated_person,FALSE,integer,Tamaño del hogar calculado por identificador de hogar,Sintaxis oficial de pobreza extrema por ingresos y ajuste interno del proyecto,derived_household,FALSE,FALSE,FALSE
+ingtot_pc,ingtot_pc,ipcf|ingreso_percapita_familiar,derived_income,household_repeated_person,FALSE,numeric,Ingreso per cápita familiar derivado dividiendo ingreso del hogar para tamaño del hogar,Sintaxis oficial de pobreza extrema por ingresos,derived_income,TRUE,FALSE,FALSE
+bono_jgl,bono_jgl,p78_normalizado,optional_bonus,person,FALSE,numeric,Monto normalizado del bono JGL para análisis opcional de bonos,Sintaxis oficial de pobreza extrema por ingresos y decisión interna del proyecto,optional_bonus_analysis,FALSE,TRUE,TRUE
+bono_jgl_recibe,bono_jgl_recibe,,optional_bonus,person,FALSE,integer,Indicador de recepción de bono JGL construido desde monto positivo de bono_jgl,Decisión interna del proyecto,optional_bonus_analysis,FALSE,TRUE,TRUE
+bonos_optional_total,bonos_optional_total,,optional_bonus,person,FALSE,numeric,Total individual de bonos opcionales activados en análisis,Decisión interna del proyecto,optional_bonus_analysis,FALSE,TRUE,TRUE
+bonos_optional_recibe,bonos_optional_recibe,,optional_bonus,person,FALSE,integer,Indicador de recepción de cualquier bono opcional activado,Decisión interna del proyecto,optional_bonus_analysis,FALSE,TRUE,TRUE
+ingrltot_plus_optional_bonos,ingrltot_plus_optional_bonos,,derived_income_scenario,person,FALSE,numeric,Ingreso individual alternativo con bonos opcionales,Decisión interna del proyecto,scenario_income,FALSE,TRUE,TRUE
+ingtot_plus_optional_bonos,ingtot_plus_optional_bonos,,derived_income_scenario,household_repeated_person,FALSE,numeric,Ingreso total del hogar alternativo con bonos opcionales,Decisión interna del proyecto,scenario_income,FALSE,TRUE,TRUE
+ingtot_pc_plus_optional_bonos,ingtot_pc_plus_optional_bonos,ipcf_plus_optional_bonos,derived_income_scenario,household_repeated_person,FALSE,numeric,Ingreso per cápita familiar alternativo con bonos opcionales,Decisión interna del proyecto,scenario_income,FALSE,TRUE,TRUE

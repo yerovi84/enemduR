@@ -1,0 +1,20 @@
+stage,output_variable,input_variable,condition_variable,condition_value,operation,valid_upper_bound,nonresponse_codes,missing_rule,description
+main_labor_income,ingr,p63,,,add,999999,"999|99999|999999",ignore_if_missing,Ingresos patronos o cuenta propia.
+main_labor_income,ingr,p64b,,,add,999999,"999|99999|999999",ignore_if_missing,Monto para consumo del hogar.
+main_labor_income,ingr,p65,,,subtract,999999,"999|99999|999999",ignore_if_missing,Monto gastado en funcionamiento del negocio.
+main_labor_income,ingr,p66,,,add,999999,"999|99999|999999",ignore_if_missing,Ingreso de asalariados o empleados domésticos.
+main_labor_income,ingr,p67,,,add,999999,"999|99999|999999",ignore_if_missing,Descuentos de asalariados según sintaxis oficial.
+main_labor_income,ingr,p68b,,,add,999999,"999|99999|999999",ignore_if_missing,Ingreso en especies o servicios de asalariados.
+secondary_labor_income,ingrls,p69,,,add,999999,"999|99999|999999",ignore_if_missing,Ingreso ocupación secundaria asalariados e independientes.
+secondary_labor_income,ingrls,p70b,,,add,999999,"999|99999|999999",ignore_if_missing,Pago en especies o consumo del hogar por trabajo secundario.
+non_labor_income,ingrltot,p71b,p71a,1,add,999999,"999|99999|999999",ignore_if_missing,Ingresos derivados de capital e inversiones.
+non_labor_income,ingrltot,p72b,p72a,1,add,999999,"999|99999|999999",ignore_if_missing,Ingresos por jubilación orfandad viudez enfermedad divorcio o cesantía.
+non_labor_income,ingrltot,p73b,p73a,1,add,999999,"999|99999|999999",ignore_if_missing,Regalos o donaciones de personas dentro del país.
+non_labor_income,ingrltot,p74b,p74a,1,add,999999,"999|99999|999999",ignore_if_missing,Ingresos en dinero o especies del exterior.
+transfer_income,ingrltot,p76,p75,1,add,999999,"999|99999|999999",ignore_if_missing,Bono de Desarrollo Humano.
+optional_transfer_income,bono_jgl,p78,,,optional_add,999999,"999|99999|999999",optional_scenario_only,Bono JGL registrado como componente opcional para análisis de transferencias y escenarios alternativos; no entra por defecto al ingreso base.
+household_income,ingtot,ingrltot,,,sum_by_household,999999,"999|99999|999999",set_nonresponse_to_missing,Ingreso total del hogar como suma de ingresos individuales por hogar.
+percapita_income,ingtot_pc,ingtot,,,divide_by_hsize,999999,"999|99999|999999",set_zero_to_missing,Ingreso per cápita familiar como ingreso total del hogar dividido para tamaño del hogar.
+optional_bonus_scenario_income,ingrltot_plus_optional_bonos,"ingrltot|bonos_optional_total",,,scenario_add,999999,"999|99999|999999",optional_scenario_only,Ingreso individual alternativo al sumar bonos opcionales activados.
+optional_bonus_scenario_household_income,ingtot_plus_optional_bonos,ingrltot_plus_optional_bonos,,,sum_by_household,999999,"999|99999|999999",optional_scenario_only,Ingreso total del hogar alternativo con bonos opcionales.
+optional_bonus_scenario_percapita_income,ingtot_pc_plus_optional_bonos,ingtot_plus_optional_bonos,,,divide_by_hsize,999999,"999|99999|999999",optional_scenario_only,Ingreso per cápita familiar alternativo con bonos opcionales.

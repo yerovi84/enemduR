@@ -1,0 +1,2 @@
+variable,output_variable,recipient_variable,bonus_label,bonus_group,analysis_level,default_income_inclusion,optional_income_inclusion,missing_codes,missing_amount_as_zero_default,source_status,source_note,notes
+p78,bono_jgl,bono_jgl_recibe,Monto recibido por bono JGL,optional_transfer,person,FALSE,TRUE,999|9999|99999|999999,TRUE,official_reference,Sintaxis oficial de pobreza extrema por ingresos registra p78 como monto recibido por bono JGL,Variable válida para análisis opcional de bonos y escenarios alternativos de ingreso; no se incluye en ingreso base por defecto.

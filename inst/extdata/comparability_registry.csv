@@ -1,0 +1,4 @@
+regimen_id,survey_type_scope,start_period,end_period,alert_level,note
+comparability_2020_09_2021_05,"mensual,trimestral","2020-09","2021-05",warning,"INEC recalculated indicators and standardized weighting procedures to preserve comparability; results should carry an alert."
+annual_2018_recalculation,"anual","2018","2018",warning,"Annual 2018 statistics were recalculated because the original expansion factor had been built at person level rather than UPM level."
+annual_2020_unavailable,"anual","2020","2020",warning,"ENEMDU annual 2020 was not produced because telephone collection during April-August 2020 is incompatible with the annual aggregation design."

@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^docs$
+^doc$
+^Meta$
+^data-raw$
+^\.github$
+^_pkgdown\.yml$
+^cran-comments\.md$
+^\.DS_Store$
+^\.positai$
+^\.claude$
