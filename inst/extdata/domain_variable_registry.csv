@@ -1,0 +1,15 @@
+variable,domain_level,source_status,notes
+area,urbano_rural,project_internal,Variable común para apertura urbano-rural; validar contra el diccionario de la base cargada.
+area_geografica,urbano_rural,project_internal,Alias posible para apertura urbano-rural; validar contra el diccionario de la base cargada.
+urbano_rural,urbano_rural,project_internal,Alias semántico para apertura urbano-rural.
+ciudad,ciudad_5,project_internal,Variable común para ciudades autorrepresentadas; validar contra el diccionario de la base cargada.
+ciudad_auto,ciudad_5,project_internal,Alias posible para ciudades principales.
+provincia,provincia_24,project_internal,Variable común para provincia; válido como dominio de diseño solo en ENEMDU anual.
+cod_prov,provincia_24,project_internal,Alias posible para código de provincia.
+prov,provincia_24,project_internal,Alias posible para provincia.
+canton,canton,project_internal,Dominio de análisis; no se considera dominio de diseño por defecto.
+sexo,subpoblacion_sociodemografica,project_internal,Subpoblación sociodemográfica; requiere evaluación de precisión.
+p02,subpoblacion_sociodemografica,project_internal,Sexo según variable p02; requiere evaluación de precisión.
+quintil_ingreso_pc,subpoblacion_sociodemografica,project_internal,Quintil analítico; requiere evaluación de precisión.
+pobre,subpoblacion_sociodemografica,project_internal,Clasificación de pobreza; requiere evaluación de precisión al desagregar.
+expobre,subpoblacion_sociodemografica,project_internal,Clasificación de pobreza extrema; requiere evaluación de precisión al desagregar.

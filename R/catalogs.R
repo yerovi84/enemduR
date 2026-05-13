@@ -56,6 +56,29 @@ enemdu_optional_bonus_registry <- function() {
   .enemdu_optional_bonus_registry()
 }
 
+#' Return the ENEMDU domain registry
+#'
+#' Reads the registry that defines which domain levels are design domains for
+#' monthly, quarterly, and annual ENEMDU bases.
+#'
+#' @return A tibble with domain-scope rules.
+#' @export
+enemdu_domain_registry <- function() {
+  .enemdu_domain_registry()
+}
+
+#' Return the domain-variable registry
+#'
+#' Reads the registry that maps common variable names to domain levels. This
+#' registry is intentionally editable because variable names may vary across
+#' analytical projects.
+#'
+#' @return A tibble with variable-to-domain mappings.
+#' @export
+enemdu_domain_variable_registry <- function() {
+  .enemdu_domain_variable_registry()
+}
+
 #' Return required variables for an indicator
 #'
 #' Resolves the required variables declared in `indicator_registry.csv`.

@@ -33,6 +33,10 @@
   .enemdu_read_csv_registry("domain_registry.csv")
 }
 
+.enemdu_domain_variable_registry <- function() {
+  .enemdu_read_csv_registry("domain_variable_registry.csv")
+}
+
 .enemdu_analysis_level_registry <- function() {
   .enemdu_read_csv_registry("analysis_level_registry.csv")
 }
