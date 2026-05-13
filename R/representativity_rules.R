@@ -292,7 +292,7 @@ enemdu_representativity_report <- function(estimate,
     out[["decision"]] <- NA_character_
   }
 
-  out[["representativity_flag"]] <- vapply(
+  out[["representativity_flag"]] <- unname(vapply(
     out[["decision"]],
     function(decision) {
       .enemdu_final_representativity_flag(
@@ -301,7 +301,7 @@ enemdu_representativity_report <- function(estimate,
       )
     },
     character(1)
-  )
+  ))
 
   out[["representativity_note"]] <- vapply(
     seq_len(nrow(out)),

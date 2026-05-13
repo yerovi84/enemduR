@@ -389,7 +389,7 @@ enemdu_survey_proportion <- function(data,
                                         conf_level,
                                         sample_n_min) {
   x <- design$variables[[value]]
-  w <- survey::weights(design, type = "sampling")
+  w <- stats::weights(design, type = "sampling")
 
   valid <- !is.na(x) & !is.na(w) & w > 0
 

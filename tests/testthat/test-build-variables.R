@@ -1,3 +1,34 @@
+.enemdu_test_complete_income_vars <- function(data) {
+  income_vars <- c(
+    "p63", "p64b", "p65", "p66", "p67", "p68b",
+    "p69", "p70b",
+    "p71a", "p71b",
+    "p72a", "p72b",
+    "p73a", "p73b",
+    "p74a", "p74b",
+    "p75", "p76",
+    "p78"
+  )
+
+  n <- nrow(data)
+
+  for (var in income_vars) {
+    if (!var %in% names(data)) {
+      data[[var]] <- NA_real_
+    }
+  }
+
+  binary_vars <- c("p71a", "p72a", "p73a", "p74a", "p75")
+
+  for (var in binary_vars) {
+    if (all(is.na(data[[var]]))) {
+      data[[var]] <- rep(2, n)
+    }
+  }
+
+  data
+}
+
 test_that("build_variables constructs hsize and income variables", {
   data <- tibble::tibble(
     idhogar = c("h1", "h1", "h2"),
@@ -81,25 +112,26 @@ test_that("build_variables normalizes income sentinel codes before deriving", {
 })
 
 test_that("build_variables can use id_hogar alias", {
-  data <- tibble::tibble(
-    id_hogar = c("a", "a", "b"),
-    p63 = c(10, 20, 30)
+  data <- .enemdu_test_complete_income_vars(
+    tibble::tibble(
+      id_hogar = c("a", "a", "b"),
+      p63 = c(10, 20, 30)
+    )
   )
 
-  out <- enemdu_build_variables(
-    data,
-    missing_vars_absent = "warn_as_na"
-  )
+  out <- enemdu_build_variables(data)
 
   expect_true("hsize" %in% names(out))
   expect_equal(out$hsize, c(2L, 2L, 1L))
 })
 
 test_that("build_variables backs up existing output variables by default", {
-  data <- tibble::tibble(
-    idhogar = c("h1", "h1"),
-    ingrl = c(999, 999),
-    p63 = c(100, 200)
+  data <- .enemdu_test_complete_income_vars(
+    tibble::tibble(
+      idhogar = c("h1", "h1"),
+      ingrl = c(999, 999),
+      p63 = c(100, 200)
+    )
   )
 
   out <- enemdu_build_variables(data)
@@ -110,10 +142,12 @@ test_that("build_variables backs up existing output variables by default", {
 })
 
 test_that("build_variables errors when existing output variables are protected", {
-  data <- tibble::tibble(
-    idhogar = c("h1", "h1"),
-    ingrl = c(999, 999),
-    p63 = c(100, 200)
+  data <- .enemdu_test_complete_income_vars(
+    tibble::tibble(
+      idhogar = c("h1", "h1"),
+      ingrl = c(999, 999),
+      p63 = c(100, 200)
+    )
   )
 
   expect_error(

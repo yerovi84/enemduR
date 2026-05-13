@@ -57,7 +57,7 @@ enemdu_build_optional_bonuses <- function(data,
 
   .enemdu_validate_optional_bonus_registry(registry)
 
-  if (missing(bonus_vars) || is.null(bonus_vars) || length(bonus_vars) == 0) {
+  if (is.null(bonus_vars) || length(bonus_vars) == 0) {
     .enemdu_abort_missing_argument(
       "bonus_vars",
       caller = "enemdu_build_optional_bonuses"
