@@ -15,6 +15,10 @@
 #' analytical size used for the representativity decision by summing `1 / hsize`
 #' over valid repeated household-level observations.
 #'
+#' When `integrate_representativity = TRUE`, the function also validates the
+#' requested domain against the representativity scope of the ENEMDU survey type
+#' and appends a final `representativity_flag`.
+#'
 #' @param data A data frame.
 #' @param indicator_id Indicator identifier declared in `indicator_registry.csv`.
 #' @param group_vars Optional grouping variables.
@@ -26,6 +30,14 @@
 #' value.
 #' @param survey_type Optional ENEMDU survey type. If omitted, uses the
 #' `survey_type` attribute when available.
+#' @param domain_level Optional domain level. If omitted and `group_vars` is
+#' supplied, the domain level is inferred from `domain_variable_registry.csv`.
+#' @param domain_var Optional domain variable. Usually omitted because
+#' `group_vars` is enough for inference.
+#' @param strict_domain Logical. If `TRUE`, errors when requested domains are
+#' outside the design scope of the selected ENEMDU survey type.
+#' @param integrate_representativity Logical. If `TRUE`, appends integrated
+#' representativity metadata to the estimate.
 #' @param household_id Household identifier used when household-scale adjustment
 #' is needed.
 #' @param hsize Household-size variable.
@@ -35,7 +47,8 @@
 #' @param lonely_psu Option passed to `survey.lonely.psu`.
 #' @param sample_n_min Preliminary minimum sample size flag.
 #'
-#' @return A tibble with the design-based estimate and registry metadata.
+#' @return A tibble with the design-based estimate, registry metadata, and
+#' integrated representativity metadata when available.
 #' @export
 enemdu_indicator_estimate <- function(data,
                                       indicator_id,
@@ -46,6 +59,10 @@ enemdu_indicator_estimate <- function(data,
                                       strata = "estrato",
                                       weight = NULL,
                                       survey_type = NULL,
+                                      domain_level = NULL,
+                                      domain_var = NULL,
+                                      strict_domain = FALSE,
+                                      integrate_representativity = TRUE,
                                       household_id = "idhogar",
                                       hsize = "hsize",
                                       scale_adjustment = c("metadata", "never", "always"),
@@ -98,6 +115,11 @@ enemdu_indicator_estimate <- function(data,
     weight <- "fexp"
   }
 
+  resolved_survey_type <- .enemdu_resolve_indicator_survey_type(
+    data = data,
+    survey_type = survey_type
+  )
+
   value_var <- .enemdu_resolve_indicator_value_var(
     data = data,
     indicator_row = indicator_row,
@@ -126,7 +148,7 @@ enemdu_indicator_estimate <- function(data,
       ids = ids,
       strata = strata,
       weight = weight,
-      survey_type = survey_type,
+      survey_type = resolved_survey_type,
       indicator_id = indicator_id,
       measure = measure,
       conf_level = conf_level,
@@ -140,7 +162,7 @@ enemdu_indicator_estimate <- function(data,
       ids = ids,
       strata = strata,
       weight = weight,
-      survey_type = survey_type,
+      survey_type = resolved_survey_type,
       indicator_id = indicator_id,
       measure = measure,
       conf_level = conf_level,
@@ -154,7 +176,7 @@ enemdu_indicator_estimate <- function(data,
       ids = ids,
       strata = strata,
       weight = weight,
-      survey_type = survey_type,
+      survey_type = resolved_survey_type,
       indicator_id = indicator_id,
       measure = measure,
       conf_level = conf_level,
@@ -199,18 +221,39 @@ enemdu_indicator_estimate <- function(data,
     }
   }
 
+  if (isTRUE(integrate_representativity)) {
+    estimate <- enemdu_representativity_report(
+      estimate = estimate,
+      survey_type = resolved_survey_type,
+      domain_level = domain_level,
+      domain_var = domain_var,
+      group_vars = group_vars,
+      strict_domain = strict_domain
+    )
+  } else {
+    estimate[["representativity_flag"]] <- NA_character_
+    estimate[["representativity_note"]] <- "Integrated representativity report was not requested."
+  }
+
   attr(estimate, "indicator_estimation_policy") <- list(
     indicator_id = indicator_id,
     value_var = value_var,
     estimator_type = estimator_type,
     weight = weight,
+    survey_type = resolved_survey_type,
+    domain_level = domain_level,
+    domain_var = domain_var,
+    group_vars = group_vars,
+    strict_domain = strict_domain,
+    integrate_representativity = integrate_representativity,
     scale_adjustment = scale_adjustment,
     scale_required = scale_required,
     scale_applied = apply_scale,
     note = paste(
       "Indicator estimated from indicator registry.",
       "Point estimates use survey design.",
-      "When scale adjustment is applied, it affects the precision decision, not the point estimate."
+      "When scale adjustment is applied, it affects the precision decision, not the point estimate.",
+      "When integrated representativity is enabled, the output combines precision decision and domain scope."
     )
   )
 
@@ -405,6 +448,27 @@ enemdu_kpi_optional_bonuses <- function(data,
   }
 
   invisible(TRUE)
+}
+
+.enemdu_resolve_indicator_survey_type <- function(data,
+                                                  survey_type = NULL) {
+  if (!is.null(survey_type)) {
+    return(.enemdu_normalize_survey_type(
+      survey_type = survey_type,
+      caller = ".enemdu_resolve_indicator_survey_type"
+    ))
+  }
+
+  attr_survey_type <- attr(data, "survey_type")
+
+  if (!is.null(attr_survey_type) && !is.na(attr_survey_type)) {
+    return(.enemdu_normalize_survey_type(
+      survey_type = attr_survey_type,
+      caller = ".enemdu_resolve_indicator_survey_type"
+    ))
+  }
+
+  NA_character_
 }
 
 .enemdu_resolve_indicator_value_var <- function(data,
@@ -679,7 +743,13 @@ enemdu_kpi_optional_bonuses <- function(data,
     household_scale_adjustment_applied_to_precision = logical(),
     adjusted_unweighted_n = numeric(),
     adjusted_effective_n = numeric(),
-    scale_adjustment_note = character()
+    scale_adjustment_note = character(),
+    domain_scope_flag = character(),
+    domain_is_design_domain = logical(),
+    domain_requires_precision_evaluation = logical(),
+    domain_scope_message = character(),
+    representativity_flag = character(),
+    representativity_note = character()
   )
 }
 
