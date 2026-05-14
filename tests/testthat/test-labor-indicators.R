@@ -116,3 +116,65 @@ test_that("enemdu_kpi_employment can group estimates with computable synthetic d
   expect_equal(as.numeric(pea_urbano), 3)
   expect_equal(as.numeric(pea_rural), 2)
 })
+
+test_that("enemdu_kpi_employment preserves observed domains by default", {
+  data <- tibble::tibble(
+    ciudad = rep(c(10150, 70150, 90150, 170150, 180150, 100150, 110150), each = 4),
+    p03 = rep(20, 28),
+    condact = rep(c(1, 2, 7, 9), 7),
+    secemp = rep(c(1, 2, NA, NA), 7),
+    upm = seq_len(28),
+    estrato = rep(seq_len(14), each = 2),
+    fexp = rep(1, 28)
+  )
+
+  out <- enemdu_kpi_employment(
+    data = data,
+    group_vars = "ciudad",
+    survey_type = "trimestral",
+    include_rates = FALSE,
+    sample_n_min = 1
+  )
+
+  expect_equal(
+    sort(unique(as.numeric(out$ciudad))),
+    sort(unique(data$ciudad))
+  )
+
+  expect_equal(
+    attr(out, "labor_kpi_policy")$domain_scope,
+    "observed"
+  )
+})
+
+test_that("enemdu_kpi_employment can filter output to design domains after estimation", {
+  data <- tibble::tibble(
+    ciudad = rep(c(10150, 70150, 90150, 170150, 180150, 100150, 110150), each = 4),
+    p03 = rep(20, 28),
+    condact = rep(c(1, 2, 7, 9), 7),
+    secemp = rep(c(1, 2, NA, NA), 7),
+    upm = seq_len(28),
+    estrato = rep(seq_len(14), each = 2),
+    fexp = rep(1, 28)
+  )
+
+  out <- enemdu_kpi_employment(
+    data = data,
+    group_vars = "ciudad",
+    survey_type = "trimestral",
+    domain_scope = "design",
+    include_rates = FALSE,
+    sample_n_min = 1
+  )
+
+  expected_city_codes <- c(10150, 70150, 90150, 170150, 180150)
+
+  expect_equal(
+    sort(unique(as.numeric(out$ciudad))),
+    sort(expected_city_codes)
+  )
+
+  expect_equal(nrow(out), length(expected_city_codes) * 18)
+  expect_equal(attr(out, "labor_kpi_policy")$domain_scope, "design")
+  expect_true(attr(out, "labor_design_domain_filter")$applied)
+})
