@@ -28,6 +28,8 @@ Imports:
     tibble
 Suggests:
     knitr,
+    readODS,
+    readxl,
     rmarkdown,
     roxygen2,
     testthat (>= 3.0.0)
