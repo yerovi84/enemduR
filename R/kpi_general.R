@@ -65,7 +65,7 @@ enemdu_kpi_general <- function(data,
     unweighted_n = sum(valid_w),
     quality_flag = .enemdu_sample_quality_flag(sum(valid_w), sample_n_min),
     warning_flag = "precision_not_evaluated",
-    source_note = "Estimación ponderada básica usando factor de expansión."
+    source_note = "Estimaci\u00f3n ponderada b\u00e1sica usando factor de expansi\u00f3n."
   )
   i <- i + 1L
 
@@ -111,8 +111,8 @@ enemdu_kpi_general <- function(data,
       quality_flag = .enemdu_sample_quality_flag(nrow(hh_profile), sample_n_min),
       warning_flag = "household_estimate_from_first_record_weight",
       source_note = paste(
-        "Estimación preliminar de hogares usando el primer factor de expansión",
-        "observado por hogar. Requiere validación metodológica para uso oficial."
+        "Estimaci\u00f3n preliminar de hogares usando el primer factor de expansi\u00f3n",
+        "observado por hogar. Requiere validaci\u00f3n metodol\u00f3gica para uso oficial."
       )
     )
     i <- i + 1L
@@ -146,7 +146,7 @@ enemdu_kpi_general <- function(data,
 
     rows[[i]] <- .enemdu_kpi_row(
       indicator_id = "ingreso_percapita_familiar_promedio",
-      indicator_label = "Ingreso per cápita familiar promedio",
+      indicator_label = "Ingreso per c\u00e1pita familiar promedio",
       unit = "usd",
       analysis_unit = "household_repeated_person",
       universe = "personas_en_hogares_con_ingreso_percapita_valido",
@@ -155,13 +155,13 @@ enemdu_kpi_general <- function(data,
       unweighted_n = sum(valid_income),
       quality_flag = .enemdu_sample_quality_flag(sum(valid_income), sample_n_min),
       warning_flag = "precision_not_evaluated",
-      source_note = "Media ponderada básica. La precisión debe evaluarse con diseño muestral."
+      source_note = "Media ponderada b\u00e1sica. La precisi\u00f3n debe evaluarse con dise\u00f1o muestral."
     )
     i <- i + 1L
 
     rows[[i]] <- .enemdu_kpi_row(
       indicator_id = "personas_con_ingreso_percapita_valido",
-      indicator_label = "Personas con ingreso per cápita familiar válido",
+      indicator_label = "Personas con ingreso per c\u00e1pita familiar v\u00e1lido",
       unit = "personas",
       analysis_unit = "person",
       universe = "personas_en_hogares_con_ingreso_percapita_valido",
@@ -170,7 +170,7 @@ enemdu_kpi_general <- function(data,
       unweighted_n = sum(valid_income),
       quality_flag = .enemdu_sample_quality_flag(sum(valid_income), sample_n_min),
       warning_flag = "precision_not_evaluated",
-      source_note = "Conteo ponderado de registros con ingreso per cápita positivo y no faltante."
+      source_note = "Conteo ponderado de registros con ingreso per c\u00e1pita positivo y no faltante."
     )
     i <- i + 1L
   }
@@ -198,8 +198,8 @@ enemdu_kpi_general <- function(data,
       quality_flag = .enemdu_sample_quality_flag(sum(valid_bonus), sample_n_min),
       warning_flag = "survey_estimate_not_administrative_execution",
       source_note = paste(
-        "Estimación ponderada de montos declarados/captados por ENEMDU.",
-        "No debe interpretarse automáticamente como ejecución fiscal o registro administrativo."
+        "Estimaci\u00f3n ponderada de montos declarados/captados por ENEMDU.",
+        "No debe interpretarse autom\u00e1ticamente como ejecuci\u00f3n fiscal o registro administrativo."
       )
     )
     i <- i + 1L
@@ -227,7 +227,7 @@ enemdu_kpi_general <- function(data,
       unweighted_n = sum(valid_recipient),
       quality_flag = .enemdu_sample_quality_flag(sum(valid_recipient), sample_n_min),
       warning_flag = "survey_estimate_not_administrative_register",
-      source_note = "Estimación ponderada de receptores con monto positivo observado en ENEMDU."
+      source_note = "Estimaci\u00f3n ponderada de receptores con monto positivo observado en ENEMDU."
     )
     i <- i + 1L
   }
@@ -312,8 +312,8 @@ enemdu_kpi_households <- function(data,
       quality_flag = .enemdu_sample_quality_flag(sum(valid_w), sample_n_min),
       warning_flag = "household_estimate_from_first_record_weight",
       source_note = paste(
-        "Estimación preliminar de hogares usando el primer factor de expansión",
-        "observado por hogar. Requiere validación metodológica para uso oficial."
+        "Estimaci\u00f3n preliminar de hogares usando el primer factor de expansi\u00f3n",
+        "observado por hogar. Requiere validaci\u00f3n metodol\u00f3gica para uso oficial."
       )
     )
     i <- i + 1L
@@ -322,7 +322,7 @@ enemdu_kpi_households <- function(data,
   if (hsize %in% names(profile)) {
     rows[[i]] <- .enemdu_kpi_row(
       indicator_id = "tamano_promedio_hogar_muestral",
-      indicator_label = "Tamaño promedio del hogar muestral",
+      indicator_label = "Tama\u00f1o promedio del hogar muestral",
       unit = "personas_por_hogar",
       analysis_unit = "household",
       universe = "hogares_identificados",
@@ -354,7 +354,7 @@ enemdu_kpi_households <- function(data,
 
     rows[[i]] <- .enemdu_kpi_row(
       indicator_id = "ingreso_percapita_promedio_hogar",
-      indicator_label = "Ingreso per cápita familiar promedio por hogar",
+      indicator_label = "Ingreso per c\u00e1pita familiar promedio por hogar",
       unit = "usd",
       analysis_unit = "household",
       universe = "hogares_con_ingreso_percapita_valido",
@@ -363,7 +363,7 @@ enemdu_kpi_households <- function(data,
       unweighted_n = sum(valid_income),
       quality_flag = .enemdu_sample_quality_flag(sum(valid_income), sample_n_min),
       warning_flag = "precision_not_evaluated",
-      source_note = "Estimación descriptiva sobre perfil de hogares."
+      source_note = "Estimaci\u00f3n descriptiva sobre perfil de hogares."
     )
     i <- i + 1L
   }

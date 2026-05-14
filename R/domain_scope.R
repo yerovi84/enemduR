@@ -230,20 +230,20 @@ enemdu_validate_domain_scope <- function(survey_type,
                                          requires_precision,
                                          description) {
   var_label <- if (is.na(domain_var) || !nzchar(domain_var)) {
-    "sin variable de dominio explícita"
+    "sin variable de dominio expl\u00edcita"
   } else {
     glue::glue("variable `{domain_var}`")
   }
 
   if (isTRUE(is_design_domain)) {
     return(glue::glue(
-      "Para ENEMDU `{survey_type}`, el dominio `{domain_level}` ({var_label}) está dentro del alcance de diseño. {description}"
+      "Para ENEMDU `{survey_type}`, el dominio `{domain_level}` ({var_label}) est\u00e1 dentro del alcance de dise\u00f1o. {description}"
     ))
   }
 
   glue::glue(
-    "Para ENEMDU `{survey_type}`, el dominio `{domain_level}` ({var_label}) no está dentro del alcance de diseño. ",
-    "Debe tratarse como dominio de análisis y reportarse únicamente con evaluación de precisión. {description}"
+    "Para ENEMDU `{survey_type}`, el dominio `{domain_level}` ({var_label}) no est\u00e1 dentro del alcance de dise\u00f1o. ",
+    "Debe tratarse como dominio de an\u00e1lisis y reportarse \u00fanicamente con evaluaci\u00f3n de precisi\u00f3n. {description}"
   )
 }
 

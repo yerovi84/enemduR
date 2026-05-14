@@ -102,8 +102,10 @@ R CMD check enemduR_0.0.1.9000.tar.gz --no-manual
   `ciudad`.
 - Kept Quarto as a downstream analytical consumer and documented current helper
   functions as reserved placeholder interfaces.
-- Preserved UTF-8 literal source text for Spanish labels and messages so the
-  source remains readable under the package `Encoding: UTF-8` contract.
+- Kept `R/*.R` source files ASCII-portable for R CMD check compatibility.
+  Unicode escapes are used only in R source strings when needed to preserve
+  evaluated Spanish labels and messages. UTF-8 remains allowed in documentation
+  files outside `R/` under the package `Encoding: UTF-8` contract.
 
 ## Limitations
 
