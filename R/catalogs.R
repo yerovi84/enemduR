@@ -22,6 +22,19 @@ enemdu_indicator_registry <- function() {
   .enemdu_indicator_registry()
 }
 
+#' Return the ENEMDU labor indicator registry
+#'
+#' Reads the package labor indicator registry. The registry documents the
+#' implemented labor indicators returned by `enemdu_kpi_employment()`, including
+#' their numerator or value flag, denominator universe, output scale, and domain
+#' scope policy.
+#'
+#' @return A tibble with the labor indicator registry.
+#' @export
+enemdu_labor_indicator_registry <- function() {
+  .enemdu_labor_indicator_registry()
+}
+
 #' Return the ENEMDU validation registry
 #'
 #' Reads the package validation registry. Validation rules are used to make

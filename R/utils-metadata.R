@@ -57,6 +57,10 @@
   .enemdu_read_csv_registry("indicator_registry.csv")
 }
 
+.enemdu_labor_indicator_registry <- function() {
+  .enemdu_read_csv_registry("labor_indicator_registry.csv")
+}
+
 .enemdu_validation_registry <- function() {
   .enemdu_read_csv_registry("validation_registry.csv")
 }
