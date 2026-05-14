@@ -13,6 +13,7 @@ This directory stores metadata registries and auxiliary catalogs used by the pac
 - `variable_catalog.csv`: package-level variable catalog.
 - `indicator_registry.csv`: general analytical indicator registry.
 - `labor_indicator_registry.csv`: registry of labor indicators implemented by `enemdu_kpi_employment()`.
+- `labor_official_validation_contract.md`: official-validation contract for the initial labor-indicator block.
 - `validation_registry.csv`: structural and substantive validation rule registry.
 - `income_component_registry.csv`: registry of income-construction components.
 - `missing_code_registry.csv`: registry of sentinel and no-response codes by analytical use.
@@ -39,11 +40,26 @@ The registry is intentionally documentary at this stage. It formalizes indicator
 
 The current labor implementation uses the consolidated ENEMDU condition-of-activity variable `condact`. It does not reconstruct labor status from raw questionnaire variables.
 
+## Official labor validation
+
+`labor_official_validation_contract.md` documents the validation contract used to compare the initial labor-indicator block against official INEC labor-market tabulations.
+
+The contract records:
+
+- validated survey cuts;
+- validated domains;
+- accepted comparison tolerances;
+- publication-format handling rules;
+- official dash handling for zero counts;
+- period-label normalization;
+- the use of `dominio` for official city-domain validation;
+- the `Santo Domingo` label alias used for annual province validation.
+
 ## Warning
 
-The presence of a registry file here does not mean that all substantive rules are closed.
+The presence of a registry or contract file here does not mean that all substantive rules are closed.
 
-A registry may document one of three situations:
+A file may document one of three situations:
 
 - an implemented and tested contract,
 - a methodological contract pending broader validation,
