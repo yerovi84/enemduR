@@ -114,6 +114,14 @@ enemdu_build_labor_flags <- function(data,
 #' `enemdu_build_labor_flags()` and then estimates totals and rates using the
 #' package survey-design estimators.
 #'
+#' The default `domain_scope = "observed"` preserves observed grouping values in
+#' the output. When `domain_scope = "design"`, estimation still uses the full
+#' input microdata and only the output rows are filtered to recognized design
+#' domains for registered grouping variables. For official city-domain
+#' validation against published tabulations, use `dominio` when that derived
+#' field is available; `ciudad` is not assumed to be equivalent to the published
+#' official city-domain tabulations.
+#'
 #' @param data A data frame.
 #' @param group_vars Optional grouping variables.
 #' @param condact Condition-of-activity variable. Defaults to `"condact"`.
@@ -268,30 +276,30 @@ enemdu_kpi_employment <- function(data,
 
 .enemdu_labor_total_specs <- function(include_sector = TRUE) {
   specs <- list(
-    list("labor_pet_total", "Población en edad de trabajar", "labor_pet", "personas", "personas_15_mas"),
-    list("labor_pea_total", "Población económicamente activa", "labor_pea", "personas", "personas_15_mas"),
-    list("labor_pei_total", "Población económicamente inactiva", "labor_pei", "personas", "personas_15_mas"),
-    list("labor_empleo_total", "Población con empleo", "labor_empleo", "personas", "personas_15_mas"),
-    list("labor_empleo_adecuado_total", "Población con empleo adecuado/pleno", "labor_empleo_adecuado", "personas", "pea"),
-    list("labor_subempleo_total", "Población en subempleo", "labor_subempleo", "personas", "pea"),
-    list("labor_subempleo_tiempo_total", "Población en subempleo por insuficiencia de tiempo", "labor_subempleo_tiempo", "personas", "pea"),
-    list("labor_subempleo_ingresos_total", "Población en subempleo por insuficiencia de ingresos", "labor_subempleo_ingresos", "personas", "pea"),
-    list("labor_otro_empleo_no_pleno_total", "Población en otro empleo no pleno", "labor_otro_empleo_no_pleno", "personas", "pea"),
-    list("labor_empleo_no_remunerado_total", "Población con empleo no remunerado", "labor_empleo_no_remunerado", "personas", "pea"),
-    list("labor_empleo_no_clasificado_total", "Población con empleo no clasificado", "labor_empleo_no_clasificado", "personas", "pea"),
-    list("labor_desempleo_total", "Población con desempleo", "labor_desempleo", "personas", "pea"),
-    list("labor_desempleo_abierto_total", "Población con desempleo abierto", "labor_desempleo_abierto", "personas", "pea"),
-    list("labor_desempleo_oculto_total", "Población con desempleo oculto", "labor_desempleo_oculto", "personas", "pea")
+    list("labor_pet_total", "Poblaci\u00f3n en edad de trabajar", "labor_pet", "personas", "personas_15_mas"),
+    list("labor_pea_total", "Poblaci\u00f3n econ\u00f3micamente activa", "labor_pea", "personas", "personas_15_mas"),
+    list("labor_pei_total", "Poblaci\u00f3n econ\u00f3micamente inactiva", "labor_pei", "personas", "personas_15_mas"),
+    list("labor_empleo_total", "Poblaci\u00f3n con empleo", "labor_empleo", "personas", "personas_15_mas"),
+    list("labor_empleo_adecuado_total", "Poblaci\u00f3n con empleo adecuado/pleno", "labor_empleo_adecuado", "personas", "pea"),
+    list("labor_subempleo_total", "Poblaci\u00f3n en subempleo", "labor_subempleo", "personas", "pea"),
+    list("labor_subempleo_tiempo_total", "Poblaci\u00f3n en subempleo por insuficiencia de tiempo", "labor_subempleo_tiempo", "personas", "pea"),
+    list("labor_subempleo_ingresos_total", "Poblaci\u00f3n en subempleo por insuficiencia de ingresos", "labor_subempleo_ingresos", "personas", "pea"),
+    list("labor_otro_empleo_no_pleno_total", "Poblaci\u00f3n en otro empleo no pleno", "labor_otro_empleo_no_pleno", "personas", "pea"),
+    list("labor_empleo_no_remunerado_total", "Poblaci\u00f3n con empleo no remunerado", "labor_empleo_no_remunerado", "personas", "pea"),
+    list("labor_empleo_no_clasificado_total", "Poblaci\u00f3n con empleo no clasificado", "labor_empleo_no_clasificado", "personas", "pea"),
+    list("labor_desempleo_total", "Poblaci\u00f3n con desempleo", "labor_desempleo", "personas", "pea"),
+    list("labor_desempleo_abierto_total", "Poblaci\u00f3n con desempleo abierto", "labor_desempleo_abierto", "personas", "pea"),
+    list("labor_desempleo_oculto_total", "Poblaci\u00f3n con desempleo oculto", "labor_desempleo_oculto", "personas", "pea")
   )
 
   if (isTRUE(include_sector)) {
     specs <- c(
       specs,
       list(
-        list("labor_sector_formal_total", "Población con empleo en el sector formal", "labor_sector_formal", "personas", "poblacion_con_empleo"),
-        list("labor_sector_informal_total", "Población con empleo en el sector informal", "labor_sector_informal", "personas", "poblacion_con_empleo"),
-        list("labor_sector_domestico_total", "Población con empleo doméstico", "labor_sector_domestico", "personas", "poblacion_con_empleo"),
-        list("labor_sector_no_clasificado_total", "Población con empleo no clasificado por sector", "labor_sector_no_clasificado", "personas", "poblacion_con_empleo")
+        list("labor_sector_formal_total", "Poblaci\u00f3n con empleo en el sector formal", "labor_sector_formal", "personas", "poblacion_con_empleo"),
+        list("labor_sector_informal_total", "Poblaci\u00f3n con empleo en el sector informal", "labor_sector_informal", "personas", "poblacion_con_empleo"),
+        list("labor_sector_domestico_total", "Poblaci\u00f3n con empleo dom\u00e9stico", "labor_sector_domestico", "personas", "poblacion_con_empleo"),
+        list("labor_sector_no_clasificado_total", "Poblaci\u00f3n con empleo no clasificado por sector", "labor_sector_no_clasificado", "personas", "poblacion_con_empleo")
       )
     )
   }
@@ -309,10 +317,10 @@ enemdu_kpi_employment <- function(data,
 
 .enemdu_labor_rate_specs <- function(include_sector = TRUE) {
   specs <- list(
-    list("labor_tasa_participacion_bruta", "Tasa de participación bruta", "labor_pea", "labor_population_base", "proportion", "poblacion_total_observada"),
-    list("labor_tasa_participacion_global", "Tasa de participación global", "labor_pea", "labor_pet", "proportion", "pet"),
-    list("labor_tasa_ocupacion_bruta", "Tasa de ocupación bruta", "labor_empleo", "labor_pet", "proportion", "pet"),
-    list("labor_tasa_ocupacion_global", "Tasa de ocupación global", "labor_empleo", "labor_pea", "proportion", "pea"),
+    list("labor_tasa_participacion_bruta", "Tasa de participaci\u00f3n bruta", "labor_pea", "labor_population_base", "proportion", "poblacion_total_observada"),
+    list("labor_tasa_participacion_global", "Tasa de participaci\u00f3n global", "labor_pea", "labor_pet", "proportion", "pet"),
+    list("labor_tasa_ocupacion_bruta", "Tasa de ocupaci\u00f3n bruta", "labor_empleo", "labor_pet", "proportion", "pet"),
+    list("labor_tasa_ocupacion_global", "Tasa de ocupaci\u00f3n global", "labor_empleo", "labor_pea", "proportion", "pea"),
     list("labor_tasa_empleo_adecuado", "Tasa de empleo adecuado/pleno", "labor_empleo_adecuado", "labor_pea", "proportion", "pea"),
     list("labor_tasa_subempleo", "Tasa de subempleo", "labor_subempleo", "labor_pea", "proportion", "pea"),
     list("labor_tasa_subempleo_tiempo", "Tasa de subempleo por insuficiencia de tiempo", "labor_subempleo_tiempo", "labor_pea", "proportion", "pea"),

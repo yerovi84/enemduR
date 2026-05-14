@@ -14,6 +14,7 @@ This directory stores metadata registries and auxiliary catalogs used by the pac
 - `indicator_registry.csv`: general analytical indicator registry.
 - `labor_indicator_registry.csv`: registry of labor indicators implemented by `enemdu_kpi_employment()`.
 - `labor_official_validation_contract.md`: official-validation contract for the initial labor-indicator block.
+- `package_hardening_report.md`: Phase 5 package-hardening report.
 - `validation_registry.csv`: structural and substantive validation rule registry.
 - `income_component_registry.csv`: registry of income-construction components.
 - `missing_code_registry.csv`: registry of sentinel and no-response codes by analytical use.

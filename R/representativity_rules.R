@@ -411,12 +411,12 @@ enemdu_representativity_report <- function(estimate,
                                                 domain_scope_message) {
   if (isTRUE(is_design_domain)) {
     return(glue::glue(
-      "{domain_scope_message} La estimación fue evaluada con decisión de precisión `{precision_decision}`."
+      "{domain_scope_message} La estimaci\u00f3n fue evaluada con decisi\u00f3n de precisi\u00f3n `{precision_decision}`."
     ))
   }
 
   glue::glue(
-    "{domain_scope_message} Aunque la estimación tenga decisión de precisión `{precision_decision}`, ",
-    "no debe presentarse como dominio de diseño de la encuesta."
+    "{domain_scope_message} Aunque la estimaci\u00f3n tenga decisi\u00f3n de precisi\u00f3n `{precision_decision}`, ",
+    "no debe presentarse como dominio de dise\u00f1o de la encuesta."
   )
 }

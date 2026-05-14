@@ -1,31 +1,47 @@
-test_that("labor user documentation file exists", {
-  doc_path <- file.path(
+labor_user_documentation_path <- function(must_work = TRUE) {
+  source_path <- file.path(
     testthat::test_path(),
     "..",
     "..",
     "vignettes",
-    "labor-indicators.md"
+    "labor-indicators.Rmd"
   )
 
-  doc_path <- normalizePath(doc_path, winslash = "/", mustWork = FALSE)
+  source_path <- normalizePath(source_path, winslash = "/", mustWork = FALSE)
+
+  if (file.exists(source_path)) {
+    return(source_path)
+  }
+
+  installed_path <- system.file(
+    "doc",
+    "labor-indicators.Rmd",
+    package = "enemduR"
+  )
+
+  if (nzchar(installed_path)) {
+    return(normalizePath(installed_path, winslash = "/", mustWork = TRUE))
+  }
+
+  if (isTRUE(must_work)) {
+    normalizePath(source_path, winslash = "/", mustWork = TRUE)
+  } else {
+    source_path
+  }
+}
+
+test_that("labor user documentation file exists", {
+  doc_path <- labor_user_documentation_path(must_work = FALSE)
 
   expect_true(file.exists(doc_path))
 })
 
 test_that("labor user documentation records user-facing validation decisions", {
-  doc_path <- file.path(
-    testthat::test_path(),
-    "..",
-    "..",
-    "vignettes",
-    "labor-indicators.md"
-  )
-
-  doc_path <- normalizePath(doc_path, winslash = "/", mustWork = TRUE)
+  doc_path <- labor_user_documentation_path(must_work = TRUE)
   content <- readLines(doc_path, warn = FALSE, encoding = "UTF-8")
 
   required_patterns <- c(
-    "# Labor indicators in enemduR",
+    "Labor indicators in enemduR",
     "enemdu_kpi_employment()",
     "condact",
     "domain_scope",

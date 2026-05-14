@@ -1,3 +1,5 @@
+library(testthat)
+
 test_that("supported survey types are stable", {
   types <- enemduR:::.enemdu_supported_survey_types()
 
@@ -18,8 +20,8 @@ test_that("survey registry loads with expected columns", {
       "default_weight",
       "default_psu",
       "default_strata",
-      "national",
-      "urban_rural"
+      "domain_national",
+      "domain_urban_rural"
     ) %in% names(registry)
   ))
 })

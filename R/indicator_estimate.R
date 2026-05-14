@@ -774,7 +774,7 @@ enemdu_kpi_optional_bonuses <- function(data,
 
   x <- tolower(trimws(as.character(x)))
 
-  if (x %in% c("true", "t", "1", "yes", "y", "si", "sí")) {
+  if (x %in% c("true", "t", "1", "yes", "y", "si", "s\u00ed")) {
     return(TRUE)
   }
 

@@ -41,5 +41,5 @@ A one-row tibble with the precision decision.
 \description{
 Applies the phase-2 precision classification contract based on ENEMDU
 methodological criteria. This function evaluates metrics already computed
-elsewhere. Full indicator estimation is implemented in later phases.
+elsewhere.
 }

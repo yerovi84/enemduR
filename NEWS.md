@@ -2,6 +2,16 @@
 
 ## Current development version
 
+- Hardened the README for portfolio use and aligned it with the current
+  analytical-engine scope, domain-scope contract, Quarto consumption model, and
+  package limitations.
+- Added a basic GitHub Actions workflow for R package checks.
+- Added a minimal pkgdown configuration for local documentation-site builds.
+- Aligned roxygen documentation with the implemented labor module and refreshed
+  exported-function manual coverage.
+- Converted the labor-indicator user guide into an R Markdown vignette source.
+- Removed avoidable package-check issues from stale metadata tests, unqualified
+  `stats::ave()` calls, and non-ASCII characters in R source code.
 - Fixed parsing of official labor tabulation percentages with dot-decimal notation, such as `96.4%`, used in annual official CSV tabulations.
 - Added normalized period matching for official labor tabulation comparisons, so labels such as `I - 2026` and `I- 2026` are treated as equivalent.
 - Added support for reading `.sav`, `.dta` and `.csv` files through `enemdu_read_data()`.
@@ -18,7 +28,8 @@
 - Added basic real-data smoke-test infrastructure.
 - Added support for income, quintiles, poverty flags, household profiles, optional bonuses and social bonus indicators.
 - Added survey estimator helpers for totals, means, proportions and tabulations.
-- Added output helpers for Quarto-compatible analytical consumption.
+- Declared placeholder Quarto helper interfaces while keeping analytical
+  outputs as the primary Quarto-ready consumption layer.
 
 ## Initial development version
 
