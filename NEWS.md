@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Fixed parsing of official labor tabulation percentages with dot-decimal notation, such as `96.4%`, used in annual official CSV tabulations.
+- Added normalized period matching for official labor tabulation comparisons, so labels such as `I - 2026` and `I- 2026` are treated as equivalent.
 - Added support for reading `.sav`, `.dta` and `.csv` files through `enemdu_read_data()`.
 - Documented `.sav` as the operational primary format for recent official ENEMDU microdata.
 - Kept `.dta` and `.csv` support as interoperability formats.

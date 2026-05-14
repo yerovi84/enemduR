@@ -164,7 +164,8 @@ enemdu_compare_labor_tabulados <- function(estimates,
 
   if (!is.null(official_period)) {
     official_work <- official_work[
-      official_work$period %in% as.character(official_period),
+      .enemdu_official_period_key(official_work$period) %in%
+        .enemdu_official_period_key(as.character(official_period)),
       ,
       drop = FALSE
     ]
@@ -526,6 +527,7 @@ enemdu_compare_labor_tabulados <- function(estimates,
         source_file = source_file,
         source_section = source_section,
         period = period,
+        official_period_key = .enemdu_official_period_key(period),
         official_indicator_label = official_indicator_label,
         official_measure = official_measure,
         indicator_id = indicator_id,
@@ -601,16 +603,80 @@ enemdu_compare_labor_tabulados <- function(estimates,
 .enemdu_parse_official_number <- function(x) {
   x <- trimws(as.character(x))
 
-  if (!nzchar(x) || x %in% c("-", "NA", "N/A", "n/a")) {
+  if (length(x) != 1 || is.na(x) || !nzchar(x) || x %in% c("-", "NA", "N/A", "n/a")) {
     return(NA_real_)
   }
 
   x <- gsub("%", "", x, fixed = TRUE)
   x <- gsub("\\s+", "", x)
-  x <- gsub(".", "", x, fixed = TRUE)
-  x <- sub(",", ".", x, fixed = TRUE)
+  x <- gsub("[^0-9,\\.\\-]", "", x)
+
+  if (!nzchar(x) || !grepl("[0-9]", x)) {
+    return(NA_real_)
+  }
+
+  has_comma <- grepl(",", x, fixed = TRUE)
+  has_dot <- grepl(".", x, fixed = TRUE)
+
+  if (has_comma && has_dot) {
+    last_comma <- max(gregexpr(",", x, fixed = TRUE)[[1]])
+    last_dot <- max(gregexpr(".", x, fixed = TRUE)[[1]])
+
+    decimal_sep <- if (last_comma > last_dot) "," else "."
+    thousands_sep <- if (identical(decimal_sep, ",")) "." else ","
+
+    x <- gsub(thousands_sep, "", x, fixed = TRUE)
+    x <- sub(decimal_sep, ".", x, fixed = TRUE)
+
+    return(suppressWarnings(as.numeric(x)))
+  }
+
+  if (has_comma) {
+    return(.enemdu_parse_single_separator_number(x, separator = ","))
+  }
+
+  if (has_dot) {
+    return(.enemdu_parse_single_separator_number(x, separator = "."))
+  }
 
   suppressWarnings(as.numeric(x))
+}
+
+.enemdu_parse_single_separator_number <- function(x,
+                                                  separator) {
+  parts <- strsplit(x, separator, fixed = TRUE)[[1]]
+
+  if (length(parts) == 1) {
+    return(suppressWarnings(as.numeric(x)))
+  }
+
+  if (length(parts) > 2) {
+    group_lengths <- nchar(parts[-1])
+
+    if (all(group_lengths == 3)) {
+      x_clean <- paste(parts, collapse = "")
+      return(suppressWarnings(as.numeric(x_clean)))
+    }
+
+    decimal_part <- parts[[length(parts)]]
+    integer_part <- paste(parts[-length(parts)], collapse = "")
+    x_clean <- paste0(integer_part, ".", decimal_part)
+
+    return(suppressWarnings(as.numeric(x_clean)))
+  }
+
+  before <- parts[[1]]
+  after <- parts[[2]]
+
+  after_digits <- nchar(after)
+
+  if (after_digits %in% c(1L, 2L)) {
+    x_clean <- paste0(before, ".", after)
+  } else {
+    x_clean <- paste0(before, after)
+  }
+
+  suppressWarnings(as.numeric(x_clean))
 }
 
 .enemdu_official_labor_unit <- function(source_section,
@@ -707,12 +773,17 @@ enemdu_compare_labor_tabulados <- function(estimates,
   trimws(gsub("\\s+", " ", out))
 }
 
+.enemdu_official_period_key <- function(x) {
+  .enemdu_label_key(x)
+}
+
 .enemdu_empty_official_labor_tabulados <- function() {
   tibble::tibble(
     survey_type = character(),
     source_file = character(),
     source_section = character(),
     period = character(),
+    official_period_key = character(),
     official_indicator_label = character(),
     official_measure = character(),
     indicator_id = character(),

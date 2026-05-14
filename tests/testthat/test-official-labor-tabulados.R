@@ -55,7 +55,7 @@ test_that("official monthly labor tabulations are parsed into long format", {
   expect_equal(empleo_global$official_value_package_scale, 0.95)
 })
 
-test_that("official annual labor estimator tabulations are parsed", {
+test_that("official annual labor estimator tabulations parse dot-decimal percentages", {
   tmp <- tempfile("official_labor_annual_")
   dir.create(tmp)
 
@@ -71,8 +71,8 @@ test_that("official annual labor estimator tabulations are parsed", {
       "Anual 2018 - 2025;;;;;",
       "Periodo;Indicador;Estimador;Nacional;Area;",
       ";;;Total;Urbano;Rural",
-      "2025;Empleo Global;Indicador;96,5%;95,1%;98,0%",
-      "2025;Empleo Global;Error estandar;0,2%;0,3%;0,4%"
+      "2025;Empleo Global;Indicador;96.4%;95.1%;98.0%",
+      "2025;Empleo Global;Error estandar;0.2%;0.3%;0.4%"
     ),
     file.path(labor_dir, "1. Estimadores.csv"),
     useBytes = TRUE
@@ -93,7 +93,48 @@ test_that("official annual labor estimator tabulations are parsed", {
   ]
 
   expect_equal(nrow(indicator_row), 1)
-  expect_equal(indicator_row$official_value_package_scale, 0.965)
+  expect_equal(indicator_row$official_value, 96.4)
+  expect_equal(indicator_row$official_value_package_scale, 0.964)
+})
+
+test_that("official annual labor estimator tabulations also parse comma-decimal percentages", {
+  tmp <- tempfile("official_labor_annual_comma_")
+  dir.create(tmp)
+
+  labor_dir <- file.path(
+    tmp,
+    "00 ENEMDU_Anual_2025_Tabulados_Mercado_Laboral_CSV"
+  )
+  dir.create(labor_dir)
+
+  writeLines(
+    c(
+      "1. Estimadores de indicadores laborales;;;;;",
+      "Anual 2018 - 2025;;;;;",
+      "Periodo;Indicador;Estimador;Nacional;Area;",
+      ";;;Total;Urbano;Rural",
+      "2025;Empleo Global;Indicador;96,4%;95,1%;98,0%"
+    ),
+    file.path(labor_dir, "1. Estimadores.csv"),
+    useBytes = TRUE
+  )
+
+  out <- enemdu_read_official_labor_tabulados(
+    path = tmp,
+    survey_type = "anual"
+  )
+
+  indicator_row <- out[
+    out$indicator_id == "labor_tasa_ocupacion_global" &
+      out$official_measure == "Indicador" &
+      out$domain_group == "Nacional" &
+      out$domain_label == "Total",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(indicator_row$official_value, 96.4)
+  expect_equal(indicator_row$official_value_package_scale, 0.964)
 })
 
 test_that("labor estimates can be compared against official national tabulations", {
@@ -135,6 +176,37 @@ test_that("labor estimates can be compared against official national tabulations
   expect_s3_class(comparison, "enemdu_labor_tabulados_comparison")
   expect_true(all(comparison$within_tolerance))
   expect_true(all(comparison$comparison_status == "match"))
+})
+
+test_that("labor comparison normalizes official period labels", {
+  official <- tibble::tibble(
+    indicator_id = "labor_tasa_ocupacion_global",
+    period = "I- 2026",
+    domain_group = "Nacional",
+    domain_label = "Total",
+    official_indicator_label = "Empleo Global (%)",
+    official_measure = "Indicador",
+    official_value_raw = "96,4",
+    official_value = 96.4,
+    official_value_package_scale = 0.964,
+    package_scale = "proportion_0_1"
+  )
+
+  estimates <- tibble::tibble(
+    indicator_id = "labor_tasa_ocupacion_global",
+    estimate = 0.964
+  )
+
+  comparison <- enemdu_compare_labor_tabulados(
+    estimates = estimates,
+    official = official,
+    official_period = "I - 2026",
+    tolerance_rate = 0.0005
+  )
+
+  expect_equal(nrow(comparison), 1)
+  expect_true(comparison$within_tolerance)
+  expect_equal(comparison$comparison_status, "match")
 })
 
 test_that("labor comparison detects values outside tolerance", {
