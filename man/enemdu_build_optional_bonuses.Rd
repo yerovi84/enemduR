@@ -2,20 +2,20 @@
 % Please edit documentation in R/optional_bonuses.R
 \name{enemdu_build_optional_bonuses}
 \alias{enemdu_build_optional_bonuses}
-\title{Build optional bonus variables}
+\title{Build validated social bonus variables}
 \usage{
 enemdu_build_optional_bonuses(
   data,
-  bonus_vars = "p78",
+  bonus_vars = NULL,
   registry = enemdu_optional_bonus_registry(),
   household_id = "idhogar",
   hsize = "hsize",
   base_individual_income_var = "ingrltot",
-  output_total_var = "bonos_optional_total",
-  output_recipient_var = "bonos_optional_recibe",
+  output_total_var = "bonos_sociales_total",
+  output_recipient_var = "bonos_sociales_recibe",
+  scenario_add_var = "bonos_scenario_add_total",
   create_income_scenario = TRUE,
   scenario_suffix = "_plus_optional_bonos",
-  missing_amount_as_zero = TRUE,
   keep_raw = TRUE,
   create_flags = TRUE,
   overwrite = FALSE,
@@ -25,8 +25,8 @@ enemdu_build_optional_bonuses(
 \arguments{
 \item{data}{A data frame.}
 
-\item{bonus_vars}{Character vector of optional bonus variables. Defaults to
-\code{"p78"}.}
+\item{bonus_vars}{Character vector of bonus amount variables. If \code{NULL},
+all registered bonus variables are considered.}
 
 \item{registry}{Optional bonus registry.}
 
@@ -39,40 +39,53 @@ requested, it is built.}
 \item{base_individual_income_var}{Base individual income variable used to
 build the alternative scenario. Defaults to \code{"ingrltot"}.}
 
-\item{output_total_var}{Output variable for row-level optional bonus total.}
+\item{output_total_var}{Output variable for row-level total social bonuses.}
 
-\item{output_recipient_var}{Output variable for row-level bonus recipient flag.}
+\item{output_recipient_var}{Output variable for any social bonus receipt.}
+
+\item{scenario_add_var}{Output variable containing only bonuses to add to
+the alternative income scenario.}
 
 \item{create_income_scenario}{Logical. If \code{TRUE}, creates alternative income
 variables: individual, household total, and household per-capita income with
-optional bonuses added.}
+non-base bonuses added.}
 
 \item{scenario_suffix}{Suffix for alternative income variables.}
 
-\item{missing_amount_as_zero}{Logical. If \code{TRUE}, structural missing amounts
-not identified as sentinel nonresponse are treated as zero.}
+\item{keep_raw}{Logical. If \code{TRUE}, keeps raw copies of source amount
+variables.}
 
-\item{keep_raw}{Logical. If \code{TRUE}, keeps raw copies of source bonus variables.}
-
-\item{create_flags}{Logical. If \code{TRUE}, creates missing-code audit flags.}
+\item{create_flags}{Logical. If \code{TRUE}, creates audit flags for sentinels,
+receipt validation, and amount/receipt inconsistencies.}
 
 \item{overwrite}{Logical. If \code{TRUE}, overwrites existing output variables.}
 
-\item{strict}{Logical. If \code{TRUE}, errors when requested bonus variables are
-absent. If \code{FALSE}, missing bonus variables are skipped with a warning.}
+\item{strict}{Logical. If \code{TRUE}, errors when registered amount or receipt
+variables are absent. If \code{FALSE}, incomplete pairs are skipped with warning.}
 }
 \value{
-A data frame with optional bonus variables and scenario income
-variables when requested.
+A data frame with validated social bonus variables and scenario
+income variables when requested.
 }
 \description{
-Builds optional bonus variables such as \code{p78} without altering the base
-official income construction. This function is intended for analytical
-scenarios where transfer or bonus amounts captured by ENEMDU are studied
-separately or used to build alternative income scenarios.
+Builds validated social bonus variables from ENEMDU amount variables and their
+corresponding receipt questions. The function supports, by registry:
 }
 \details{
-By default, registered sentinel codes are kept as missing, while structural
-missing values are treated as zero for optional amount totals. This default is
-useful for transfer-amount analysis but is explicitly recorded in attributes.
+\itemize{
+\item \code{p75} / \code{p76}: Bono de Desarrollo Humano
+\item \code{p77} / \code{p78}: Bono de Discapacidad
+}
+
+The amount is not read as analytically valid unless the corresponding
+receipt question confirms that the person received the bonus. If the receipt
+question says the person did not receive the bonus, the amount is treated as
+structural zero. If the receipt question says the person did receive the bonus
+but the amount is missing, invalid, or a sentinel code, the amount remains
+missing because it cannot be safely assumed to be zero.
+
+The scenario income variables add only bonuses marked in the registry with
+\code{scenario_income_inclusion = TRUE}. This prevents duplicating the Bono de
+Desarrollo Humano, which is already part of the base income construction
+through \code{p75} / \code{p76}.
 }

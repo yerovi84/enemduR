@@ -13,9 +13,11 @@ The package is designed to support a phased implementation strategy:
 \itemize{
 \item reading and standardizing ENEMDU microdata,
 \item validating structural and substantive requirements,
-\item building derived variables and indicators,
-\item producing stable analytical outputs,
-\item and later exposing optional helpers for Quarto-based reporting.
+\item building derived variables and registry-backed indicators,
+\item declaring complex survey designs and estimating survey-aware outputs,
+\item producing labor indicators from the consolidated \code{condact} variable,
+\item comparing implemented labor indicators with official tabulations,
+\item and producing stable analytical outputs for downstream Quarto reporting.
 }
 
 The package intentionally separates:
@@ -24,6 +26,10 @@ The package intentionally separates:
 \item analytical logic,
 \item and presentation helpers.
 }
+
+Presentation code is downstream of the analytical engine. Quarto-facing
+helpers are intentionally lightweight and must not govern indicator
+computation.
 }
 \author{
 \strong{Maintainer}: Alejandro Yerovi \email{yerovi84@hotmail.com}

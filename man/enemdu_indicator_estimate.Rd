@@ -14,6 +14,10 @@ enemdu_indicator_estimate(
   strata = "estrato",
   weight = NULL,
   survey_type = NULL,
+  domain_level = NULL,
+  domain_var = NULL,
+  strict_domain = FALSE,
+  integrate_representativity = TRUE,
   household_id = "idhogar",
   hsize = "hsize",
   scale_adjustment = c("metadata", "never", "always"),
@@ -43,6 +47,18 @@ value.}
 \item{survey_type}{Optional ENEMDU survey type. If omitted, uses the
 \code{survey_type} attribute when available.}
 
+\item{domain_level}{Optional domain level. If omitted and \code{group_vars} is
+supplied, the domain level is inferred from \code{domain_variable_registry.csv}.}
+
+\item{domain_var}{Optional domain variable. Usually omitted because
+\code{group_vars} is enough for inference.}
+
+\item{strict_domain}{Logical. If \code{TRUE}, errors when requested domains are
+outside the design scope of the selected ENEMDU survey type.}
+
+\item{integrate_representativity}{Logical. If \code{TRUE}, appends integrated
+representativity metadata to the estimate.}
+
 \item{household_id}{Household identifier used when household-scale adjustment
 is needed.}
 
@@ -58,7 +74,8 @@ is needed.}
 \item{sample_n_min}{Preliminary minimum sample size flag.}
 }
 \value{
-A tibble with the design-based estimate and registry metadata.
+A tibble with the design-based estimate, registry metadata, and
+integrated representativity metadata when available.
 }
 \description{
 Estimates an indicator declared in \code{indicator_registry.csv} by selecting the
@@ -77,4 +94,8 @@ household-scale correction for the precision decision when the adjustment is
 enabled. This does not change the point estimate. It adjusts the effective
 analytical size used for the representativity decision by summing \code{1 / hsize}
 over valid repeated household-level observations.
+
+When \code{integrate_representativity = TRUE}, the function also validates the
+requested domain against the representativity scope of the ENEMDU survey type
+and appends a final \code{representativity_flag}.
 }

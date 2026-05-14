@@ -240,20 +240,6 @@ enemdu_kpi_general <- function(data,
   out
 }
 
-#' Compute ENEMDU employment KPIs
-#'
-#' Declared in phase 1 and intentionally left for later implementation. This
-#' module requires a formal employment-variable contract before coding.
-#'
-#' @param data A data frame.
-#' @param ... Reserved for future arguments.
-#'
-#' @return This function currently errors with an informative message.
-#' @export
-enemdu_kpi_employment <- function(data, ...) {
-  .enemdu_abort_not_implemented("enemdu_kpi_employment")
-}
-
 #' Compute ENEMDU household KPIs
 #'
 #' Produces minimal household-level KPIs from an ENEMDU person-level data frame.

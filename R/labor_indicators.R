@@ -114,6 +114,14 @@ enemdu_build_labor_flags <- function(data,
 #' `enemdu_build_labor_flags()` and then estimates totals and rates using the
 #' package survey-design estimators.
 #'
+#' The default `domain_scope = "observed"` preserves observed grouping values in
+#' the output. When `domain_scope = "design"`, estimation still uses the full
+#' input microdata and only the output rows are filtered to recognized design
+#' domains for registered grouping variables. For official city-domain
+#' validation against published tabulations, use `dominio` when that derived
+#' field is available; `ciudad` is not assumed to be equivalent to the published
+#' official city-domain tabulations.
+#'
 #' @param data A data frame.
 #' @param group_vars Optional grouping variables.
 #' @param condact Condition-of-activity variable. Defaults to `"condact"`.

@@ -183,7 +183,7 @@ enemdu_apply_household_scale_adjustment <- function(data,
   }
 
   out[valid] <- as.integer(
-    ave(
+    stats::ave(
       rep(1L, sum(valid)),
       group[valid],
       FUN = length
@@ -205,9 +205,9 @@ enemdu_apply_household_scale_adjustment <- function(data,
   group_valid <- group[valid_group]
 
   x_zero <- ifelse(is.na(x_valid), 0, x_valid)
-  sum_values <- ave(x_zero, group_valid, FUN = sum)
+  sum_values <- stats::ave(x_zero, group_valid, FUN = sum)
 
-  all_missing <- ave(
+  all_missing <- stats::ave(
     as.integer(is.na(x_valid)),
     group_valid,
     FUN = function(z) all(z == 1L)

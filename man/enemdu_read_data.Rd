@@ -45,7 +45,8 @@ A data frame with class \code{enemdu_tbl} and basic ENEMDU attributes.
 \description{
 Reads ENEMDU microdata and returns an object prepared for the \code{enemduR}
 workflow.
-
+}
+\details{
 The operational primary format for recent official ENEMDU microdata is
 \code{.sav}. The function also supports \code{.dta} and \code{.csv} files for interoperability
 with analytical workflows that export or transform the original source.

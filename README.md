@@ -26,7 +26,9 @@ The current development version includes:
 - a formal labor indicator registry with 32 implemented labor indicators;
 - official labor-market tabulation parsing;
 - comparison helpers for official labor-market validation workflows;
-- Quarto-compatible analytical output helpers.
+- stable analytical outputs ready for downstream Quarto consumption;
+- a basic GitHub Actions R package check workflow;
+- a minimal pkgdown configuration for local documentation-site builds.
 
 The package is not intended to replace official statistical production systems or official published results. It is an analytical infrastructure project designed to improve reproducibility, transparency, and methodological consistency in downstream ENEMDU workflows.
 
@@ -259,13 +261,16 @@ labor_area <- enemdu_kpi_employment(
 ### Quarterly city-domain indicators
 
 For official quarterly city-domain validation, use `dominio`, not `ciudad`.
+The current validation examples keep `domain_scope = "observed"` for
+`dominio` because `dominio` is the official city-domain comparison field; the
+estimator still uses the full input microdata.
 
 ```r
 labor_city_domains <- enemdu_kpi_employment(
   data = quarterly_data,
   group_vars = "dominio",
   survey_type = "trimestral",
-  domain_scope = "design"
+  domain_scope = "observed"
 )
 ```
 
@@ -314,14 +319,19 @@ It does not prefilter the microdata before estimation.
 
 ```r
 labor_design <- enemdu_kpi_employment(
-  data = quarterly_data,
-  group_vars = "dominio",
-  survey_type = "trimestral",
+  data = monthly_data,
+  group_vars = "area",
+  survey_type = "mensual",
   domain_scope = "design"
 )
 ```
 
 This distinction is important because analysis domains and design domains are not the same concept.
+
+Do not use `domain_scope = "design"` as a substitute for mapping `ciudad` to
+published official city-domain tabulations. For official city-domain
+validation, use `dominio` when that field is available in the analytical
+workflow.
 
 ## Official labor tabulation validation workflow
 
@@ -385,10 +395,10 @@ Most analytical functions return tibbles with fields such as:
 - `indicator_id`;
 - `indicator_label`;
 - `estimate`;
-- `std_error`;
+- `standard_error`;
 - `cv`;
-- `conf_low`;
-- `conf_high`;
+- `ci_lower`;
+- `ci_upper`;
 - `unweighted_n`;
 - `weighted_n`;
 - `quality_flag`;
@@ -451,11 +461,19 @@ This is especially important when working with social bonuses, transfer variable
 
 ## Quarto-ready analytical consumption
 
-`enemduR` includes lightweight Quarto-compatible helpers, but the package remains an analytical core.
+`enemduR` produces stable long-format analytical tables that are designed to be
+consumed by Quarto documents, validation notebooks, dashboards, and reporting
+pipelines. The package remains an analytical core.
 
-Presentation helpers are downstream consumers of analytical outputs. They should not control how indicators are computed.
+Presentation layers are downstream consumers of analytical outputs. They should
+not control how indicators are computed.
 
-Available helpers include:
+The current package also reserves a small set of Quarto helper interfaces. At
+this stage, these helpers are placeholders that fail with informative messages;
+production Quarto documents should consume the analytical tibbles directly or
+implement presentation-specific wrappers outside the computational core.
+
+Reserved helper interfaces include:
 
 ```r
 enemdu_card_kpi()
@@ -465,8 +483,6 @@ enemdu_note_method()
 enemdu_section_header()
 ```
 
-These helpers are intentionally lightweight at this stage.
-
 ## Current limitations
 
 The current development version does not yet provide:
@@ -474,8 +490,8 @@ The current development version does not yet provide:
 - full reconstruction of labor status from raw questionnaire variables;
 - a complete historical harmonization engine for all ENEMDU questionnaire changes;
 - official production-grade poverty estimation workflows;
-- a full pkgdown site;
-- continuous integration through GitHub Actions;
+- a published pkgdown site or custom documentation identity layer;
+- fully implemented Quarto helper objects;
 - a complete visual dashboard layer;
 - full release hardening.
 
@@ -500,6 +516,12 @@ If documentation is modified through roxygen comments, run:
 
 ```r
 devtools::document()
+```
+
+To build the local documentation site when `pkgdown` is available, run:
+
+```r
+pkgdown::build_site()
 ```
 
 ## Portfolio summary

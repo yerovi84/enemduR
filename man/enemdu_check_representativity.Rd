@@ -39,6 +39,6 @@ enemdu_check_representativity(
 A one-row tibble with representativity and precision metadata.
 }
 \description{
-Phase-2 contract function. It evaluates precision metrics already computed by
-an estimation layer and attaches survey-type representativity scope metadata.
+Evaluates precision metrics already computed by an estimation layer and
+attaches survey-type representativity scope metadata.
 }

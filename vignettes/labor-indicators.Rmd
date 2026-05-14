@@ -1,4 +1,11 @@
-# Labor indicators in enemduR
+---
+title: "Labor indicators in enemduR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Labor indicators in enemduR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
 ## Purpose
 

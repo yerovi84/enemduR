@@ -44,7 +44,8 @@ comparison status.
 \description{
 Compares \code{enemdu_kpi_employment()} outputs against official INEC labor
 tabulations previously read with \code{enemdu_read_official_labor_tabulados()}.
-
+}
+\details{
 This function is intentionally conservative. It compares only official rows
 whose estimator is \code{Indicador}, and only rows that can be mapped to an
 implemented \code{indicator_id}.
