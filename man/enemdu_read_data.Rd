@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_data.R
 \name{enemdu_read_data}
 \alias{enemdu_read_data}
-\title{Read ENEMDU microdata from a Stata file}
+\title{Read ENEMDU microdata}
 \usage{
 enemdu_read_data(
   path,
@@ -11,11 +11,12 @@ enemdu_read_data(
   standardize_names = TRUE,
   inform_scope = TRUE,
   encoding = NULL,
+  csv_delim = NULL,
   ...
 )
 }
 \arguments{
-\item{path}{Path to the \code{.dta} file.}
+\item{path}{Path to a \code{.sav}, \code{.dta} or \code{.csv} file.}
 
 \item{survey_type}{One of \code{"mensual"}, \code{"trimestral"} or \code{"anual"}.}
 
@@ -28,15 +29,29 @@ lower snake case.}
 \item{inform_scope}{Logical. If \code{TRUE}, emits a message describing the
 representativity scope of the loaded survey type.}
 
-\item{encoding}{Optional file encoding passed to \code{haven::read_dta()}.}
+\item{encoding}{Optional file encoding. Passed to \code{haven::read_sav()} and
+\code{haven::read_dta()} for SPSS/Stata files. For CSV files, it is used in
+\code{readr::locale()}. If \code{NULL}, CSV reading uses \code{"UTF-8"}.}
 
-\item{...}{Additional arguments passed to \code{haven::read_dta()}.}
+\item{csv_delim}{Optional delimiter for CSV files. If \code{NULL}, the delimiter is
+detected from the first non-empty lines among comma, semicolon and tab.}
+
+\item{...}{Additional arguments passed to the format-specific reader:
+\code{haven::read_sav()}, \code{haven::read_dta()} or \code{readr::read_delim()}.}
 }
 \value{
 A data frame with class \code{enemdu_tbl} and basic ENEMDU attributes.
 }
 \description{
-Reads a \code{.dta} file and returns an object prepared for the \code{enemduR} workflow.
-The function also stores the ENEMDU survey type and emits a representativity
-scope message according to the loaded base: monthly, quarterly, or annual.
+Reads ENEMDU microdata and returns an object prepared for the \code{enemduR}
+workflow.
+
+The operational primary format for recent official ENEMDU microdata is
+\code{.sav}. The function also supports \code{.dta} and \code{.csv} files for interoperability
+with analytical workflows that export or transform the original source.
+
+The function stores the ENEMDU survey type, input format, source path, design
+variables, and optional period metadata as object attributes. It can also emit
+a representativity scope message according to the loaded base: monthly,
+quarterly, or annual.
 }

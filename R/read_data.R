@@ -1,10 +1,18 @@
-#' Read ENEMDU microdata from a Stata file
+#' Read ENEMDU microdata
 #'
-#' Reads a `.dta` file and returns an object prepared for the `enemduR` workflow.
-#' The function also stores the ENEMDU survey type and emits a representativity
-#' scope message according to the loaded base: monthly, quarterly, or annual.
+#' Reads ENEMDU microdata and returns an object prepared for the `enemduR`
+#' workflow.
 #'
-#' @param path Path to the `.dta` file.
+#' The operational primary format for recent official ENEMDU microdata is
+#' `.sav`. The function also supports `.dta` and `.csv` files for interoperability
+#' with analytical workflows that export or transform the original source.
+#'
+#' The function stores the ENEMDU survey type, input format, source path, design
+#' variables, and optional period metadata as object attributes. It can also emit
+#' a representativity scope message according to the loaded base: monthly,
+#' quarterly, or annual.
+#'
+#' @param path Path to a `.sav`, `.dta` or `.csv` file.
 #' @param survey_type One of `"mensual"`, `"trimestral"` or `"anual"`.
 #' @param period Optional period identifier used for comparability warnings.
 #' Typical values are `"2020-09"`, `"2021-05"` or `"2018"`.
@@ -12,8 +20,13 @@
 #' lower snake case.
 #' @param inform_scope Logical. If `TRUE`, emits a message describing the
 #' representativity scope of the loaded survey type.
-#' @param encoding Optional file encoding passed to `haven::read_dta()`.
-#' @param ... Additional arguments passed to `haven::read_dta()`.
+#' @param encoding Optional file encoding. Passed to `haven::read_sav()` and
+#' `haven::read_dta()` for SPSS/Stata files. For CSV files, it is used in
+#' `readr::locale()`. If `NULL`, CSV reading uses `"UTF-8"`.
+#' @param csv_delim Optional delimiter for CSV files. If `NULL`, the delimiter is
+#' detected from the first non-empty lines among comma, semicolon and tab.
+#' @param ... Additional arguments passed to the format-specific reader:
+#' `haven::read_sav()`, `haven::read_dta()` or `readr::read_delim()`.
 #'
 #' @return A data frame with class `enemdu_tbl` and basic ENEMDU attributes.
 #' @export
@@ -23,8 +36,9 @@ enemdu_read_data <- function(path,
                              standardize_names = TRUE,
                              inform_scope = TRUE,
                              encoding = NULL,
+                             csv_delim = NULL,
                              ...) {
-  if (missing(path) || is.null(path) || !nzchar(path)) {
+  if (missing(path) || is.null(path) || length(path) != 1 || !nzchar(path)) {
     .enemdu_abort_missing_argument("path", caller = "enemdu_read_data")
   }
 
@@ -36,13 +50,17 @@ enemdu_read_data <- function(path,
   }
 
   extension <- tolower(tools::file_ext(path))
-  if (!identical(extension, "dta")) {
+  supported_extensions <- c("sav", "dta", "csv")
+
+  if (!extension %in% supported_extensions) {
     rlang::abort(
       message = glue::glue(
         "Unsupported file format `{extension}`. ",
-        "In this phase `enemdu_read_data()` only supports `.dta` files."
+        "`enemdu_read_data()` supports `.sav`, `.dta` and `.csv` files. ",
+        "For official recent ENEMDU microdata, `.sav` is treated as the operational primary format."
       ),
-      class = c("enemdu_error_invalid_file_format", "enemdu_error")
+      class = c("enemdu_error_invalid_file_format", "enemdu_error"),
+      supported_extensions = supported_extensions
     )
   }
 
@@ -51,7 +69,22 @@ enemdu_read_data <- function(path,
     caller = "enemdu_read_data"
   )
 
-  data <- haven::read_dta(file = path, encoding = encoding, ...)
+  data <- switch(
+    extension,
+    sav = haven::read_sav(file = path, encoding = encoding, ...),
+    dta = haven::read_dta(file = path, encoding = encoding, ...),
+    csv = {
+      csv_delim <- csv_delim %||% .enemdu_detect_csv_delim(path)
+      readr::read_delim(
+        file = path,
+        delim = csv_delim,
+        locale = readr::locale(encoding = encoding %||% "UTF-8"),
+        show_col_types = FALSE,
+        progress = FALSE,
+        ...
+      )
+    }
+  )
 
   if (isTRUE(standardize_names)) {
     data <- enemdu_standardize_names(data)
@@ -61,7 +94,7 @@ enemdu_read_data <- function(path,
     survey_type = survey_type,
     period = period,
     source_path = normalizePath(path, winslash = "/", mustWork = FALSE),
-    input_format = "dta",
+    input_format = extension,
     design_vars = .enemdu_default_design_vars()
   )
 
@@ -91,4 +124,31 @@ enemdu_read_data <- function(path,
   }
 
   data
+}
+
+.enemdu_detect_csv_delim <- function(path) {
+  lines <- readLines(path, n = 20, warn = FALSE, encoding = "UTF-8")
+  lines <- lines[nzchar(trimws(lines))]
+
+  if (length(lines) == 0) {
+    return(",")
+  }
+
+  sample_text <- paste(lines, collapse = "\n")
+
+  candidates <- c(
+    "," = ",",
+    ";" = ";",
+    "\t" = "\t"
+  )
+
+  counts <- vapply(
+    candidates,
+    function(delim) {
+      sum(gregexpr(delim, sample_text, fixed = TRUE)[[1]] > 0)
+    },
+    numeric(1)
+  )
+
+  names(counts)[which.max(counts)]
 }
