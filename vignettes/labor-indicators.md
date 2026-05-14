@@ -1,0 +1,475 @@
+# Labor indicators in enemduR
+
+## Purpose
+
+`enemduR` is an analytical infrastructure package for reproducible work with Ecuadorian ENEMDU microdata.
+
+This guide documents the initial labor-indicator workflow implemented in:
+
+```r
+enemdu_kpi_employment()
+```
+
+The function produces stable, long-format outputs that can be consumed by reports, Quarto documents, dashboards, validation scripts, and institutional analytical pipelines.
+
+This document is written as a user-facing guide. It does not replace the official INEC methodology and it does not change any estimator.
+
+## What this module does
+
+The labor module provides a reproducible workflow to:
+
+- read official ENEMDU microdata;
+- build labor flags from the consolidated labor-status variable;
+- estimate labor totals and labor rates using the survey design;
+- evaluate representativity and precision;
+- control official design domains;
+- compare results against official INEC labor-market tabulations.
+
+The initial labor implementation is intentionally conservative. It uses the consolidated ENEMDU variable:
+
+```r
+condact
+```
+
+It does not reconstruct labor status from raw questionnaire variables.
+
+## Current methodological scope
+
+The current implementation covers the initial labor-indicator block based on `condact`.
+
+The confirmed `condact` categories used by the package are:
+
+| Code | Meaning |
+|---:|---|
+| 0 | Population younger than 15 years |
+| 1 | Adequate or full employment |
+| 2 | Time-related underemployment |
+| 3 | Income-related underemployment |
+| 4 | Other non-full employment |
+| 5 | Unpaid employment |
+| 6 | Unclassified employment |
+| 7 | Open unemployment |
+| 8 | Hidden unemployment |
+| 9 | Economically inactive population |
+
+Sector indicators use:
+
+```r
+secemp
+```
+
+when required.
+
+## Main function
+
+```r
+enemdu_kpi_employment(
+  data,
+  survey_type,
+  group_vars = NULL,
+  domain_scope = c("observed", "design")
+)
+```
+
+## Input data
+
+Official recent ENEMDU microdata are treated operationally as `.sav` files.
+
+`enemdu_read_data()` supports:
+
+- `.sav` as the operational primary format for recent official ENEMDU microdata;
+- `.dta` as an interoperability format;
+- `.csv` as an interoperability format.
+
+Example:
+
+```r
+micro_mensual <- enemdu_read_data(
+  path = "../../../../Downloads/enemdu_persona_2026_03.sav",
+  survey_type = "mensual"
+)
+```
+
+## Survey types
+
+The current workflow supports three survey types:
+
+| `survey_type` | Official design domains used by the package |
+|---|---|
+| `mensual` | National and urban-rural area |
+| `trimestral` | National, urban-rural area, and five main city domains |
+| `anual` | National, urban-rural area, five main city domains, and 24 provinces |
+
+## Design variables
+
+The package uses the following core survey-design variables:
+
+```r
+upm
+estrato
+fexp
+```
+
+These variables are part of the package-level survey design contract.
+
+## Domain scope
+
+`enemdu_kpi_employment()` includes the argument:
+
+```r
+domain_scope = c("observed", "design")
+```
+
+### `domain_scope = "observed"`
+
+This is the default behavior.
+
+It keeps all observed analytical domains present in the data after estimation.
+
+Use it when the user wants exploratory or analytical-domain outputs, especially when working with custom groups.
+
+Example:
+
+```r
+kpi_observed <- enemdu_kpi_employment(
+  data = micro_trimestral,
+  survey_type = "trimestral",
+  group_vars = "ciudad",
+  domain_scope = "observed"
+)
+```
+
+### `domain_scope = "design"`
+
+This mode estimates using the complete microdata and then filters the output to recognized design domains.
+
+It does not prefilter the microdata before estimation.
+
+This distinction is important because prefiltering the microdata to a domain can degrade or distort the survey design used by the estimator.
+
+Example:
+
+```r
+kpi_area <- enemdu_kpi_employment(
+  data = micro_mensual,
+  survey_type = "mensual",
+  group_vars = "area",
+  domain_scope = "design"
+)
+```
+
+## Important distinction: `ciudad` versus `dominio`
+
+The variable `ciudad` must not be assumed to be equivalent to the official published city-domain tabulations.
+
+For official city-domain validation, the package workflow uses:
+
+```r
+dominio
+```
+
+This is especially important for quarterly and annual official tabulations that publish the five main cities as official domains.
+
+The validated city domains are:
+
+- Quito;
+- Guayaquil;
+- Cuenca;
+- Machala;
+- Ambato.
+
+For official city-domain validation:
+
+- use `dominio`;
+- do not use `ciudad` as an automatic substitute.
+
+## Basic national example
+
+```r
+micro_mensual <- enemdu_read_data(
+  path = "../../../../Downloads/enemdu_persona_2026_03.sav",
+  survey_type = "mensual"
+)
+
+kpi_mensual_nacional <- enemdu_kpi_employment(
+  data = micro_mensual,
+  survey_type = "mensual",
+  domain_scope = "design"
+)
+
+kpi_mensual_nacional
+```
+
+## Area example
+
+```r
+kpi_mensual_area <- enemdu_kpi_employment(
+  data = micro_mensual,
+  survey_type = "mensual",
+  group_vars = "area",
+  domain_scope = "design"
+)
+```
+
+## Quarterly city-domain example
+
+```r
+micro_trimestral <- enemdu_read_data(
+  path = "../../../../Downloads/enemdu_persona_2026_l_trimestre.sav",
+  survey_type = "trimestral"
+)
+
+kpi_trimestral_dominio <- enemdu_kpi_employment(
+  data = micro_trimestral,
+  survey_type = "trimestral",
+  group_vars = "dominio",
+  domain_scope = "observed"
+)
+```
+
+`domain_scope = "observed"` is used here because the official city-domain validation is performed through the derived `dominio` variable.
+
+## Annual province example
+
+```r
+micro_anual <- enemdu_read_data(
+  path = "../../../../Downloads/BDDenemdu_personas_2025_anual.sav",
+  survey_type = "anual"
+)
+
+kpi_anual_provincia <- enemdu_kpi_employment(
+  data = micro_anual,
+  survey_type = "anual",
+  group_vars = "prov",
+  domain_scope = "design"
+)
+```
+
+## Output structure
+
+The function returns a long-format tibble.
+
+The output includes one row per indicator and domain combination.
+
+Typical fields include:
+
+- `indicator_id`;
+- `indicator_label`;
+- `estimate`;
+- survey-design fields;
+- precision and representativity fields;
+- domain fields when `group_vars` is used.
+
+The exact number of columns may evolve as the package adds metadata, but the contract is to keep the output analytical, long-format, and suitable for downstream reporting.
+
+## Implemented labor indicator registry
+
+The implemented indicators are documented in:
+
+```r
+enemdu_labor_indicator_registry()
+```
+
+Example:
+
+```r
+labor_registry <- enemdu_labor_indicator_registry()
+
+labor_registry
+```
+
+The registry documents indicator identifiers, labels, estimator type, universe, required variables, scale, and domain policy.
+
+## Official validation workflow
+
+The package includes helper functions for reading and comparing official INEC labor-market tabulations:
+
+```r
+enemdu_read_official_labor_tabulados()
+enemdu_compare_labor_tabulados()
+```
+
+Example:
+
+```r
+oficial_mensual <- enemdu_read_official_labor_tabulados(
+  path = "../../../../Downloads/202603_Tabulados_Mercado_Laboral_CSV.zip",
+  survey_type = "mensual"
+)
+
+comparacion_mensual_nacional <- enemdu_compare_labor_tabulados(
+  estimates = kpi_mensual_nacional,
+  official = oficial_mensual,
+  official_period = "mar-26",
+  domain_group = "Nacional",
+  domain_label = "Total",
+  tolerance_count = 1,
+  tolerance_rate = 0.0006,
+  strict = TRUE
+)
+```
+
+## Validation tolerances
+
+The validation workflow uses:
+
+```r
+tolerance_count = 1
+tolerance_rate = 0.0006
+```
+
+The rate tolerance is expressed in package scale.
+
+Therefore:
+
+```text
+0.0006 = 0.06 percentage points
+```
+
+This tolerance is used because official tabulations publish rounded percentages.
+
+The tolerance is only used for validation against published tabulations. It does not change the internal estimator.
+
+## Published dash handling
+
+Official tabulations may publish `-` in some cells.
+
+The validation workflow accepts `-` as a match only under all of the following conditions:
+
+- the official value is exactly `-`;
+- the package scale is `count`;
+- the package estimate is not missing;
+- the package estimate is equal to zero or within the count tolerance from zero.
+
+This adjusted status is documented as:
+
+```text
+match_official_dash_zero
+```
+
+This rule must not be applied globally to rates, coefficients of variation, standard errors, or other non-count measures.
+
+## Province label alias
+
+The annual official tabulation may label one province as:
+
+```text
+Santo Domingo
+```
+
+The corresponding labelled value in the official microdata is:
+
+```text
+Santo Domingo de los Tsáchilas
+```
+
+For validation purposes, the accepted alias is:
+
+```text
+Santo Domingo -> Santo Domingo de los Tsáchilas
+```
+
+This is a label-alignment rule. It is not a statistical transformation.
+
+## Validation coverage achieved
+
+The initial labor block has been validated against official INEC labor-market tabulations for the following cuts and domains.
+
+### Monthly March 2026
+
+Validated domains:
+
+- national;
+- urban area;
+- rural area.
+
+### Quarterly First Quarter 2026
+
+Validated domains:
+
+- national;
+- urban area;
+- rural area;
+- Quito;
+- Guayaquil;
+- Cuenca;
+- Machala;
+- Ambato.
+
+### Annual 2025
+
+Validated domains:
+
+- national;
+- urban area;
+- rural area;
+- Quito;
+- Guayaquil;
+- Cuenca;
+- Machala;
+- Ambato;
+- 24 provinces.
+
+## What is not covered yet
+
+The current labor module does not yet cover:
+
+- reconstruction of `condact` from raw questionnaire variables;
+- validation of all historical periods;
+- validation of poverty indicators;
+- validation of income aggregates;
+- validation of non-labor indicators;
+- publication of official INEC results beyond the validated labor block.
+
+## Recommended workflow
+
+A safe analytical workflow is:
+
+```r
+micro <- enemdu_read_data(
+  path = "path/to/official_microdata.sav",
+  survey_type = "mensual"
+)
+
+labor <- enemdu_kpi_employment(
+  data = micro,
+  survey_type = "mensual",
+  domain_scope = "design"
+)
+
+labor_registry <- enemdu_labor_indicator_registry()
+```
+
+For official comparison:
+
+```r
+official <- enemdu_read_official_labor_tabulados(
+  path = "path/to/official_labor_tabulados.zip",
+  survey_type = "mensual"
+)
+
+comparison <- enemdu_compare_labor_tabulados(
+  estimates = labor,
+  official = official,
+  official_period = "mar-26",
+  domain_group = "Nacional",
+  domain_label = "Total",
+  tolerance_count = 1,
+  tolerance_rate = 0.0006,
+  strict = TRUE
+)
+```
+
+## Portfolio summary
+
+The labor module demonstrates that `enemduR` is not only a convenience wrapper. It includes:
+
+- survey-design-aware estimation;
+- explicit domain control;
+- a formal labor-indicator registry;
+- official-tabulation parsers;
+- reproducible validation against published INEC outputs;
+- documented handling of publication-format differences;
+- a clear separation between analytical computation and reporting reconciliation.
+
+This makes the package suitable as an analytical infrastructure component for institutional reporting, Quarto pipelines, dashboards, technical reports, and reproducible statistical validation.
