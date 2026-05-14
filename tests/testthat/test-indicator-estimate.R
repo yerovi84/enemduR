@@ -226,13 +226,16 @@ test_that("income KPI returns income estimates", {
   expect_true("representativity_flag" %in% names(out))
 })
 
-test_that("optional bonus KPI builds bonus variables if p78 exists", {
+test_that("legacy optional bonus KPI still works with validated p77/p78 pair", {
   data <- tibble::tibble(
     idhogar = c("h1", "h1", "h2", "h2"),
     upm = c(1, 2, 3, 4),
     estrato = c(1, 1, 2, 2),
     fexp = c(1, 1, 1, 1),
-    p78 = c(10, 0, 20, NA_real_)
+    p75 = c(2, 2, 2, 2),
+    p76 = c(NA_real_, NA_real_, NA_real_, NA_real_),
+    p77 = c(1, 2, 1, 2),
+    p78 = c(10, NA_real_, 20, NA_real_)
   )
 
   out <- enemdu_kpi_optional_bonuses(
@@ -247,17 +250,20 @@ test_that("optional bonus KPI builds bonus variables if p78 exists", {
   expect_true("representativity_flag" %in% names(out))
 })
 
-test_that("optional bonus KPI can be grouped", {
+test_that("social bonus KPI includes BDH and disability bonus indicators", {
   data <- tibble::tibble(
     idhogar = c("h1", "h1", "h2", "h2"),
     area = c("urbano", "urbano", "rural", "rural"),
     upm = c(1, 2, 3, 4),
     estrato = c(1, 1, 2, 2),
     fexp = c(1, 1, 1, 1),
-    p78 = c(10, 0, 20, 0)
+    p75 = c(1, 2, 1, 2),
+    p76 = c(55, NA_real_, 55, NA_real_),
+    p77 = c(1, 2, 1, 2),
+    p78 = c(10, NA_real_, 20, NA_real_)
   )
 
-  out <- enemdu_kpi_optional_bonuses(
+  out <- enemdu_kpi_social_bonuses(
     data = data,
     group_vars = "area",
     survey_type = "mensual",
@@ -266,5 +272,8 @@ test_that("optional bonus KPI can be grouped", {
 
   expect_true("area" %in% names(out))
   expect_true(all(c("urbano", "rural") %in% out$area))
+  expect_true("bono_desarrollo_humano_receptores" %in% out$indicator_id)
+  expect_true("bono_discapacidad_receptores" %in% out$indicator_id)
+  expect_true("bonos_scenario_add_total_enemdu" %in% out$indicator_id)
   expect_true(all(out$domain_is_design_domain))
 })

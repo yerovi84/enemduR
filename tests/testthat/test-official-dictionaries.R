@@ -62,11 +62,12 @@ test_that("official dictionary validation recognizes annual province domain vari
   expect_equal(nrow(row), 1)
   expect_equal(row$domain_level, "provincia_24")
   expect_equal(row$domain_status, "covered_by_domain_registry")
-  expect_equal(row$severity, "warning")
-  expect_equal(row$validation_flag, "warning_domain_variable_not_in_variable_catalog")
+  expect_equal(row$catalog_status, "covered_by_variable_catalog")
+  expect_equal(row$severity, "ok")
+  expect_equal(row$validation_flag, "pass")
 })
 
-test_that("official dictionary validation flags p78 bonus label mismatch for review", {
+test_that("official dictionary validation recognizes p78 as disability bonus", {
   out <- enemdu_validate_official_dictionary_core(
     emit = FALSE
   )
@@ -74,9 +75,10 @@ test_that("official dictionary validation flags p78 bonus label mismatch for rev
   p78_rows <- out[out$official_variable == "p78", , drop = FALSE]
 
   expect_gt(nrow(p78_rows), 0)
-  expect_true(all(p78_rows$bonus_label_status == "possible_label_mismatch"))
-  expect_true(all(p78_rows$validation_flag == "warning_optional_bonus_label_mismatch"))
-  expect_true(all(p78_rows$severity == "warning"))
+  expect_true(all(p78_rows$optional_bonus_label == "Bono de Discapacidad"))
+  expect_true(all(p78_rows$bonus_label_status == "label_consistent"))
+  expect_true(all(p78_rows$validation_flag == "pass"))
+  expect_true(all(p78_rows$severity == "ok"))
 })
 
 test_that("official dictionary validation has no error-level issues in current core registry", {
