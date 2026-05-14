@@ -391,7 +391,11 @@ enemdu_survey_proportion <- function(data,
   x <- design$variables[[value]]
   w <- stats::weights(design, type = "sampling")
 
-  valid <- !is.na(x) & !is.na(w) & w > 0
+  valid <- !is.na(x) &
+    is.finite(as.numeric(x)) &
+    !is.na(w) &
+    is.finite(as.numeric(w)) &
+    w > 0
 
   if (isTRUE(na_rm)) {
     design_eval <- design[valid, ]
@@ -447,6 +451,29 @@ enemdu_survey_proportion <- function(data,
 
   estimate <- as.numeric(stats::coef(estimate_object)[1])
   standard_error <- as.numeric(survey::SE(estimate_object)[1])
+  degrees_freedom <- suppressWarnings(survey::degf(design_eval))
+
+  if (length(estimate) != 1 ||
+      is.na(estimate) ||
+      !is.finite(estimate)) {
+    return(.enemdu_failed_survey_estimate_row(
+      unweighted_n = unweighted_n,
+      weighted_n = weighted_n,
+      degrees_freedom = degrees_freedom,
+      reason = "estimate_not_computable"
+    ))
+  }
+
+  if (length(standard_error) != 1 ||
+      is.na(standard_error) ||
+      !is.finite(standard_error)) {
+    return(.enemdu_failed_survey_estimate_row(
+      unweighted_n = unweighted_n,
+      weighted_n = weighted_n,
+      degrees_freedom = degrees_freedom,
+      reason = "standard_error_not_computable"
+    ))
+  }
 
   ci <- tryCatch(
     {
@@ -481,8 +508,6 @@ enemdu_survey_proportion <- function(data,
   } else {
     NA_real_
   }
-
-  degrees_freedom <- suppressWarnings(survey::degf(design_eval))
 
   effective_n <- if (!is.na(deff) && deff > 0) {
     unweighted_n / deff

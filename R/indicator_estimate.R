@@ -605,6 +605,31 @@ enemdu_kpi_optional_bonuses <- function(data,
       adjusted_value
     }
 
+    estimate$adjusted_unweighted_n[[i]] <- adjusted_value
+    estimate$adjusted_effective_n[[i]] <- adjusted_effective_n
+
+    noncomputable_reason <- .enemdu_scale_precision_noncomputable_reason(
+      estimate_row = estimate[i, , drop = FALSE]
+    )
+
+    if (!is.null(noncomputable_reason)) {
+      estimate$decision[[i]] <- "no_recommended_inference"
+      estimate$failed_reasons[[i]] <- .enemdu_preserve_failed_reason(
+        current_reason = estimate$failed_reasons[[i]],
+        fallback_reason = noncomputable_reason
+      )
+      estimate$quality_flag[[i]] <- .enemdu_preserve_quality_flag(
+        current_flag = estimate$quality_flag[[i]],
+        fallback_flag = "not_evaluable"
+      )
+      estimate$warning_flag[[i]] <- .enemdu_preserve_quality_flag(
+        current_flag = estimate$warning_flag[[i]],
+        fallback_flag = "inference_not_recommended"
+      )
+
+      next
+    }
+
     precision <- tryCatch(
       {
         enemdu_evaluate_precision(
@@ -626,8 +651,6 @@ enemdu_kpi_optional_bonuses <- function(data,
       }
     )
 
-    estimate$adjusted_unweighted_n[[i]] <- adjusted_value
-    estimate$adjusted_effective_n[[i]] <- adjusted_effective_n
     estimate$decision[[i]] <- precision$decision[[1]]
     estimate$failed_reasons[[i]] <- precision$failed_reasons[[1]]
     estimate$quality_flag[[i]] <- .enemdu_precision_quality_flag(
@@ -641,6 +664,58 @@ enemdu_kpi_optional_bonuses <- function(data,
   }
 
   estimate
+}
+
+.enemdu_scale_precision_noncomputable_reason <- function(estimate_row) {
+  if (!"estimate" %in% names(estimate_row) ||
+      !.enemdu_is_finite_scalar(estimate_row$estimate[[1]])) {
+    return("estimate_not_computable")
+  }
+
+  if (!"standard_error" %in% names(estimate_row) ||
+      !.enemdu_is_finite_scalar(estimate_row$standard_error[[1]])) {
+    return("standard_error_not_computable")
+  }
+
+  if (!"degrees_freedom" %in% names(estimate_row) ||
+      !.enemdu_is_finite_scalar(estimate_row$degrees_freedom[[1]])) {
+    return("degrees_freedom_not_computable")
+  }
+
+  NULL
+}
+
+.enemdu_is_finite_scalar <- function(x) {
+  is.numeric(x) &&
+    length(x) == 1 &&
+    !is.na(x) &&
+    is.finite(x)
+}
+
+.enemdu_preserve_failed_reason <- function(current_reason,
+                                           fallback_reason) {
+  if (.enemdu_is_nonempty_string(current_reason)) {
+    return(as.character(current_reason))
+  }
+
+  as.character(fallback_reason)
+}
+
+.enemdu_preserve_quality_flag <- function(current_flag,
+                                          fallback_flag) {
+  if (.enemdu_is_nonempty_string(current_flag)) {
+    return(as.character(current_flag))
+  }
+
+  as.character(fallback_flag)
+}
+
+.enemdu_is_nonempty_string <- function(x) {
+  if (is.null(x) || length(x) != 1 || is.na(x)) {
+    return(FALSE)
+  }
+
+  nzchar(trimws(as.character(x)))
 }
 
 .enemdu_adjusted_n_by_group <- function(data,
