@@ -135,6 +135,25 @@ resolution. Existing output defaults are:
 The current rule classifies only records with positive, non-missing income.
 Missing or non-positive income remains unclassified.
 
+### Current Edge-Case Contract
+
+Current income and poverty helpers intentionally use a conservative edge-case
+contract:
+
+- `enemdu_build_variables()` sets derived household per-capita income to
+  missing when the resulting value is zero or non-positive.
+- `enemdu_build_quintiles()` assigns income groups only to positive,
+  non-missing income values; missing, zero, and negative income remain
+  unclassified.
+- `enemdu_build_poverty_flags()` classifies poverty and extreme poverty only
+  for positive, non-missing income values; missing, zero, and negative income
+  remain unclassified under the current implementation.
+
+This is a current package contract, not an official poverty methodology claim.
+Any future change to non-positive income handling requires explicit
+methodological review, tests, and documentation. Official poverty validation
+has not been run for these income and poverty contracts.
+
 ### Optional Bonus Scenarios
 
 The current optional-bonus contract validates amount variables against receipt

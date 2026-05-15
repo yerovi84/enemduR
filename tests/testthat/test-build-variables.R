@@ -111,6 +111,30 @@ test_that("build_variables normalizes income sentinel codes before deriving", {
   expect_equal(out$ingtot_pc[1], 50)
 })
 
+test_that("build_variables leaves non-positive per-capita income unclassified", {
+  data <- .enemdu_test_complete_income_vars(
+    tibble::tibble(
+      idhogar = c("zero", "negative", "positive"),
+      p71a = c(1, 1, 1),
+      p71b = c(0, -10, 10)
+    )
+  )
+
+  out <- enemdu_build_variables(data)
+
+  expect_equal(out$ingtot[out$idhogar == "zero"], 0)
+  expect_equal(out$ingtot[out$idhogar == "negative"], -10)
+  expect_equal(out$ingtot[out$idhogar == "positive"], 10)
+
+  expect_true(is.na(out$ingtot_pc[out$idhogar == "zero"]))
+  expect_true(is.na(out$ingtot_pc[out$idhogar == "negative"]))
+  expect_equal(out$ingtot_pc[out$idhogar == "positive"], 10)
+
+  metadata <- attr(out, "income_derivation")
+  expect_true(is.list(metadata))
+  expect_true(grepl("Poverty flags are intentionally not derived", metadata$note))
+})
+
 test_that("build_variables can use id_hogar alias", {
   data <- .enemdu_test_complete_income_vars(
     tibble::tibble(
@@ -173,14 +197,20 @@ test_that("build_quintiles creates a quintile variable", {
 
 test_that("build_quintiles leaves invalid income as missing", {
   data <- tibble::tibble(
-    ingtot_pc = c(10, NA_real_, 0, 40, 50),
-    fexp = c(1, 1, 1, 1, 1)
+    ingtot_pc = c(10, NA_real_, 0, -5, 40, 50),
+    fexp = c(1, 1, 1, 1, 1, 1)
   )
 
   out <- enemdu_build_quintiles(data)
 
   expect_true(is.na(out$quintil_ingreso_pc[2]))
   expect_true(is.na(out$quintil_ingreso_pc[3]))
+  expect_true(is.na(out$quintil_ingreso_pc[4]))
+  expect_true(all(out$quintil_ingreso_pc[c(1, 5, 6)] %in% 1:5))
+
+  metadata <- attr(out, "quintile_derivation")
+  expect_true(is.list(metadata))
+  expect_match(metadata$note, "positive, non-missing income values", fixed = TRUE)
 })
 
 test_that("build_household_profile creates one row per household", {
