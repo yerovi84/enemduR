@@ -1,0 +1,68 @@
+name: Codex task
+description: Define a small, auditable task for Codex or another code agent.
+title: "[Task]: "
+labels:
+  - task
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the intended outcome in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List the work that is explicitly in scope.
+    validations:
+      required: true
+  - type: textarea
+    id: files_allowed
+    attributes:
+      label: Files allowed
+      description: List files or directories that may be modified.
+    validations:
+      required: true
+  - type: textarea
+    id: files_prohibited
+    attributes:
+      label: Files prohibited
+      description: List files or directories that must not be modified.
+    validations:
+      required: true
+  - type: textarea
+    id: validation_commands
+    attributes:
+      label: Validation commands
+      description: Provide exact commands to run.
+      value: |
+        Rscript -e "devtools::load_all(reset = TRUE)"
+        Rscript -e "devtools::test()"
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of Done
+      description: State the concrete completion criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Describe methodological, package-check, data, or review risks.
+  - type: textarea
+    id: expected_report
+    attributes:
+      label: Expected report
+      description: Specify what the final report must include.
+      value: |
+        - Files changed
+        - Validation commands and results
+        - Warnings, notes, errors, or skipped checks
+        - Assumptions and limitations
+        - Whether a branch, commit, push, or pull request was created
