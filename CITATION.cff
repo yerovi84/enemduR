@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use enemduR in your work, please cite the package."
+type: software
+title: "enemduR"
+version: 0.0.1.9000
+authors:
+  - family-names: "Yerovi"
+    given-names: "Alejandro"
+repository-code: "https://github.com/yerovi84/enemduR"
+url: "https://yerovi84.github.io/enemduR/"
+license: MIT
+abstract: "R package infrastructure for reproducible analytical workflows using Ecuador ENEMDU microdata."

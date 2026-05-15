@@ -13,7 +13,10 @@ Description: Structured analytical infrastructure for reading, standardizing,
     logic and future presentation helpers for Quarto. It includes metadata-driven
     support for survey representativity scope, complex survey design declaration,
     and precision assessment contracts based on official methodological criteria.
-License: GPL-3
+License: MIT + file LICENSE
+URL: https://yerovi84.github.io/enemduR/,
+    https://github.com/yerovi84/enemduR
+BugReports: https://github.com/yerovi84/enemduR/issues
 Depends: 
     R (>= 4.2.0)
 Encoding: UTF-8
