@@ -31,6 +31,15 @@ Presentation code is downstream of the analytical engine. Quarto-facing
 helpers are intentionally lightweight and must not govern indicator
 computation.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://yerovi84.github.io/enemduR/}
+  \item \url{https://github.com/yerovi84/enemduR}
+  \item Report bugs at \url{https://github.com/yerovi84/enemduR/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Alejandro Yerovi \email{yerovi84@hotmail.com}
 

@@ -2,6 +2,9 @@
 
 ## Current development version
 
+- Added `enemdu_kpi_income_poverty()`, a high-level wrapper for design-based
+  poverty and extreme-poverty incidence estimates from explicit auditable
+  poverty lines.
 - Hardened the README for portfolio use and aligned it with the current
   analytical-engine scope, domain-scope contract, Quarto consumption model, and
   package limitations.
