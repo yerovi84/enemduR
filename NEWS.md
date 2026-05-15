@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Added official poverty benchmark comparison helpers for published ENEMDU
+  income-poverty benchmarks.
 - Added `enemdu_kpi_income_poverty()`, a high-level wrapper for design-based
   poverty and extreme-poverty incidence estimates from explicit auditable
   poverty lines.
