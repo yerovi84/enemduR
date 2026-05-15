@@ -399,11 +399,18 @@ enemdu_compare_official_poverty <- function(estimates,
   out[!benchmark_missing & package_missing] <- "missing_package_estimate"
 
   comparable <- is.na(out)
-  within_rounding <- comparable & comparison$abs_difference_pp <= 0.05 + .Machine$double.eps
+
+  reported_rounding_pp <- min(0.05, tolerance_pp)
+
+  within_rounding <- comparable &
+    comparison$abs_difference_pp <= reported_rounding_pp + .Machine$double.eps
+
   within_tolerance <- comparable &
-    comparison$abs_difference_pp > 0.05 + .Machine$double.eps &
+    comparison$abs_difference_pp > reported_rounding_pp + .Machine$double.eps &
     comparison$abs_difference_pp <= tolerance_pp + .Machine$double.eps
-  outside_tolerance <- comparable & comparison$abs_difference_pp > tolerance_pp + .Machine$double.eps
+
+  outside_tolerance <- comparable &
+    comparison$abs_difference_pp > tolerance_pp + .Machine$double.eps
 
   out[within_rounding] <- "matched_reported_rounding"
   out[within_tolerance] <- "within_tolerance"

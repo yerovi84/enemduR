@@ -89,33 +89,62 @@ test_that("domain comparison works with domain map", {
   expect_true(all(poverty_rows$comparison_status == "matched_reported_rounding"))
 })
 
-test_that("outside tolerance is detected", {
+test_that("official poverty comparison respects tolerance below reported rounding", {
+  benchmarks <- enemdu_official_poverty_benchmarks(
+    period = "2025-12",
+    benchmark_set = "income_poverty_december_2025",
+    indicator_id = "pobreza_ingresos",
+    domain_type = "national",
+    domain_value = "national"
+  )
+
   estimates <- tibble::tibble(
     indicator_id = "pobreza_ingresos",
-    estimate = 0.300
+    estimate = 0.2143
   )
 
   comparison <- enemdu_compare_official_poverty(
-    estimates,
-    period = "2025-12",
-    benchmark_set = "income_poverty_december_2025",
-    tolerance_pp = 0.10
+    estimates = estimates,
+    benchmarks = benchmarks,
+    tolerance_pp = 0.01
   )
 
-  poverty_row <- comparison[comparison$indicator_id == "pobreza_ingresos", , drop = FALSE]
-
-  expect_equal(poverty_row$comparison_status, "outside_tolerance")
+  expect_equal(comparison$comparison_status, "outside_tolerance")
+  expect_equal(comparison$abs_difference_pp, 0.03, tolerance = 1e-10)
 
   expect_error(
     enemdu_compare_official_poverty(
-      estimates,
-      period = "2025-12",
-      benchmark_set = "income_poverty_december_2025",
-      tolerance_pp = 0.10,
+      estimates = estimates,
+      benchmarks = benchmarks,
+      tolerance_pp = 0.01,
       strict = TRUE
     ),
     class = "enemdu_error_official_poverty_comparison_mismatch"
   )
+})
+
+test_that("official poverty comparison keeps reported rounding when tolerance allows it", {
+  benchmarks <- enemdu_official_poverty_benchmarks(
+    period = "2025-12",
+    benchmark_set = "income_poverty_december_2025",
+    indicator_id = "pobreza_ingresos",
+    domain_type = "national",
+    domain_value = "national"
+  )
+
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_ingresos",
+    estimate = 0.2143
+  )
+
+  comparison <- enemdu_compare_official_poverty(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    tolerance_pp = 0.10
+  )
+
+  expect_equal(comparison$comparison_status, "matched_reported_rounding")
+  expect_equal(comparison$abs_difference_pp, 0.03, tolerance = 1e-10)
 })
 
 test_that("missing benchmark is detected", {
