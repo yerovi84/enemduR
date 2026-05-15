@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a reproducible problem in enemduR.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include errors or warnings when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reprex
+    attributes:
+      label: Minimal reproducible example
+      description: Provide the smallest code example possible. Use synthetic or anonymized data if needed.
+      render: r
+  - type: dropdown
+    id: survey_type
+    attributes:
+      label: ENEMDU survey type
+      description: Select the survey type if relevant.
+      options:
+        - Not applicable
+        - Monthly
+        - Quarterly
+        - Annual
+        - Other or unsure
+    validations:
+      required: true
+  - type: dropdown
+    id: data_type
+    attributes:
+      label: Data type
+      description: Identify the data source used in the report.
+      options:
+        - Official public data
+        - Synthetic data
+        - Private or restricted data
+        - Other or unsure
+    validations:
+      required: true
+  - type: textarea
+    id: session
+    attributes:
+      label: sessionInfo()
+      description: Paste the output of `sessionInfo()`.
+      render: r
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add file format, period, domain, or workflow details that may help diagnose the issue.

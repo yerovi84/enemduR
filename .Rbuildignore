@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^AGENTS\.md$
+^ROADMAP\.md$
 ^README\.Rmd$
 ^docs$
 ^doc$

@@ -1,0 +1,49 @@
+name: Feature request
+description: Propose a focused analytical or package feature for enemduR.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: Who needs this and in what workflow?
+    validations:
+      required: true
+  - type: textarea
+    id: analytical_purpose
+    attributes:
+      label: Analytical purpose
+      description: Explain the statistical or reproducibility purpose of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_output
+    attributes:
+      label: Expected output
+      description: Describe the output structure, columns, file, or user-facing result.
+    validations:
+      required: true
+  - type: textarea
+    id: required_variables
+    attributes:
+      label: Required variables
+      description: List ENEMDU variables needed by the feature. Do not invent variables.
+  - type: textarea
+    id: methodological_source
+    attributes:
+      label: Methodological source
+      description: Cite the official, internal, or existing package source if the request depends on a method rule.
+  - type: textarea
+    id: validation_strategy
+    attributes:
+      label: Validation strategy
+      description: Describe tests, official comparisons, synthetic examples, or manual checks that should validate the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints or risks
+      description: Note prohibited files, expected data limitations, or methodological risks.
