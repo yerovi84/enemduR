@@ -1,0 +1,237 @@
+:root {
+  --ay-bg: #070a0f;
+  --ay-bg-soft: #0b0f17;
+  --ay-panel: #111827;
+  --ay-border: rgba(148, 163, 184, 0.22);
+  --ay-border-strong: rgba(56, 189, 248, 0.42);
+  --ay-text: #f8fafc;
+  --ay-muted: #cbd5e1;
+  --ay-subtle: #94a3b8;
+  --ay-blue: #38bdf8;
+  --ay-violet: #8b5cf6;
+  --ay-orange: #f59e0b;
+}
+
+html,
+body {
+  background: var(--ay-bg);
+  color: var(--ay-text);
+}
+
+body {
+  color-scheme: dark;
+}
+
+a {
+  color: var(--ay-blue);
+}
+
+a:hover,
+a:focus {
+  color: #00a6ff;
+}
+
+.navbar,
+.pkgdown-navbar {
+  background: rgba(7, 10, 15, 0.96) !important;
+  border-bottom: 1px solid var(--ay-border);
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: var(--ay-text) !important;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus {
+  color: var(--ay-blue) !important;
+}
+
+.contents,
+main,
+.template-home .contents {
+  background: transparent;
+}
+
+.page-header {
+  border-bottom-color: var(--ay-border);
+}
+
+.ay-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  margin: 1.4rem 0 2rem;
+  padding: 1.5rem;
+  background:
+    linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(7, 10, 15, 0.98)),
+    var(--ay-bg-soft);
+  border: 1px solid var(--ay-border);
+  border-left: 4px solid var(--ay-blue);
+  border-radius: 8px;
+}
+
+.ay-eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--ay-orange);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ay-title {
+  margin: 0;
+  max-width: 820px;
+  color: var(--ay-text);
+  font-size: clamp(1.85rem, 3.2vw, 3rem);
+  line-height: 1.05;
+}
+
+.ay-lede {
+  max-width: 780px;
+  margin: 1rem 0 0;
+  color: var(--ay-muted);
+  font-size: 1.05rem;
+}
+
+.ay-capability-line {
+  margin: 1rem 0 0;
+  color: var(--ay-subtle);
+  font-weight: 650;
+}
+
+.ay-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.25rem 0 0;
+}
+
+.ay-link-row a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--ay-border-strong);
+  border-radius: 8px;
+  color: var(--ay-text);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.ay-link-row a:hover,
+.ay-link-row a:focus {
+  border-color: var(--ay-orange);
+  color: var(--ay-text);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.ay-brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  min-height: 220px;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 8px;
+}
+
+.ay-brand-panel img {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.ay-brand-caption {
+  margin: 0;
+  color: #0b1220;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ay-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.ay-card {
+  min-height: 132px;
+  padding: 1rem;
+  background: rgba(17, 24, 39, 0.78);
+  border: 1px solid var(--ay-border);
+  border-radius: 8px;
+}
+
+.ay-card strong {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: var(--ay-text);
+}
+
+.ay-card span {
+  color: var(--ay-muted);
+}
+
+.template-home h2,
+.template-home h3 {
+  color: var(--ay-text);
+}
+
+.template-home table,
+.template-home .table {
+  color: var(--ay-muted);
+  border-color: var(--ay-border);
+}
+
+.template-home code,
+.template-reference-topic code {
+  color: #ffb020;
+}
+
+.template-home pre,
+.template-reference-topic pre {
+  background: #0b0f17;
+  border: 1px solid var(--ay-border);
+  border-radius: 8px;
+}
+
+.pkgdown-footer,
+footer {
+  background: #0b0f17;
+  border-top: 1px solid var(--ay-border);
+  color: var(--ay-subtle);
+}
+
+@media (max-width: 900px) {
+  .ay-hero,
+  .ay-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ay-brand-panel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .ay-hero {
+    padding: 1rem;
+  }
+
+  .ay-title {
+    font-size: 1.75rem;
+  }
+
+  .ay-link-row a {
+    width: 100%;
+    justify-content: center;
+  }
+}

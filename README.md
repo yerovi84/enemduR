@@ -2,13 +2,46 @@
 
 [![R-CMD-check](https://github.com/yerovi84/enemduR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/yerovi84/enemduR/actions/workflows/R-CMD-check.yaml)
 
-[Documentation](https://yerovi84.github.io/enemduR/) | [Repository](https://github.com/yerovi84/enemduR) | [Issues](https://github.com/yerovi84/enemduR/issues) | [MIT license](LICENSE) | [Citation](CITATION.cff)
+<section class="ay-hero">
+  <div>
+    <p class="ay-eyebrow">Built by Alejandro Yerovi | Big Y Productions</p>
+    <h2 class="ay-title">Reproducible analytical infrastructure for Ecuador ENEMDU microdata.</h2>
+    <p class="ay-lede"><code>enemduR</code> is an R package for technical workflows that need standardized reading, validation, derivation, survey-design-aware estimation, representativity assessment, and Quarto-ready analytical outputs.</p>
+    <p class="ay-capability-line">Survey Statistics | Policy Analytics | Reporting Automation | R</p>
+    <p class="ay-link-row">
+      <a href="https://yerovi84.github.io/enemduR/">Documentation</a>
+      <a href="https://github.com/yerovi84/enemduR">GitHub</a>
+      <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha">v0.1.0-alpha</a>
+      <a href="LICENSE">MIT license</a>
+      <a href="CITATION.cff">Citation</a>
+    </p>
+  </div>
+  <div class="ay-brand-panel">
+    <img src="pkgdown/assets/big-y-logo.png" alt="Big Y Productions analytics brand seal" />
+    <p class="ay-brand-caption">Professional analytics studio seal for the public portfolio.</p>
+  </div>
+</section>
 
-`enemduR` is an R package that provides analytical infrastructure for reproducible work with Ecuador's ENEMDU microdata.
+<div class="ay-card-grid">
+  <div class="ay-card">
+    <strong>Survey statistics</strong>
+    <span>Complex-design estimators, domain handling, and precision-aware analytical outputs.</span>
+  </div>
+  <div class="ay-card">
+    <strong>Policy analytics</strong>
+    <span>Metadata contracts and validation workflows for reproducible ENEMDU analysis.</span>
+  </div>
+  <div class="ay-card">
+    <strong>Reporting automation</strong>
+    <span>Stable long-format tibbles designed for downstream Quarto and reporting systems.</span>
+  </div>
+  <div class="ay-card">
+    <strong>R package engineering</strong>
+    <span>Documented functions, tests, CI, pkgdown, governance files, and release metadata.</span>
+  </div>
+</div>
 
-The package is designed as an analytical engine, not as a dashboard or final visual product. Its purpose is to standardize reading, validation, derivation, indicator estimation, survey-design-aware tabulation, representativity assessment, and Quarto-ready analytical outputs for technical workflows using ENEMDU microdata.
-
-`enemduR` is especially useful for analysts, researchers, institutional teams, and advanced users working with official microdata, technical reports, Quarto websites, reproducible notebooks, and policy-oriented analytical systems.
+The package is designed as an analytical engine, not as a dashboard or final visual product. It is especially useful for analysts, researchers, institutional teams, and advanced users working with official microdata, technical reports, reproducible notebooks, and policy-oriented analytical systems.
 
 ## Project status
 
@@ -494,7 +527,7 @@ The current development version does not yet provide:
 - full reconstruction of labor status from raw questionnaire variables;
 - a complete historical harmonization engine for all ENEMDU questionnaire changes;
 - official production-grade poverty estimation workflows;
-- a custom documentation identity layer beyond the basic pkgdown site;
+- a full custom documentation design system beyond the restrained portfolio identity;
 - fully implemented Quarto helper objects;
 - a complete visual dashboard layer;
 - full release hardening.

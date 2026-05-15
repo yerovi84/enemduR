@@ -2,6 +2,17 @@ url: https://yerovi84.github.io/enemduR/
 
 template:
   bootstrap: 5
+  bslib:
+    bg: "#070A0F"
+    fg: "#F8FAFC"
+    primary: "#38BDF8"
+    secondary: "#8B5CF6"
+    success: "#00A6FF"
+    info: "#38BDF8"
+    warning: "#F59E0B"
+    danger: "#F97316"
+    light: "#F8FAFC"
+    dark: "#0B0F17"
 
 development:
   mode: auto
@@ -10,3 +21,10 @@ navbar:
   structure:
     left: [reference, articles, news]
     right: [search]
+
+footer:
+  structure:
+    left: built_by
+    right: built_with
+  components:
+    built_by: "Built by Alejandro Yerovi | Big Y Productions"

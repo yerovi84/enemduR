@@ -10,6 +10,7 @@
 ^data-raw$
 ^\.github$
 ^_pkgdown\.yml$
+^pkgdown$
 ^cran-comments\.md$
 ^\.DS_Store$
 ^\.positai$
