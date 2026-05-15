@@ -10,8 +10,8 @@ analytical outputs.
 
 `enemduR` is in active development. The repository has the core package
 structure, user documentation, generated manual pages, a labor vignette,
-GitHub Actions for R package checks, pkgdown configuration, and lightweight
-agent governance.
+GitHub Actions for R package checks, a published pkgdown documentation site,
+and lightweight agent governance.
 
 ## Completed Foundations
 
@@ -26,7 +26,7 @@ agent governance.
 - Quarto-ready analytical outputs while keeping presentation separate from
   computation.
 - Package hardening through README, NEWS, roxygen/manual pages, vignette,
-  GitHub Actions, pkgdown configuration, and agent guidance.
+  GitHub Actions, pkgdown publication, and agent guidance.
 
 ## Next Milestones
 

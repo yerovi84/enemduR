@@ -1,5 +1,9 @@
 # enemduR
 
+[![R-CMD-check](https://github.com/yerovi84/enemduR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/yerovi84/enemduR/actions/workflows/R-CMD-check.yaml)
+
+[Documentation](https://yerovi84.github.io/enemduR/) | [Repository](https://github.com/yerovi84/enemduR) | [Issues](https://github.com/yerovi84/enemduR/issues) | [MIT license](LICENSE) | [Citation](CITATION.cff)
+
 `enemduR` is an R package that provides analytical infrastructure for reproducible work with Ecuador's ENEMDU microdata.
 
 The package is designed as an analytical engine, not as a dashboard or final visual product. Its purpose is to standardize reading, validation, derivation, indicator estimation, survey-design-aware tabulation, representativity assessment, and Quarto-ready analytical outputs for technical workflows using ENEMDU microdata.
@@ -28,7 +32,7 @@ The current development version includes:
 - comparison helpers for official labor-market validation workflows;
 - stable analytical outputs ready for downstream Quarto consumption;
 - a basic GitHub Actions R package check workflow;
-- a minimal pkgdown configuration for local documentation-site builds.
+- a published pkgdown documentation site for package reference and vignettes.
 
 The package is not intended to replace official statistical production systems or official published results. It is an analytical infrastructure project designed to improve reproducibility, transparency, and methodological consistency in downstream ENEMDU workflows.
 
@@ -490,7 +494,7 @@ The current development version does not yet provide:
 - full reconstruction of labor status from raw questionnaire variables;
 - a complete historical harmonization engine for all ENEMDU questionnaire changes;
 - official production-grade poverty estimation workflows;
-- a published pkgdown site or custom documentation identity layer;
+- a custom documentation identity layer beyond the basic pkgdown site;
 - fully implemented Quarto helper objects;
 - a complete visual dashboard layer;
 - full release hardening.

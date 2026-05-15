@@ -6,7 +6,7 @@
   analytical-engine scope, domain-scope contract, Quarto consumption model, and
   package limitations.
 - Added a basic GitHub Actions workflow for R package checks.
-- Added a minimal pkgdown configuration for local documentation-site builds.
+- Added pkgdown configuration and GitHub Pages documentation publication support.
 - Aligned roxygen documentation with the implemented labor module and refreshed
   exported-function manual coverage.
 - Converted the labor-indicator user guide into an R Markdown vignette source.
