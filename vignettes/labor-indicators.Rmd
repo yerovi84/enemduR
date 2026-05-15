@@ -92,7 +92,7 @@ Example:
 
 ```r
 micro_mensual <- enemdu_read_data(
-  path = "../../../../Downloads/enemdu_persona_2026_03.sav",
+  path = "path/to/enemdu_persona_2026_03.sav",
   survey_type = "mensual"
 )
 ```
@@ -194,7 +194,7 @@ For official city-domain validation:
 
 ```r
 micro_mensual <- enemdu_read_data(
-  path = "../../../../Downloads/enemdu_persona_2026_03.sav",
+  path = "path/to/enemdu_persona_2026_03.sav",
   survey_type = "mensual"
 )
 
@@ -222,7 +222,7 @@ kpi_mensual_area <- enemdu_kpi_employment(
 
 ```r
 micro_trimestral <- enemdu_read_data(
-  path = "../../../../Downloads/enemdu_persona_2026_l_trimestre.sav",
+  path = "path/to/enemdu_persona_2026_I_trimestre.sav",
   survey_type = "trimestral"
 )
 
@@ -240,7 +240,7 @@ kpi_trimestral_dominio <- enemdu_kpi_employment(
 
 ```r
 micro_anual <- enemdu_read_data(
-  path = "../../../../Downloads/BDDenemdu_personas_2025_anual.sav",
+  path = "path/to/BDDenemdu_personas_2025_anual.sav",
   survey_type = "anual"
 )
 
@@ -300,7 +300,7 @@ Example:
 
 ```r
 oficial_mensual <- enemdu_read_official_labor_tabulados(
-  path = "../../../../Downloads/202603_Tabulados_Mercado_Laboral_CSV.zip",
+  path = "path/to/202603_Tabulados_Mercado_Laboral_CSV.zip",
   survey_type = "mensual"
 )
 

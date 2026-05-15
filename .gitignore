@@ -1,7 +1,14 @@
 .Rproj.user
+.env
+.env.*
 .Rhistory
 .RData
 .Ruserdata
+*.RData
+*.rds
+*.sav
+*.dta
+*.zip
 *.Rproj
 .DS_Store
 /tmp/
