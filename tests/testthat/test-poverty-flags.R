@@ -148,6 +148,63 @@ test_that("strict poverty flags are built from a valid registry", {
   expect_equal(nrow(metadata), 2)
 })
 
+test_that("strict poverty flags can use an external registry with provenance", {
+  registry <- tibble::tibble(
+    period = c("2025-12", "2025-12"),
+    period_type = c("monthly", "monthly"),
+    line_type = c("poverty", "extreme_poverty"),
+    line_value = c(100, 50),
+    currency = c("USD", "USD"),
+    ipc_value = c(NA_real_, NA_real_),
+    base_line_value = c(NA_real_, NA_real_),
+    base_period = c("external_synthetic", "external_synthetic"),
+    update_method = c("external_registry", "external_registry"),
+    source_status = c("external_published", "external_published"),
+    source_note = c(
+      "Synthetic external registry for workflow tests; not official validation.",
+      "Synthetic external registry for workflow tests; not official validation."
+    ),
+    valid_from = c("2025-12", "2025-12"),
+    valid_to = c("2025-12", "2025-12"),
+    notes = c(
+      "Synthetic poverty-line row for external registry workflow tests.",
+      "Synthetic extreme-poverty-line row for external registry workflow tests."
+    )
+  )
+
+  data <- tibble::tibble(
+    ingtot_pc = c(NA_real_, 0, -5, 40, 75, 125)
+  )
+
+  out <- enemdu_build_poverty_flags(
+    data = data,
+    period = "2025-12",
+    mode = "strict",
+    poverty_lines = registry
+  )
+
+  expect_equal(out$pobre, c(NA_integer_, NA_integer_, NA_integer_, 1L, 1L, 0L))
+  expect_equal(out$expobre, c(NA_integer_, NA_integer_, NA_integer_, 1L, 0L, 0L))
+  expect_equal(unique(out$linea_pobreza), 100)
+  expect_equal(unique(out$linea_pobreza_extrema), 50)
+
+  metadata <- attr(out, "poverty_line_metadata")
+  input_report <- attr(out, "poverty_input_report")
+  policy <- attr(out, "poverty_flag_policy")
+
+  expect_true(is.data.frame(metadata))
+  expect_equal(nrow(metadata), 2)
+  expect_equal(unique(metadata$source_status), "external_published")
+  expect_true(all(grepl("not official validation", metadata$source_note, fixed = TRUE)))
+  expect_true(is.data.frame(input_report))
+  expect_equal(
+    input_report$status[input_report$component == "income_positive"],
+    3
+  )
+  expect_equal(policy$mode, "strict")
+  expect_match(policy$valid_income_rule, "greater than zero", fixed = TRUE)
+})
+
 test_that("strict mode fails with default template registry", {
   data <- tibble::tibble(
     ingtot_pc = c(30, 60, 120)
