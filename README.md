@@ -17,7 +17,7 @@
     </p>
   </div>
   <div class="ay-brand-panel">
-    <img src="pkgdown/assets/big-y-logo.png" alt="Big Y Productions analytics brand seal" />
+    <img src="man/figures/big-y-logo.png" alt="Big Y Productions analytics brand seal" />
     <p class="ay-brand-caption">Professional analytics studio seal for the public portfolio.</p>
   </div>
 </section>
