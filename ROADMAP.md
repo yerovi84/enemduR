@@ -36,10 +36,11 @@ and lightweight agent governance.
   or otherwise shareable data.
 - Continue Phase 7 income and poverty work from explicit contracts; the income
   poverty KPI wrapper is implemented for auditable user-supplied poverty lines,
-  and official poverty benchmark comparison readiness is implemented for
-  published December 2025 reference values.
-- Run a real-microdata reproducibility workflow for December 2025 income
-  poverty indicators before any official poverty validation claim.
+  official poverty benchmark comparison readiness is implemented for published
+  December 2025 reference values, and a local reproducibility workflow scaffold
+  is available for December 2025 income-poverty indicators.
+- Run the December 2025 reproducibility workflow with official microdata and
+  review benchmark differences before any official poverty validation claim.
 - Strengthen tests around metadata contracts, official tabulation parsers, and
   representativity edge cases.
 - Refine pkgdown reference organization without turning documentation into a
