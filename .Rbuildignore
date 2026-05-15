@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^AGENTS\.md$
+^CITATION[.]cff$
 ^ROADMAP\.md$
 ^README\.Rmd$
 ^docs$
