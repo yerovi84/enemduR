@@ -58,7 +58,11 @@ test_that("default template registry is not valid for strict calculation", {
 
   expect_s3_class(validation, "enemdu_poverty_line_validation")
   expect_true(any(validation$status == "fail"))
-  expect_true(all(registry$source_status == "pending_review"))
+  expect_true("message" %in% names(validation))
+  expect_true(any(grepl(
+    "line_value|source_status|source_note",
+    validation$message[validation$status == "fail"]
+  )))
 })
 
 test_that("external poverty-line registry validates and resolves both lines", {
