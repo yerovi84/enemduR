@@ -55,7 +55,7 @@ Fallback package-check commands were also run because `devtools::check()` was
 blocked by the local Rtools preflight under R 4.6.0:
 
 ```sh
-R CMD build C:\Users\yerov\Documents\dev\R\enemduR
+R CMD build path/to/enemduR
 R CMD check enemduR_0.0.1.9000.tar.gz --no-manual
 ```
 
