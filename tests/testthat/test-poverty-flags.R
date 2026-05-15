@@ -21,6 +21,79 @@ test_that("manual poverty flags are built with explicit source", {
   expect_equal(out$expobre, c(1L, 0L, 0L, NA_integer_, NA_integer_))
 })
 
+test_that("manual poverty flags leave non-positive income unclassified", {
+  data <- tibble::tibble(
+    ingtot_pc = c(NA_real_, 0, -10, 25, 75, 125)
+  )
+
+  out <- enemdu_build_poverty_flags(
+    data = data,
+    period = "2024-12",
+    mode = "manual",
+    poverty_line = 100,
+    extreme_poverty_line = 50,
+    line_source = "Synthetic contract-test source"
+  )
+
+  expect_equal(out$pobre, c(NA_integer_, NA_integer_, NA_integer_, 1L, 1L, 0L))
+  expect_equal(out$expobre, c(NA_integer_, NA_integer_, NA_integer_, 1L, 0L, 0L))
+
+  policy <- attr(out, "poverty_flag_policy")
+  expect_true(is.list(policy))
+  expect_match(policy$valid_income_rule, "greater than zero", fixed = TRUE)
+})
+
+test_that("scenario poverty flags can use custom output names without replacing base flags", {
+  data <- tibble::tibble(
+    ingtot_pc_plus_optional_bonos = c(40, 75, 125),
+    pobre = c(9L, 9L, 9L),
+    expobre = c(8L, 8L, 8L)
+  )
+
+  out <- enemdu_build_poverty_flags(
+    data = data,
+    period = "2024-12",
+    income_var = "ingtot_pc_plus_optional_bonos",
+    mode = "manual",
+    poverty_line = 100,
+    extreme_poverty_line = 50,
+    line_source = "Synthetic scenario contract-test source",
+    poverty_var = "pobreza_ingresos_plus_optional_bonos",
+    extreme_poverty_var = "pobreza_extrema_ingresos_plus_optional_bonos"
+  )
+
+  expect_equal(out$pobre, data$pobre)
+  expect_equal(out$expobre, data$expobre)
+
+  expect_equal(out$pobreza_ingresos_plus_optional_bonos, c(1L, 1L, 0L))
+  expect_equal(out$pobreza_extrema_ingresos_plus_optional_bonos, c(1L, 0L, 0L))
+
+  policy <- attr(out, "poverty_flag_policy")
+  expect_equal(policy$income_var, "ingtot_pc_plus_optional_bonos")
+  expect_equal(policy$poverty_var, "pobreza_ingresos_plus_optional_bonos")
+  expect_equal(policy$extreme_poverty_var, "pobreza_extrema_ingresos_plus_optional_bonos")
+})
+
+test_that("poverty flag outputs are protected by default", {
+  data <- tibble::tibble(
+    ingtot_pc = c(40, 75, 125),
+    pobre = c(0L, 0L, 0L)
+  )
+
+  expect_error(
+    enemdu_build_poverty_flags(
+      data = data,
+      period = "2024-12",
+      mode = "manual",
+      poverty_line = 100,
+      extreme_poverty_line = 50,
+      line_source = "Synthetic contract-test source",
+      overwrite = FALSE
+    ),
+    class = "enemdu_error_existing_poverty_output"
+  )
+})
+
 test_that("manual mode requires a source", {
   data <- tibble::tibble(
     ingtot_pc = c(30, 60, 120)
@@ -88,6 +161,54 @@ test_that("strict mode fails with default template registry", {
     ),
     class = "enemdu_error_missing_poverty_line"
   )
+})
+
+test_that("income derivation can feed explicit manual poverty flags without official validation", {
+  data <- tibble::tibble(
+    idhogar = c("h1", "h2", "h3"),
+    p63 = c(40, 120, NA_real_),
+    p64b = c(NA_real_, NA_real_, NA_real_),
+    p65 = c(NA_real_, NA_real_, NA_real_),
+    p66 = c(NA_real_, NA_real_, NA_real_),
+    p67 = c(NA_real_, NA_real_, NA_real_),
+    p68b = c(NA_real_, NA_real_, NA_real_),
+    p69 = c(NA_real_, NA_real_, NA_real_),
+    p70b = c(NA_real_, NA_real_, NA_real_),
+    p71a = c(2, 2, 2),
+    p71b = c(NA_real_, NA_real_, NA_real_),
+    p72a = c(2, 2, 2),
+    p72b = c(NA_real_, NA_real_, NA_real_),
+    p73a = c(2, 2, 2),
+    p73b = c(NA_real_, NA_real_, NA_real_),
+    p74a = c(2, 2, 2),
+    p74b = c(NA_real_, NA_real_, NA_real_),
+    p75 = c(2, 2, 2),
+    p76 = c(NA_real_, NA_real_, NA_real_),
+    p78 = c(NA_real_, NA_real_, NA_real_)
+  )
+
+  built <- enemdu_build_variables(data)
+
+  out <- enemdu_build_poverty_flags(
+    data = built,
+    period = "2024-12",
+    mode = "manual",
+    poverty_line = 100,
+    extreme_poverty_line = 50,
+    line_source = "Synthetic contract-test line source"
+  )
+
+  expect_equal(out$pobre, c(1L, 0L, NA_integer_))
+  expect_equal(out$expobre, c(1L, 0L, NA_integer_))
+
+  line_metadata <- attr(out, "poverty_line_metadata")
+  input_report <- attr(out, "poverty_input_report")
+
+  expect_true(is.data.frame(line_metadata))
+  expect_true(is.data.frame(input_report))
+  expect_equal(unique(line_metadata$source_status), "manual")
+  expect_equal(unique(line_metadata$source_note), "Synthetic contract-test line source")
+  expect_true("line_source_declared" %in% input_report$component)
 })
 
 test_that("extreme poverty line cannot exceed poverty line", {
