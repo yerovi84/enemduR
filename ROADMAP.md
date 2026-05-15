@@ -34,6 +34,8 @@ and lightweight agent governance.
   small Codex-ready task cards.
 - Expand examples that demonstrate complete analytical workflows with synthetic
   or otherwise shareable data.
+- Prepare Phase 7 income and poverty work through explicit contracts before
+  adding new analytical behavior.
 - Strengthen tests around metadata contracts, official tabulation parsers, and
   representativity edge cases.
 - Refine pkgdown reference organization without turning documentation into a
