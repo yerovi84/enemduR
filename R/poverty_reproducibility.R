@@ -7,12 +7,6 @@
 #' @param data A data frame.
 #' @param income_var Household per-capita income variable.
 #' @param area_var Urban/rural domain variable.
-#' @param ids Primary sampling unit variable passed to
-#' `enemdu_kpi_income_poverty()`.
-#' @param strata Survey strata variable passed to
-#' `enemdu_kpi_income_poverty()`.
-#' @param weight Survey expansion factor variable passed to
-#' `enemdu_kpi_income_poverty()`.
 #' @param weight_var Survey expansion factor variable.
 #' @param psu_var Primary sampling unit variable.
 #' @param strata_var Survey strata variable.
@@ -100,6 +94,12 @@ enemdu_validate_poverty_reproducibility_inputs <- function(data,
 #' @param survey_type ENEMDU survey type.
 #' @param income_var Household per-capita income variable.
 #' @param area_var Urban/rural domain variable.
+#' @param ids Primary sampling unit variable passed to
+#' `enemdu_kpi_income_poverty()`.
+#' @param strata Survey strata variable passed to
+#' `enemdu_kpi_income_poverty()`.
+#' @param weight Survey expansion factor variable passed to
+#' `enemdu_kpi_income_poverty()`.
 #' @param urban_values Values in `area_var` interpreted as urban.
 #' @param rural_values Values in `area_var` interpreted as rural.
 #' @param poverty_line Explicit poverty line for the period.
@@ -266,6 +266,9 @@ enemdu_run_poverty_reproducibility <- function(data,
     survey_type = survey_type,
     income_var = income_var,
     area_var = area_var,
+    ids = ids,
+    strata = strata,
+    weight = weight,
     poverty_line = poverty_line,
     extreme_poverty_line = extreme_poverty_line,
     line_source = line_source,

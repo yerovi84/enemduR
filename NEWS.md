@@ -2,6 +2,9 @@
 
 ## Current development version
 
+- Added a December 2025 income-poverty reproducibility workflow scaffold with
+  input preflight checks, benchmark comparison output, and a local script that
+  reads official microdata only from user-supplied environment variables.
 - Added official poverty benchmark comparison helpers for published ENEMDU
   income-poverty benchmarks.
 - Added `enemdu_kpi_income_poverty()`, a high-level wrapper for design-based

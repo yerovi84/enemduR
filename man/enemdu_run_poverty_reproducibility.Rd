@@ -38,6 +38,15 @@ enemdu_run_poverty_reproducibility(
 
 \item{area_var}{Urban/rural domain variable.}
 
+\item{ids}{Primary sampling unit variable passed to
+\code{enemdu_kpi_income_poverty()}.}
+
+\item{strata}{Survey strata variable passed to
+\code{enemdu_kpi_income_poverty()}.}
+
+\item{weight}{Survey expansion factor variable passed to
+\code{enemdu_kpi_income_poverty()}.}
+
 \item{urban_values}{Values in \code{area_var} interpreted as urban.}
 
 \item{rural_values}{Values in \code{area_var} interpreted as rural.}
