@@ -124,3 +124,17 @@ test_that("NBI consistency validation detects inconsistent flags", {
   expect_equal(validation$inconsistencias_xnbi, 1L)
   expect_equal(validation$validation_status, "failed")
 })
+
+test_that("NBI consistency validation parses factor labels by value", {
+  data <- enemdu_build_nbi_flags(.nbi_test_data())
+
+  data$knbi <- factor(as.character(data$knbi), levels = c("0", "1", "2", "3", "4", "5"))
+  data$nbi <- factor(as.character(data$nbi), levels = c("0", "1"))
+  data$xnbi <- factor(as.character(data$xnbi), levels = c("0", "1"))
+
+  validation <- enemdu_validate_nbi_consistency(data)
+
+  expect_equal(validation$inconsistencias_nbi, 0L)
+  expect_equal(validation$inconsistencias_xnbi, 0L)
+  expect_equal(validation$validation_status, "passed")
+})

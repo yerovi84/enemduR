@@ -309,8 +309,17 @@ enemdu_run_nbi_reproducibility <- function(data,
   }
 
   if (grepl("component", role)) {
-    numeric_values <- suppressWarnings(as.numeric(values[!is.na(values)]))
-    if (any(is.na(numeric_values)) || any(!numeric_values %in% c(0, 1))) {
+    numeric_values <- .enemdu_coerce_nbi_component(
+      values = values,
+      var = role,
+      strict_binary = FALSE
+    )
+    numeric_values <- numeric_values[!is.na(values)]
+
+    if (
+      any(is.na(numeric_values)) ||
+      any(!(numeric_values %in% c(0, 1)), na.rm = TRUE)
+    ) {
       return("non_binary_component")
     }
   }

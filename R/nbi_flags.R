@@ -125,9 +125,9 @@ enemdu_validate_nbi_consistency <- function(data,
     caller = "enemdu_validate_nbi_consistency"
   )
 
-  knbi <- suppressWarnings(as.numeric(data[[nbi_count_var]]))
-  nbi <- suppressWarnings(as.numeric(data[[nbi_var]]))
-  xnbi <- suppressWarnings(as.numeric(data[[extreme_nbi_var]]))
+  knbi <- .enemdu_coerce_nbi_numeric(data[[nbi_count_var]])
+  nbi <- .enemdu_coerce_nbi_numeric(data[[nbi_var]])
+  xnbi <- .enemdu_coerce_nbi_numeric(data[[extreme_nbi_var]])
 
   valid_knbi <- !is.na(knbi)
 
@@ -171,30 +171,37 @@ enemdu_validate_nbi_consistency <- function(data,
   out
 }
 
-.enemdu_coerce_nbi_component <- function(values,
-                                         var,
-                                         strict_binary) {
+.enemdu_coerce_nbi_numeric <- function(values) {
   missing <- is.na(values)
 
   if (is.factor(values)) {
-    raw <- as.character(values)
+    raw <- trimws(as.character(values))
   } else if (is.logical(values)) {
     raw <- as.integer(values)
-  } else if (is.numeric(values)) {
+  } else if (is.numeric(values) || is.integer(values)) {
     raw <- values
   } else if (is.character(values)) {
     raw <- trimws(values)
   } else {
-    raw <- as.character(values)
+    raw <- trimws(as.character(values))
   }
 
   numeric_values <- suppressWarnings(as.numeric(raw))
   numeric_values[missing] <- NA_real_
 
+  numeric_values
+}
+
+.enemdu_coerce_nbi_component <- function(values,
+                                         var,
+                                         strict_binary) {
+  missing <- is.na(values)
+  numeric_values <- .enemdu_coerce_nbi_numeric(values)
+
   invalid_conversion <- !missing & is.na(numeric_values)
   invalid_binary <- !missing & !is.na(numeric_values) & !(numeric_values %in% c(0, 1))
 
-  if (isTRUE(strict_binary) && any(invalid_conversion | invalid_binary)) {
+  if (isTRUE(strict_binary) && any(invalid_conversion | invalid_binary, na.rm = TRUE)) {
     rlang::abort(
       message = glue::glue(
         "NBI component variable `{var}` must contain binary 0/1 values."

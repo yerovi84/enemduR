@@ -294,7 +294,10 @@ enemdu_compare_official_nbi <- function(estimates,
 
 .enemdu_normalize_official_nbi_benchmarks <- function(benchmarks) {
   benchmarks <- tibble::as_tibble(benchmarks)
-  benchmarks[["official_estimate"]] <- suppressWarnings(as.numeric(benchmarks[["official_estimate"]]))
+  benchmarks[["official_estimate"]] <- .enemdu_parse_nbi_numeric_column(
+    values = benchmarks[["official_estimate"]],
+    argument = "official_estimate"
+  )
 
   character_cols <- setdiff(names(benchmarks), "official_estimate")
 
@@ -333,7 +336,10 @@ enemdu_compare_official_nbi <- function(estimates,
     indicator_id = as.character(estimates[[indicator_col]]),
     domain_type = domain_type,
     domain_value = domain_value,
-    calculated_estimate = suppressWarnings(as.numeric(estimates[[estimate_col]])),
+    calculated_estimate = .enemdu_parse_nbi_numeric_column(
+      values = estimates[[estimate_col]],
+      argument = estimate_col
+    ),
     calculated_estimate_present = TRUE
   )
 }
@@ -378,9 +384,46 @@ enemdu_compare_official_nbi <- function(estimates,
   invisible(TRUE)
 }
 
+.enemdu_parse_nbi_numeric_column <- function(values,
+                                             argument) {
+  missing <- is.na(values)
+
+  if (is.factor(values)) {
+    raw <- trimws(as.character(values))
+  } else if (is.logical(values)) {
+    raw <- as.integer(values)
+  } else if (is.numeric(values) || is.integer(values)) {
+    raw <- values
+  } else if (is.character(values)) {
+    raw <- trimws(values)
+  } else {
+    raw <- trimws(as.character(values))
+  }
+
+  numeric_values <- suppressWarnings(as.numeric(raw))
+  numeric_values[missing] <- NA_real_
+
+  invalid_conversion <- !missing & is.na(numeric_values)
+
+  if (any(invalid_conversion, na.rm = TRUE)) {
+    rlang::abort(
+      message = glue::glue(
+        "NBI numeric column `{argument}` contains non-numeric non-missing values."
+      ),
+      class = c("enemdu_error_invalid_nbi_numeric_column", "enemdu_error")
+    )
+  }
+
+  numeric_values
+}
+
+
 .enemdu_normalize_nbi_official_estimates <- function(official_estimate,
                                                      official_scale) {
-  official_estimate <- suppressWarnings(as.numeric(official_estimate))
+  official_estimate <- .enemdu_parse_nbi_numeric_column(
+    values = official_estimate,
+    argument = "official_estimate"
+  )
   official_scale <- tolower(trimws(as.character(official_scale)))
 
   proportion_scales <- c("proportion", "proportions", "rate", "rates", "ratio", "decimal")

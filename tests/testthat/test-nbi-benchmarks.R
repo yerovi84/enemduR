@@ -103,6 +103,74 @@ test_that("NBI comparison normalizes percent-scale official estimates", {
   expect_equal(comparison$difference_pp, 0)
 })
 
+test_that("NBI comparison parses factor numeric estimates by value", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = factor("0.40", levels = c("0.20", "0.40"))
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = factor("40", levels = c("20", "40")),
+    official_scale = "percent",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  comparison <- enemdu_compare_official_nbi(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    period = "synthetic",
+    benchmark_set = "synthetic_nbi"
+  )
+
+  expect_equal(comparison$official_estimate_proportion, 0.40)
+  expect_equal(comparison$official_estimate_percent, 40)
+  expect_equal(comparison$calculated_proportion, 0.40)
+  expect_equal(comparison$calculated_percent, 40)
+  expect_equal(comparison$difference, 0)
+  expect_equal(comparison$difference_pp, 0)
+})
+
+test_that("NBI comparison rejects non-numeric package estimates", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = "not_numeric"
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 40,
+    official_scale = "percent",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  expect_error(
+    enemdu_compare_official_nbi(
+      estimates = estimates,
+      benchmarks = benchmarks,
+      period = "synthetic",
+      benchmark_set = "synthetic_nbi"
+    ),
+    class = "enemdu_error_invalid_nbi_numeric_column"
+  )
+})
+
 test_that("NBI comparison normalizes proportion-scale official estimates", {
   estimates <- tibble::tibble(
     indicator_id = "pobreza_nbi",

@@ -33,6 +33,39 @@ test_that("NBI reproducibility preflight passes with complete variables", {
   expect_true(all(preflight$issue == "ok"))
 })
 
+test_that("NBI reproducibility preflight accepts factor binary component labels", {
+  data <- .nbi_repro_test_data()
+
+  data$comp1 <- factor(as.character(data$comp1), levels = c("0", "1"))
+  data$comp2 <- factor(as.character(data$comp2), levels = c("0", "1"))
+  data$comp3 <- factor(as.character(data$comp3), levels = c("0", "1"))
+  data$comp4 <- factor(as.character(data$comp4), levels = c("0", "1"))
+  data$comp5 <- factor(as.character(data$comp5), levels = c("0", "1"))
+
+  preflight <- enemdu_validate_nbi_reproducibility_inputs(data)
+
+  expect_true(isTRUE(attr(preflight, "preflight_passed")))
+  expect_true(all(preflight$issue == "ok"))
+
+  result <- enemdu_run_nbi_reproducibility(
+    data = data,
+    sample_n_min = 1
+  )
+
+  expect_s3_class(result, "enemdu_nbi_reproducibility_result")
+  expect_equal(result$validation$validation_status, "passed")
+})
+
+test_that("NBI reproducibility preflight rejects invalid factor component labels", {
+  data <- .nbi_repro_test_data()
+  data$comp1 <- factor(c("0", "1", "yes", "0", "0", "1", "0", "1"))
+
+  preflight <- enemdu_validate_nbi_reproducibility_inputs(data)
+  comp1_row <- preflight[preflight$variable == "comp1", , drop = FALSE]
+
+  expect_false(isTRUE(attr(preflight, "preflight_passed")))
+  expect_equal(comp1_row$issue, "non_binary_component")
+})
 test_that("NBI reproducibility preflight reports missing component variables", {
   data <- .nbi_repro_test_data()
   data$comp5 <- NULL
