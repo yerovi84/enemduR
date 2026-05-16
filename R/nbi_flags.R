@@ -49,15 +49,12 @@ enemdu_build_nbi_flags <- function(data,
     )
   }
 
-  if (isTRUE(strict_binary)) {
-    .enemdu_validate_nbi_components_binary(
-      data = data,
-      component_vars = component_vars
-    )
-  }
-
   component_data <- lapply(component_vars, function(var) {
-    suppressWarnings(as.numeric(data[[var]]))
+    .enemdu_coerce_nbi_component(
+      values = data[[var]],
+      var = var,
+      strict_binary = strict_binary
+    )
   })
   component_data <- as.data.frame(component_data, optional = TRUE)
   names(component_data) <- component_vars
@@ -174,34 +171,37 @@ enemdu_validate_nbi_consistency <- function(data,
   out
 }
 
-.enemdu_validate_nbi_components_binary <- function(data,
-                                                   component_vars) {
-  invalid <- character(0)
+.enemdu_coerce_nbi_component <- function(values,
+                                         var,
+                                         strict_binary) {
+  missing <- is.na(values)
 
-  for (var in component_vars) {
-    values <- data[[var]]
-    values <- values[!is.na(values)]
-
-    if (length(values) == 0) {
-      next
-    }
-
-    numeric_values <- suppressWarnings(as.numeric(values))
-    valid <- !is.na(numeric_values) & numeric_values %in% c(0, 1)
-
-    if (!all(valid)) {
-      invalid <- c(invalid, var)
-    }
+  if (is.factor(values)) {
+    raw <- as.character(values)
+  } else if (is.logical(values)) {
+    raw <- as.integer(values)
+  } else if (is.numeric(values)) {
+    raw <- values
+  } else if (is.character(values)) {
+    raw <- trimws(values)
+  } else {
+    raw <- as.character(values)
   }
 
-  if (length(invalid) > 0) {
+  numeric_values <- suppressWarnings(as.numeric(raw))
+  numeric_values[missing] <- NA_real_
+
+  invalid_conversion <- !missing & is.na(numeric_values)
+  invalid_binary <- !missing & !is.na(numeric_values) & !(numeric_values %in% c(0, 1))
+
+  if (isTRUE(strict_binary) && any(invalid_conversion | invalid_binary)) {
     rlang::abort(
       message = glue::glue(
-        "NBI component variables must be binary 0/1: {paste(unique(invalid), collapse = ', ')}."
+        "NBI component variable `{var}` must contain binary 0/1 values."
       ),
       class = c("enemdu_error_invalid_nbi_component", "enemdu_error")
     )
   }
 
-  invisible(TRUE)
+  numeric_values
 }

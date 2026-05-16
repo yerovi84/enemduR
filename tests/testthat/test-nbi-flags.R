@@ -52,6 +52,52 @@ test_that("NBI flags reject non-binary components in strict mode", {
   )
 })
 
+test_that("NBI flags safely coerce factor components with displayed 0 and 1 values", {
+  data <- tibble::tibble(
+    comp1 = factor(c("0", "1", "0", "1")),
+    comp2 = factor(c("0", "0", "0", "0")),
+    comp3 = factor(c("0", "0", "1", "1")),
+    comp4 = factor(c("0", "0", "0", "0")),
+    comp5 = factor(c("0", "0", "0", "0"))
+  )
+
+  out <- enemdu_build_nbi_flags(data)
+
+  expect_equal(out$knbi, c(0L, 1L, 1L, 2L))
+  expect_equal(out$nbi, c(0L, 1L, 1L, 1L))
+  expect_equal(out$xnbi, c(0L, 0L, 0L, 1L))
+})
+
+test_that("NBI factor components do not use internal factor level codes", {
+  data <- tibble::tibble(
+    comp1 = factor(c("0", "1")),
+    comp2 = factor(c("0", "0")),
+    comp3 = factor(c("0", "0")),
+    comp4 = factor(c("0", "0")),
+    comp5 = factor(c("0", "0"))
+  )
+
+  out <- enemdu_build_nbi_flags(data)
+
+  expect_equal(out$knbi, c(0L, 1L))
+  expect_false(any(out$knbi == 2L))
+})
+
+test_that("NBI flags reject invalid factor component levels in strict mode", {
+  data <- tibble::tibble(
+    comp1 = factor(c("0", "yes")),
+    comp2 = factor(c("0", "0")),
+    comp3 = factor(c("0", "0")),
+    comp4 = factor(c("0", "0")),
+    comp5 = factor(c("0", "0"))
+  )
+
+  expect_error(
+    enemdu_build_nbi_flags(data, strict_binary = TRUE),
+    class = "enemdu_error_invalid_nbi_component"
+  )
+})
+
 test_that("NBI flags protect existing outputs unless overwrite is requested", {
   data <- .nbi_test_data()
   data$knbi <- 99L
