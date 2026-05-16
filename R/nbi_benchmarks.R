@@ -180,13 +180,19 @@ enemdu_compare_official_nbi <- function(estimates,
     sort = FALSE
   )
 
-  comparison[["official_percent"]] <- .enemdu_nbi_official_percent(
+  official_scale <- .enemdu_normalize_nbi_official_estimates(
     official_estimate = comparison[["official_estimate"]],
     official_scale = comparison[["official_scale"]]
   )
+  comparison[["official_estimate_proportion"]] <- official_scale$proportion
+  comparison[["official_estimate_percent"]] <- official_scale$percent
+  comparison[["official_percent"]] <- comparison[["official_estimate_percent"]]
+  comparison[["calculated_proportion"]] <- comparison[["calculated_estimate"]]
   comparison[["calculated_percent"]] <- comparison[["calculated_estimate"]] * 100
-  comparison[["difference"]] <- comparison[["calculated_estimate"]] - comparison[["official_estimate"]]
-  comparison[["difference_pp"]] <- comparison[["calculated_percent"]] - comparison[["official_percent"]]
+  comparison[["difference"]] <- comparison[["calculated_proportion"]] -
+    comparison[["official_estimate_proportion"]]
+  comparison[["difference_pp"]] <- comparison[["calculated_percent"]] -
+    comparison[["official_estimate_percent"]]
   comparison[["abs_difference_pp"]] <- abs(comparison[["difference_pp"]])
   comparison[["tolerance_pp"]] <- tolerance_pp
   comparison[["comparison_status"]] <- .enemdu_official_nbi_comparison_status(
@@ -206,7 +212,10 @@ enemdu_compare_official_nbi <- function(estimates,
     "period",
     "benchmark_set",
     "calculated_estimate",
+    "calculated_proportion",
     "official_estimate",
+    "official_estimate_proportion",
+    "official_estimate_percent",
     "calculated_percent",
     "official_percent",
     "difference",
@@ -369,14 +378,38 @@ enemdu_compare_official_nbi <- function(estimates,
   invisible(TRUE)
 }
 
-.enemdu_nbi_official_percent <- function(official_estimate,
-                                         official_scale) {
+.enemdu_normalize_nbi_official_estimates <- function(official_estimate,
+                                                     official_scale) {
   official_estimate <- suppressWarnings(as.numeric(official_estimate))
   official_scale <- tolower(trimws(as.character(official_scale)))
 
-  out <- official_estimate * 100
-  out[official_scale %in% c("percent", "percentage")] <-
-    official_estimate[official_scale %in% c("percent", "percentage")]
+  proportion_scales <- c("proportion", "proportions", "rate", "rates", "ratio", "decimal")
+  percent_scales <- c("percent", "percentage", "percentages", "pct")
+
+  out <- tibble::tibble(
+    proportion = rep(NA_real_, length(official_estimate)),
+    percent = rep(NA_real_, length(official_estimate))
+  )
+
+  missing_benchmark <- is.na(official_estimate)
+  proportion_rows <- !missing_benchmark & official_scale %in% proportion_scales
+  percent_rows <- !missing_benchmark & official_scale %in% percent_scales
+  unknown_rows <- !missing_benchmark & !(proportion_rows | percent_rows)
+
+  if (any(unknown_rows)) {
+    bad_scale <- unique(official_scale[unknown_rows])
+    rlang::abort(
+      message = glue::glue(
+        "Unknown official NBI benchmark scale: {paste(bad_scale, collapse = ', ')}."
+      ),
+      class = c("enemdu_error_invalid_official_nbi_scale", "enemdu_error")
+    )
+  }
+
+  out$proportion[proportion_rows] <- official_estimate[proportion_rows]
+  out$percent[proportion_rows] <- official_estimate[proportion_rows] * 100
+  out$proportion[percent_rows] <- official_estimate[percent_rows] / 100
+  out$percent[percent_rows] <- official_estimate[percent_rows]
   out
 }
 

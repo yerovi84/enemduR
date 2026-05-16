@@ -67,6 +67,142 @@ test_that("NBI comparison matches synthetic benchmark rows", {
   expect_equal(unique(comparison$official_validation_status), "not_officially_validated")
 })
 
+test_that("NBI comparison normalizes percent-scale official estimates", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.40
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 40,
+    official_scale = "percent",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  comparison <- enemdu_compare_official_nbi(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    period = "synthetic",
+    benchmark_set = "synthetic_nbi"
+  )
+
+  expect_equal(comparison$official_estimate_proportion, 0.40)
+  expect_equal(comparison$official_estimate_percent, 40)
+  expect_equal(comparison$calculated_proportion, 0.40)
+  expect_equal(comparison$calculated_percent, 40)
+  expect_equal(comparison$difference, 0)
+  expect_equal(comparison$difference_pp, 0)
+})
+
+test_that("NBI comparison normalizes proportion-scale official estimates", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.40
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 0.40,
+    official_scale = "proportion",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  comparison <- enemdu_compare_official_nbi(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    period = "synthetic",
+    benchmark_set = "synthetic_nbi"
+  )
+
+  expect_equal(comparison$official_estimate_proportion, 0.40)
+  expect_equal(comparison$official_estimate_percent, 40)
+  expect_equal(comparison$difference, 0)
+  expect_equal(comparison$difference_pp, 0)
+})
+
+test_that("NBI comparison rejects unknown official benchmark scales", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.40
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 0.40,
+    official_scale = "points",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  expect_error(
+    enemdu_compare_official_nbi(
+      estimates = estimates,
+      benchmarks = benchmarks,
+      period = "synthetic",
+      benchmark_set = "synthetic_nbi"
+    ),
+    class = "enemdu_error_invalid_official_nbi_scale"
+  )
+})
+
+test_that("NBI comparison evaluates tolerance in percentage points", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.406
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 40,
+    official_scale = "percent",
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  comparison <- enemdu_compare_official_nbi(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    period = "synthetic",
+    benchmark_set = "synthetic_nbi",
+    tolerance_pp = 0.50
+  )
+
+  expect_equal(comparison$difference, 0.006, tolerance = 1e-10)
+  expect_equal(comparison$difference_pp, 0.6, tolerance = 1e-10)
+  expect_equal(comparison$comparison_status, "outside_tolerance")
+})
+
 test_that("NBI comparison supports domain values and tolerance status", {
   estimates <- tibble::tibble(
     indicator_id = c("pobreza_nbi", "pobreza_nbi"),
