@@ -49,6 +49,42 @@ test_that("NBI KPI supports grouped estimates", {
   expect_true(all(c("pobreza_nbi", "pobreza_extrema_nbi") %in% result$indicator_id))
 })
 
+test_that("NBI KPI accepts extended indicator registries", {
+  registry <- enemdu_indicator_registry()
+  registry$custom_metadata <- "caller_schema"
+
+  result <- enemdu_kpi_nbi(
+    .nbi_kpi_test_data(),
+    registry = registry,
+    survey_type = "mensual",
+    sample_n_min = 1
+  )
+
+  expect_s3_class(result, "enemdu_nbi_kpi")
+  expect_true(all(c("pobreza_nbi", "pobreza_extrema_nbi") %in% result$indicator_id))
+})
+
+test_that("NBI registry alignment preserves extended registry schema", {
+  registry <- enemdu_indicator_registry()
+  registry$custom_metadata <- "caller_schema"
+
+  aligner <- get(
+    ".enemdu_registry_with_nbi_indicators",
+    envir = asNamespace("enemduR")
+  )
+  aligned <- aligner(registry)
+
+  nbi_rows <- aligned[
+    aligned$indicator_id %in% c("pobreza_nbi", "pobreza_extrema_nbi"),
+    ,
+    drop = FALSE
+  ]
+
+  expect_true("custom_metadata" %in% names(aligned))
+  expect_equal(names(aligned), names(registry))
+  expect_true(all(is.na(nbi_rows$custom_metadata)))
+})
+
 test_that("NBI component registry is available and auditable", {
   registry <- enemdu_nbi_component_registry()
 

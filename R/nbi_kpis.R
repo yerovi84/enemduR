@@ -152,12 +152,34 @@ enemdu_kpi_nbi <- function(data,
     return(registry)
   }
 
+  nbi_rows <- nbi_registry[
+    nbi_registry$indicator_id %in% missing_ids,
+    ,
+    drop = FALSE
+  ]
+
+  nbi_rows <- .enemdu_align_registry_rows_to_target(
+    rows = nbi_rows,
+    target_registry = registry
+  )
+
   out <- rbind(
     registry,
-    nbi_registry[nbi_registry$indicator_id %in% missing_ids, names(registry), drop = FALSE]
+    nbi_rows
   )
 
   tibble::as_tibble(out)
+}
+
+.enemdu_align_registry_rows_to_target <- function(rows, target_registry) {
+  target_names <- names(target_registry)
+  missing_cols <- setdiff(target_names, names(rows))
+
+  for (col in missing_cols) {
+    rows[[col]] <- target_registry[[col]][rep(NA_integer_, nrow(rows))]
+  }
+
+  rows[, target_names, drop = FALSE]
 }
 
 .enemdu_nbi_indicator_registry <- function() {
