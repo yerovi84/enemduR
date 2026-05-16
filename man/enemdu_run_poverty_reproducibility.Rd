@@ -11,6 +11,9 @@ enemdu_run_poverty_reproducibility(
   survey_type = "mensual",
   income_var = "ingtot_pc",
   area_var = "area",
+  ids = "upm",
+  strata = "estrato",
+  weight = "fexp",
   urban_values = c("urban", "urbano", "1", 1),
   rural_values = c("rural", "2", 2),
   poverty_line = 92.4,
@@ -34,6 +37,15 @@ enemdu_run_poverty_reproducibility(
 \item{income_var}{Household per-capita income variable.}
 
 \item{area_var}{Urban/rural domain variable.}
+
+\item{ids}{Primary sampling unit variable passed to
+\code{enemdu_kpi_income_poverty()}.}
+
+\item{strata}{Survey strata variable passed to
+\code{enemdu_kpi_income_poverty()}.}
+
+\item{weight}{Survey expansion factor variable passed to
+\code{enemdu_kpi_income_poverty()}.}
 
 \item{urban_values}{Values in \code{area_var} interpreted as urban.}
 
