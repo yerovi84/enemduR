@@ -85,6 +85,10 @@
   .enemdu_read_csv_registry("optional_bonus_registry.csv")
 }
 
+.enemdu_nbi_component_registry <- function() {
+  .enemdu_read_csv_registry("nbi_component_registry.csv")
+}
+
 .enemdu_normalize_survey_type <- function(survey_type, caller = "enemdu_internal") {
   if (is.null(survey_type) || length(survey_type) != 1 || is.na(survey_type)) {
     .enemdu_abort_missing_argument("survey_type", caller = caller)

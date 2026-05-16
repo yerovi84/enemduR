@@ -69,6 +69,18 @@ enemdu_optional_bonus_registry <- function() {
   .enemdu_optional_bonus_registry()
 }
 
+#' Return the NBI component registry
+#'
+#' Reads the NBI component registry. The registry documents final NBI component
+#' variables expected by `enemdu_build_nbi_flags()` and explicitly keeps raw
+#' questionnaire reconstruction out of scope for this phase.
+#'
+#' @return A tibble with final NBI component metadata.
+#' @export
+enemdu_nbi_component_registry <- function() {
+  .enemdu_nbi_component_registry()
+}
+
 #' Return the ENEMDU domain registry
 #'
 #' Reads the registry that defines which domain levels are design domains for

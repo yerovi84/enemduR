@@ -41,6 +41,10 @@ and lightweight agent governance.
   is available for December 2025 income-poverty indicators.
 - Run the December 2025 reproducibility workflow with official microdata and
   review benchmark differences before any official poverty validation claim.
+- Continue Phase 7 NBI work from final NBI components only; the initial module
+  builds `knbi`, `nbi`, and `xnbi`, estimates NBI KPIs, and prepares benchmark
+  and reproducibility scaffolding without reconstructing raw questionnaire
+  variables.
 - Strengthen tests around metadata contracts, official tabulation parsers, and
   representativity edge cases.
 - Refine pkgdown reference organization without turning documentation into a
@@ -56,6 +60,10 @@ Candidate areas include:
 
 - income and household analytical summaries;
 - poverty-line-driven poverty indicators;
+- NBI benchmark intake and official comparison workflows once audited official
+  benchmark rows are available;
+- TPM, TPEM, intensity, and IPM under a separate multidimensional poverty
+  contract;
 - social bonus and optional bonus workflows;
 - survey-domain representativity reports;
 - official dictionary and metadata quality diagnostics.

@@ -1,0 +1,6 @@
+component_id,component_var,component_label,component_order,expected_binary,source_status,notes
+comp1,comp1,Final NBI component 1,1,TRUE,contract,Final NBI component already built upstream; no raw questionnaire reconstruction is performed.
+comp2,comp2,Final NBI component 2,2,TRUE,contract,Final NBI component already built upstream; no raw questionnaire reconstruction is performed.
+comp3,comp3,Final NBI component 3,3,TRUE,contract,Final NBI component already built upstream; no raw questionnaire reconstruction is performed.
+comp4,comp4,Final NBI component 4,4,TRUE,contract,Final NBI component already built upstream; no raw questionnaire reconstruction is performed.
+comp5,comp5,Final NBI component 5,5,TRUE,contract,Final NBI component already built upstream; no raw questionnaire reconstruction is performed.

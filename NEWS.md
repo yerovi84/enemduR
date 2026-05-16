@@ -2,6 +2,10 @@
 
 ## Current development version
 
+- Added an initial NBI module that builds `knbi`, `nbi`, and `xnbi` from final
+  NBI components, estimates NBI poverty KPIs, and prepares benchmark comparison
+  and reproducibility scaffolding without reconstructing raw questionnaire
+  variables.
 - Added a December 2025 income-poverty reproducibility workflow scaffold with
   input preflight checks, benchmark comparison output, and a local script that
   reads official microdata only from user-supplied environment variables.
