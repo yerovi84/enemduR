@@ -94,6 +94,12 @@ enemdu_validate_poverty_reproducibility_inputs <- function(data,
 #' @param survey_type ENEMDU survey type.
 #' @param income_var Household per-capita income variable.
 #' @param area_var Urban/rural domain variable.
+#' @param ids Primary sampling unit variable passed to
+#' `enemdu_kpi_income_poverty()`.
+#' @param strata Survey strata variable passed to
+#' `enemdu_kpi_income_poverty()`.
+#' @param weight Survey expansion factor variable passed to
+#' `enemdu_kpi_income_poverty()`.
 #' @param urban_values Values in `area_var` interpreted as urban.
 #' @param rural_values Values in `area_var` interpreted as rural.
 #' @param poverty_line Explicit poverty line for the period.
@@ -128,6 +134,9 @@ enemdu_run_poverty_reproducibility <- function(data,
                                                survey_type = "mensual",
                                                income_var = "ingtot_pc",
                                                area_var = "area",
+                                               ids = "upm",
+                                               strata = "estrato",
+                                               weight = "fexp",
                                                urban_values = c("urban", "urbano", "1", 1),
                                                rural_values = c("rural", "2", 2),
                                                poverty_line = 92.40,
@@ -144,7 +153,10 @@ enemdu_run_poverty_reproducibility <- function(data,
   preflight <- enemdu_validate_poverty_reproducibility_inputs(
     data = data,
     income_var = income_var,
-    area_var = area_var
+    area_var = area_var,
+    weight_var = weight,
+    psu_var = ids,
+    strata_var = strata
   )
 
   if (isTRUE(run_preflight) && !isTRUE(attr(preflight, "preflight_passed"))) {
@@ -153,7 +165,7 @@ enemdu_run_poverty_reproducibility <- function(data,
 
   if (!isTRUE(run_preflight)) {
     .enemdu_abort_missing_vars(
-      vars = c(income_var, area_var, "fexp", "upm", "estrato"),
+      vars = c(income_var, area_var, weight, ids, strata),
       names_data = names(data),
       caller = "enemdu_run_poverty_reproducibility"
     )
@@ -178,6 +190,9 @@ enemdu_run_poverty_reproducibility <- function(data,
     period = period,
     mode = "manual",
     income_var = income_var,
+    ids = ids,
+    strata = strata,
+    weight = weight,
     poverty_line = poverty_line,
     extreme_poverty_line = extreme_poverty_line,
     line_source = line_source,
@@ -192,6 +207,9 @@ enemdu_run_poverty_reproducibility <- function(data,
     period = period,
     mode = "manual",
     income_var = income_var,
+    ids = ids,
+    strata = strata,
+    weight = weight,
     poverty_line = poverty_line,
     extreme_poverty_line = extreme_poverty_line,
     line_source = line_source,
@@ -248,6 +266,9 @@ enemdu_run_poverty_reproducibility <- function(data,
     survey_type = survey_type,
     income_var = income_var,
     area_var = area_var,
+    ids = ids,
+    strata = strata,
+    weight = weight,
     poverty_line = poverty_line,
     extreme_poverty_line = extreme_poverty_line,
     line_source = line_source,
