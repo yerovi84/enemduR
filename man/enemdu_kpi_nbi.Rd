@@ -13,8 +13,7 @@ enemdu_kpi_nbi(
   extreme_nbi_var = "xnbi",
   registry = enemdu_indicator_registry(),
   official_validation_status = "not_officially_validated",
-  official_validation_note =
-    "NBI estimates are not officially validated unless compared against published official INEC benchmarks.",
+  official_validation_note = NULL,
   build_flags = TRUE,
   overwrite = FALSE,
   ...
@@ -39,7 +38,7 @@ NBI contract rows are added in memory when they are absent.}
 \item{official_validation_status}{Official validation status label.}
 
 \item{official_validation_note}{Note explaining the official validation
-status.}
+status. If \code{NULL}, a conservative default note is used.}
 
 \item{build_flags}{Logical. If \code{TRUE}, build NBI flags before estimation.}
 
@@ -74,5 +73,5 @@ data <- tibble::tibble(
   comp5 = c(0, 0, 0, 0)
 )
 
-enemdu_kpi_nbi(data, sample_n_min = 1)
+enemdu_kpi_nbi(data, survey_type = "anual", sample_n_min = 1)
 }

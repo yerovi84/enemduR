@@ -17,7 +17,7 @@
 #' NBI contract rows are added in memory when they are absent.
 #' @param official_validation_status Official validation status label.
 #' @param official_validation_note Note explaining the official validation
-#' status.
+#' status. If `NULL`, a conservative default note is used.
 #' @param build_flags Logical. If `TRUE`, build NBI flags before estimation.
 #' @param overwrite Logical. If `TRUE`, overwrite existing NBI output variables
 #' when `build_flags = TRUE`.
@@ -40,7 +40,7 @@
 #'   comp5 = c(0, 0, 0, 0)
 #' )
 #'
-#' enemdu_kpi_nbi(data, sample_n_min = 1)
+#' enemdu_kpi_nbi(data, survey_type = "anual", sample_n_min = 1)
 enemdu_kpi_nbi <- function(data,
                            group_vars = NULL,
                            component_vars = c("comp1", "comp2", "comp3", "comp4", "comp5"),
@@ -49,12 +49,19 @@ enemdu_kpi_nbi <- function(data,
                            extreme_nbi_var = "xnbi",
                            registry = enemdu_indicator_registry(),
                            official_validation_status = "not_officially_validated",
-                           official_validation_note = "NBI estimates are not officially validated unless compared against published official INEC benchmarks.",
+                           official_validation_note = NULL,
                            build_flags = TRUE,
                            overwrite = FALSE,
                            ...) {
   if (!is.data.frame(data)) {
     .enemdu_abort_invalid_data(caller = "enemdu_kpi_nbi")
+  }
+
+  if (is.null(official_validation_note)) {
+    official_validation_note <- paste(
+      "NBI estimates are not officially validated unless compared against",
+      "published official INEC benchmarks."
+    )
   }
 
   if (isTRUE(build_flags)) {
