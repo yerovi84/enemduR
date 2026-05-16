@@ -392,12 +392,21 @@ enemdu_compare_official_nbi <- function(estimates,
   )
 
   missing_benchmark <- is.na(official_estimate)
-  proportion_rows <- !missing_benchmark & official_scale %in% proportion_scales
-  percent_rows <- !missing_benchmark & official_scale %in% percent_scales
-  unknown_rows <- !missing_benchmark & !(proportion_rows | percent_rows)
+  has_benchmark <- !missing_benchmark
 
-  if (any(unknown_rows)) {
+  proportion_rows <- has_benchmark & !is.na(official_scale) &
+    official_scale %in% proportion_scales
+
+  percent_rows <- has_benchmark & !is.na(official_scale) &
+    official_scale %in% percent_scales
+
+  unknown_rows <- has_benchmark & !(proportion_rows | percent_rows)
+  unknown_rows[is.na(unknown_rows)] <- FALSE
+
+  if (any(unknown_rows, na.rm = TRUE)) {
     bad_scale <- unique(official_scale[unknown_rows])
+    bad_scale[is.na(bad_scale) | !nzchar(bad_scale)] <- "<missing>"
+
     rlang::abort(
       message = glue::glue(
         "Unknown official NBI benchmark scale: {paste(bad_scale, collapse = ', ')}."
@@ -410,6 +419,7 @@ enemdu_compare_official_nbi <- function(estimates,
   out$percent[proportion_rows] <- official_estimate[proportion_rows] * 100
   out$proportion[percent_rows] <- official_estimate[percent_rows] / 100
   out$percent[percent_rows] <- official_estimate[percent_rows]
+
   out
 }
 
@@ -424,7 +434,7 @@ enemdu_compare_official_nbi <- function(estimates,
   out[benchmark_missing] <- "missing_official_benchmark"
   out[!benchmark_missing & package_missing] <- "missing_package_estimate"
 
-  comparable <- is.na(out)
+  comparable <- is.na(out) & !is.na(comparison$abs_difference_pp)
   reported_rounding_pp <- min(0.05, tolerance_pp)
 
   within_rounding <- comparable &
@@ -437,9 +447,16 @@ enemdu_compare_official_nbi <- function(estimates,
   outside_tolerance <- comparable &
     comparison$abs_difference_pp > tolerance_pp + .Machine$double.eps
 
+  within_rounding[is.na(within_rounding)] <- FALSE
+  within_tolerance[is.na(within_tolerance)] <- FALSE
+  outside_tolerance[is.na(outside_tolerance)] <- FALSE
+
   out[within_rounding] <- "matched_reported_rounding"
   out[within_tolerance] <- "benchmark_comparison_within_tolerance"
   out[outside_tolerance] <- "outside_tolerance"
+
+  unresolved <- is.na(out)
+  out[unresolved] <- "not_comparable"
 
   out
 }

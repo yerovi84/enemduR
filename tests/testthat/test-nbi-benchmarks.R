@@ -169,6 +169,73 @@ test_that("NBI comparison rejects unknown official benchmark scales", {
   )
 })
 
+test_that("NBI comparison rejects missing scale when official estimate is present", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.40
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = 40,
+    official_scale = NA_character_,
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  expect_error(
+    enemdu_compare_official_nbi(
+      estimates = estimates,
+      benchmarks = benchmarks,
+      period = "synthetic",
+      benchmark_set = "synthetic_nbi"
+    ),
+    class = "enemdu_error_invalid_official_nbi_scale"
+  )
+})
+
+test_that("NBI comparison does not reject missing scale when official estimate is missing", {
+  estimates <- tibble::tibble(
+    indicator_id = "pobreza_nbi",
+    estimate = 0.40
+  )
+
+  benchmarks <- tibble::tibble(
+    benchmark_set = "synthetic_nbi",
+    period = "synthetic",
+    indicator_id = "pobreza_nbi",
+    domain_type = "national",
+    domain_value = "national",
+    domain_label = "National",
+    official_estimate = NA_real_,
+    official_scale = NA_character_,
+    source_file = "synthetic",
+    source_table = "synthetic",
+    source_note = "Synthetic benchmark for tests only.",
+    source_status = "synthetic_test"
+  )
+
+  comparison <- enemdu_compare_official_nbi(
+    estimates = estimates,
+    benchmarks = benchmarks,
+    period = "synthetic",
+    benchmark_set = "synthetic_nbi"
+  )
+
+  expect_equal(comparison$comparison_status, "missing_official_benchmark")
+  expect_true(is.na(comparison$official_estimate_proportion))
+  expect_true(is.na(comparison$official_estimate_percent))
+  expect_true(is.na(comparison$difference))
+  expect_true(is.na(comparison$difference_pp))
+})
+
 test_that("NBI comparison evaluates tolerance in percentage points", {
   estimates <- tibble::tibble(
     indicator_id = "pobreza_nbi",
