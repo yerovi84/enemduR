@@ -1,0 +1,6 @@
+profile_id,component_id,component_var,component_label,source_vars,rule_id,rule_description,source_status,source_note
+enemdu_2025_anual,comp1,comp1,Calidad de vivienda,vi04a;vi05a,nbi_quality_housing,Floor or wall material deprivation,mapping_from_loaded_notes,Pending official benchmark validation
+enemdu_2025_anual,comp2,comp2,Hacinamiento,id_hogar;p01;hsize;vi07,nbi_overcrowding,Household members per sleeping room greater than 3 or no sleeping room,mapping_from_loaded_notes,Pending official benchmark validation
+enemdu_2025_anual,comp3,comp3,Servicios basicos,vi09;vi10;vi10a,nbi_basic_services,Sanitation or water access deprivation,mapping_from_loaded_notes,Pending official benchmark validation
+enemdu_2025_anual,comp4,comp4,Acceso a educacion,id_hogar;p03;p07,nbi_school_attendance,Child age 6 to 12 not attending school,mapping_from_loaded_notes,Pending official benchmark validation
+enemdu_2025_anual,comp5,comp5,Capacidad economica,id_hogar;p04;p10a;p10b;empleo;hsize,nbi_economic_capacity,Low head schooling and dependency ratio greater than 3,mapping_from_loaded_notes,Pending official benchmark validation

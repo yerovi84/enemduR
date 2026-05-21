@@ -45,6 +45,9 @@ and lightweight agent governance.
   builds `knbi`, `nbi`, and `xnbi`, estimates NBI KPIs, and prepares benchmark
   and reproducibility scaffolding without reconstructing raw questionnaire
   variables.
+- Add and review raw ENEMDU-to-NBI component derivation for the
+  `enemdu_2025_anual` profile, then compare results against audited official
+  NBI benchmarks before any validation claim.
 - Strengthen tests around metadata contracts, official tabulation parsers, and
   representativity edge cases.
 - Refine pkgdown reference organization without turning documentation into a

@@ -2,6 +2,9 @@
 
 ## Current development version
 
+- Added NBI raw-component derivation for the `enemdu_2025_anual` profile,
+  deriving `comp1` through `comp5` from documented ENEMDU questionnaire
+  variables before downstream NBI flag construction.
 - Added an initial NBI module that builds `knbi`, `nbi`, and `xnbi` from final
   NBI components, estimates NBI poverty KPIs, and prepares benchmark comparison
   and reproducibility scaffolding without reconstructing raw questionnaire
