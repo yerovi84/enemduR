@@ -81,6 +81,20 @@ enemdu_nbi_component_registry <- function() {
   .enemdu_nbi_component_registry()
 }
 
+#' Return the NBI raw-derivation registry
+#'
+#' Reads the registry that documents how final NBI components are derived from
+#' ENEMDU questionnaire variables for supported profiles. Registry rows are
+#' documentation and audit metadata, not official validation evidence.
+#'
+#' @return A tibble with NBI derivation rules.
+#' @export
+enemdu_nbi_derivation_registry <- function() {
+  registry <- .enemdu_nbi_derivation_registry()
+  .enemdu_validate_nbi_derivation_registry(registry)
+  tibble::as_tibble(registry)
+}
+
 #' Return the ENEMDU domain registry
 #'
 #' Reads the registry that defines which domain levels are design domains for
