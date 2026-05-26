@@ -48,6 +48,8 @@ and lightweight agent governance.
 - Add and review raw ENEMDU-to-NBI component derivation for the
   `enemdu_2025_anual` profile, then compare results against audited official
   NBI benchmarks before any validation claim.
+- Use the controlled NBI source-join helper when person and housing files are
+  delivered separately, preserving person rows before component derivation.
 - Strengthen tests around metadata contracts, official tabulation parsers, and
   representativity edge cases.
 - Refine pkgdown reference organization without turning documentation into a

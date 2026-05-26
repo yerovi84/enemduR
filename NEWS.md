@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Added a controlled NBI source-join helper for appending household/housing
+  variables to person-level ENEMDU files without changing person row order.
 - Added NBI raw-component derivation for the `enemdu_2025_anual` profile,
   deriving `comp1` through `comp5` from documented ENEMDU questionnaire
   variables before downstream NBI flag construction.
