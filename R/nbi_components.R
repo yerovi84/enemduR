@@ -257,7 +257,8 @@ enemdu_build_nbi_components <- function(data,
   )
   occupied <- .enemdu_nbi_occupied_indicator(
     employment = employment,
-    occupied_codes = profile_contract$occupied_codes
+    occupied_codes = profile_contract$occupied_codes,
+    missing_as_not_occupied = isTRUE(profile_contract$employment_missing_as_not_occupied)
   )
   occupied_count <- .enemdu_nbi_household_sum_complete(
     household_id = out[[household_id]],
@@ -375,6 +376,7 @@ enemdu_build_nbi_components <- function(data,
       attendance_yes_codes = c(1),
       household_head_codes = c(1),
       occupied_codes = c(1),
+      employment_missing_as_not_occupied = TRUE,
       school_age_min = 6,
       school_age_max = 12,
       head_schooling_max = 2,
@@ -574,7 +576,12 @@ enemdu_build_nbi_components <- function(data,
                                         education_grade) {
   years <- rep(NA_real_, length(education_level))
 
-  valid <- !is.na(education_level) & !is.na(education_grade)
+  no_schooling <- !is.na(education_level) & education_level == 1
+  years[no_schooling] <- 0
+
+  valid <- !is.na(education_level) &
+    !is.na(education_grade) &
+    !no_schooling
 
   years[valid & education_level <= 2] <-
     education_grade[valid & education_level <= 2]
@@ -589,8 +596,16 @@ enemdu_build_nbi_components <- function(data,
 }
 
 .enemdu_nbi_occupied_indicator <- function(employment,
-                                           occupied_codes) {
+                                           occupied_codes,
+                                           missing_as_not_occupied = FALSE) {
   out <- rep(NA_real_, length(employment))
-  out[!is.na(employment)] <- as.numeric(employment[!is.na(employment)] %in% occupied_codes)
+
+  observed <- !is.na(employment)
+  out[observed] <- as.numeric(employment[observed] %in% occupied_codes)
+
+  if (isTRUE(missing_as_not_occupied)) {
+    out[is.na(employment)] <- 0
+  }
+
   out
 }

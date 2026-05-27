@@ -126,13 +126,13 @@ test_that("NBI economic capacity handles zero occupied persons without division 
   expect_equal(out$comp5[out$id_hogar == "h2"], c(0L, 0L))
 })
 
-test_that("NBI economic capacity is non-evaluable when employment is partially missing", {
+test_that("NBI economic capacity treats missing employment as not occupied for ENEMDU 2025 profile", {
   data <- .nbi_raw_component_test_data()
   data$empleo[data$id_hogar == "h1"] <- c(0, NA)
 
   out <- enemdu_build_nbi_components(data)
 
-  expect_true(all(is.na(out$comp5[out$id_hogar == "h1"])))
+  expect_equal(out$comp5[out$id_hogar == "h1"], c(1L, 1L))
 })
 
 test_that("NBI component derivation uses visible factor values", {
@@ -196,12 +196,39 @@ test_that("NBI services component keeps observed water deprivation with missing 
 })
 
 
-test_that("NBI economic capacity is non-evaluable when head schooling grade is missing", {
+test_that("NBI schooling assigns zero years when head education level is none and grade is missing", {
   data <- .nbi_raw_component_test_data()
 
+  data$p10a[data$id_hogar == "h1" & data$p04 == 1] <- 1
+  data$p10b[data$id_hogar == "h1" & data$p04 == 1] <- NA
+  data$empleo[data$id_hogar == "h1"] <- c(NA, NA)
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp5[out$id_hogar == "h1"], c(1L, 1L))
+})
+
+
+test_that("NBI economic capacity treats missing empleo as not occupied for ENEMDU 2025 profile", {
+  data <- .nbi_raw_component_test_data()
+
+  data$empleo <- c(NA, NA, 1, NA, 1, 1)
+  data$p10a[data$id_hogar == "h1" & data$p04 == 1] <- 1
   data$p10b[data$id_hogar == "h1" & data$p04 == 1] <- NA
 
   out <- enemdu_build_nbi_components(data)
 
-  expect_true(all(is.na(out$comp5[out$id_hogar == "h1"])))
+  expect_equal(out$comp5[out$id_hogar == "h1"], c(1L, 1L))
+})
+
+test_that("NBI schooling assigns zero years when education level is none", {
+  data <- .nbi_raw_component_test_data()
+
+  data$p10a[data$id_hogar == "h1" & data$p04 == 1] <- 1
+  data$p10b[data$id_hogar == "h1" & data$p04 == 1] <- NA
+  data$empleo[data$id_hogar == "h1"] <- c(NA, NA)
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp5[out$id_hogar == "h1"], c(1L, 1L))
 })
