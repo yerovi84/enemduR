@@ -115,9 +115,8 @@ if (!exists("enemdu_build_ipm_components")) {
 
 test_that("IPM component builder exists and is exported", {
   expect_true(exists("enemdu_build_ipm_components"))
-
-  namespace_lines <- readLines(.ipm_components_repo_path("NAMESPACE"), warn = FALSE)
-  expect_true(any(namespace_lines == "export(enemdu_build_ipm_components)"))
+  expect_true("enemdu_build_ipm_components" %in% getNamespaceExports("enemduR"))
+  expect_true(is.function(getExportedValue("enemduR", "enemdu_build_ipm_components")))
 })
 
 test_that("IPM component builder preserves row count and order", {
