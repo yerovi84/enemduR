@@ -232,3 +232,52 @@ test_that("NBI schooling assigns zero years when education level is none", {
 
   expect_equal(out$comp5[out$id_hogar == "h1"], c(1L, 1L))
 })
+
+
+test_that("NBI basic services accepts other piped water source with piped reception", {
+  data <- .nbi_raw_component_test_data()
+
+  data$vi09 <- 1
+  data$vi10 <- 3
+  data$vi10a <- 2
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp3, rep(0L, nrow(out)))
+})
+
+test_that("NBI basic services accepts piped water outside dwelling or lot", {
+  data <- .nbi_raw_component_test_data()
+
+  data$vi09 <- 1
+  data$vi10 <- 3
+  data$vi10a <- 3
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp3, rep(0L, nrow(out)))
+})
+
+test_that("NBI basic services flags no piped water reception", {
+  data <- .nbi_raw_component_test_data()
+
+  data$vi09 <- 1
+  data$vi10 <- 1
+  data$vi10a <- 4
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp3, rep(1L, nrow(out)))
+})
+
+test_that("NBI basic services flags blind pit sanitation", {
+  data <- .nbi_raw_component_test_data()
+
+  data$vi09 <- 3
+  data$vi10 <- 1
+  data$vi10a <- 1
+
+  out <- enemdu_build_nbi_components(data)
+
+  expect_equal(out$comp3, rep(1L, nrow(out)))
+})
