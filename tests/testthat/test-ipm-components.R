@@ -473,3 +473,37 @@ test_that("IPM component builder preserves unrelated NBI, poverty, and labor out
   expect_equal(out$pobre, data$pobre)
   expect_equal(out$labor_empleo, data$labor_empleo)
 })
+
+test_that("IPM inadequate employment derivation ignores irrelevant sector variables", {
+  component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h2"),
+    p01 = c(1, 1),
+    p03 = c(18, 18),
+    condact = c(1, 7),
+    secemp = c("invalid_sector", "also_invalid")
+  )
+
+  expect_no_error({
+    result <- .enemdu_build_ipm_labor_inadequate_component(
+      data = data,
+      component_var = component,
+      household_id = "id_hogar",
+      age_var = "p03",
+      condact_var = "condact",
+      labor_inadequate_flags = c(
+        "labor_desempleo",
+        "labor_subempleo",
+        "labor_otro_empleo_no_pleno",
+        "labor_empleo_no_remunerado",
+        "labor_empleo_no_clasificado"
+      ),
+      overwrite = TRUE,
+      strict = TRUE
+    )
+  })
+
+  expect_true(component %in% names(result$data))
+  expect_false("secemp" %in% result$variables_used$labor_inadequate_employment$source_vars)
+})

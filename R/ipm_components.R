@@ -886,12 +886,20 @@ enemdu_build_ipm_components <- function(
       ))
     }
 
-    labor_data <- enemdu_build_labor_flags(
-      data = labor_data,
+    labor_input <- labor_data[, unique(c(condact_var, age_var)), drop = FALSE]
+
+    labor_flags_data <- enemdu_build_labor_flags(
+      data = labor_input,
       condact = condact_var,
       age = age_var,
       strict = strict
     )
+
+    new_labor_flags <- setdiff(names(labor_flags_data), names(labor_data))
+
+    for (flag in new_labor_flags) {
+      labor_data[[flag]] <- labor_flags_data[[flag]]
+    }
   }
 
   missing_flags <- setdiff(labor_inadequate_flags, names(labor_data))
@@ -957,7 +965,10 @@ enemdu_build_ipm_components <- function(
         labor_inadequate_flags = labor_inadequate_flags,
         output_component = component_var,
         rule = "household_has_person_age_18_plus_unemployed_or_inadequately_employed",
-        note = "Labor flags are derived only from the consolidated ENEMDU condact variable when needed."
+        note = paste(
+          "Labor flags are derived only from the consolidated ENEMDU condact variable when needed.",
+          "Sector variables such as secemp are intentionally ignored for this IPM component."
+        )
       )
     )
   )
