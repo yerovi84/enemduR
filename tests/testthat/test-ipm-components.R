@@ -42,6 +42,7 @@ if (!exists("enemdu_build_ipm_components")) {
     )
   }
   source(.ipm_components_repo_path("R", "nbi_sources.R"), local = TRUE)
+  source(.ipm_components_repo_path("R", "labor_indicators.R"), local = TRUE)
   source(.ipm_components_repo_path("R", "ipm_sources.R"), local = TRUE)
   source(.ipm_components_repo_path("R", "ipm_flags.R"), local = TRUE)
   source(.ipm_components_repo_path("R", "ipm_components_household.R"), local = TRUE)
@@ -113,6 +114,28 @@ if (!exists("enemdu_build_ipm_components")) {
   out
 }
 
+.ipm_operational_component_data <- function() {
+  tibble::tibble(
+    id_hogar = c("h1", "h1", "h2", "h2", "h3", "h3", "h4"),
+    p01 = c(1, 2, 1, 2, 1, 2, 1),
+    row_id = seq_len(7),
+    p03 = c(10, 30, 12, 35, 40, 50, 25),
+    p07 = c(1, 2, 2, 2, 2, 2, 2),
+    p10a = c(5, 7, 5, 4, 6, 6, 5),
+    p10b = c(5, 3, 7, 6, 6, 6, 9),
+    condact = c(0, 1, 0, 7, 1, 9, 4),
+    area = c(1, 1, 1, 1, 2, 2, 2),
+    vi10 = c(1, 1, 2, 2, 1, 1, 1),
+    vi07 = c(2, 2, 1, 1, 0, 0, 1),
+    vi09 = c(1, 1, 2, 2, 2, 2, 3),
+    vi13 = c(2, 2, 3, 3, 1, 1, 4),
+    epobreza = c(0, 0, 1, 1, 0, 0, 0),
+    nbi = 0L,
+    pobre = 0L,
+    labor_empleo = 1L
+  )
+}
+
 test_that("IPM component builder exists and is exported", {
   expect_true(exists("enemdu_build_ipm_components"))
   expect_true("enemdu_build_ipm_components" %in% getNamespaceExports("enemduR"))
@@ -172,6 +195,14 @@ test_that("IPM component builder constructs extreme poverty from expobre", {
   expect_equal(out[[extreme_component]], .ipm_component_test_data()$expobre)
 })
 
+test_that("IPM component builder accepts epobreza alias for extreme poverty", {
+  data <- .ipm_operational_component_data()
+  out <- enemdu_build_ipm_components(data, strict = FALSE)
+  extreme_component <- .ipm_component_name("ipm_i07_pobreza_extrema_ingresos")
+
+  expect_equal(out[[extreme_component]], data$epobreza)
+})
+
 test_that("IPM component builder aborts when expobre and other components are pending in strict mode", {
   data <- .ipm_component_test_data()
   data$expobre <- NULL
@@ -179,6 +210,157 @@ test_that("IPM component builder aborts when expobre and other components are pe
   expect_error(
     enemdu_build_ipm_components(data, strict = TRUE),
     class = "enemdu_error_pending_ipm_components"
+  )
+})
+
+test_that("IPM component builder derives water from vi10", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  water_component <- .ipm_component_name("ipm_i08_sin_agua_red_publica")
+
+  expect_equal(out[[water_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[water_component]][out$id_hogar == "h2"], c(1L, 1L))
+})
+
+test_that("IPM component builder derives sanitation from area and vi09", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  sanitation_component <- .ipm_component_name("ipm_i11_sin_saneamiento_excretas")
+
+  expect_equal(out[[sanitation_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[sanitation_component]][out$id_hogar == "h2"], c(1L, 1L))
+  expect_equal(out[[sanitation_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[sanitation_component]][out$id_hogar == "h4"], 1L)
+})
+
+test_that("IPM sanitation component rejects invalid source codes", {
+  component <- .ipm_component_name("ipm_i11_sin_saneamiento_excretas")
+  data <- .ipm_operational_component_data()
+  data$area <- 1
+  data$vi09 <- c(rep(1, nrow(data) - 1), 999)
+
+  expect_error(
+    enemdu_build_ipm_components(
+      data,
+      strict = TRUE,
+      overwrite = TRUE,
+      sanitation_valid_codes = 1:5
+    ),
+    class = "enemdu_error_invalid_ipm_source_codes"
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    strict = FALSE,
+    overwrite = TRUE,
+    sanitation_valid_codes = 1:5
+  )
+
+  expect_true(is.na(out[[component]][nrow(out)]))
+})
+
+test_that("IPM component builder derives garbage collection from vi13", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  garbage_component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
+
+  expect_equal(out[[garbage_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[garbage_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[garbage_component]][out$id_hogar == "h2"], c(1L, 1L))
+  expect_equal(out[[garbage_component]][out$id_hogar == "h4"], 1L)
+})
+
+test_that("IPM garbage component rejects invalid source codes", {
+  component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
+  data <- .ipm_operational_component_data()
+  data$vi13 <- c(rep(2, nrow(data) - 1), 999)
+
+  expect_error(
+    enemdu_build_ipm_components(
+      data,
+      strict = TRUE,
+      overwrite = TRUE,
+      garbage_valid_codes = 1:4
+    ),
+    class = "enemdu_error_invalid_ipm_source_codes"
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    strict = FALSE,
+    overwrite = TRUE,
+    garbage_valid_codes = 1:4
+  )
+
+  expect_true(is.na(out[[component]][nrow(out)]))
+})
+
+test_that("IPM component builder derives school attendance from p03 and p07", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  attendance_component <- .ipm_component_name("ipm_i01_inasistencia_basica_bach")
+
+  expect_equal(out[[attendance_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[attendance_component]][out$id_hogar == "h2"], c(1L, 1L))
+  expect_equal(out[[attendance_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[attendance_component]][out$id_hogar == "h4"], 0L)
+})
+
+test_that("IPM component builder derives incomplete education from p03, p07, p10a, and p10b", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  incomplete_component <- .ipm_component_name("ipm_i03_logro_educativo_incompleto")
+
+  expect_equal(out[[incomplete_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[incomplete_component]][out$id_hogar == "h2"], c(1L, 1L))
+  expect_equal(out[[incomplete_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[incomplete_component]][out$id_hogar == "h4"], 1L)
+})
+
+test_that("IPM component builder derives inadequate employment from consolidated labor flags", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  labor_component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+
+  expect_equal(out[[labor_component]][out$id_hogar == "h1"], c(0L, 0L))
+  expect_equal(out[[labor_component]][out$id_hogar == "h2"], c(1L, 1L))
+  expect_equal(out[[labor_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[labor_component]][out$id_hogar == "h4"], 1L)
+})
+
+test_that("IPM inadequate employment component uses the official 18+ universe", {
+  output_component <- "ipm_i05_desempleo_empleo_inadecuado_flag"
+
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h2"),
+    p01 = c(1, 1),
+    p03 = c(17, 18),
+    labor_desempleo = c(1L, 1L),
+    labor_subempleo = c(0L, 0L),
+    labor_otro_empleo_no_pleno = c(0L, 0L),
+    labor_empleo_no_remunerado = c(0L, 0L),
+    labor_empleo_no_clasificado = c(0L, 0L)
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    household_id = "id_hogar",
+    person_id = "p01",
+    strict = FALSE,
+    overwrite = TRUE,
+    labor_inadequate_flags = c(
+      "labor_desempleo",
+      "labor_subempleo",
+      "labor_otro_empleo_no_pleno",
+      "labor_empleo_no_remunerado",
+      "labor_empleo_no_clasificado"
+    )
+  )
+
+  expect_true(output_component %in% names(out))
+
+  expect_equal(
+    out[[output_component]][out$id_hogar == "h1"],
+    0L
+  )
+
+  expect_equal(
+    out[[output_component]][out$id_hogar == "h2"],
+    1L
   )
 })
 
@@ -197,6 +379,25 @@ test_that("IPM component builder returns pending components as NA when strict is
   expect_true(length(pending_components) > 0)
   expect_true(all(vapply(out[pending_components], function(x) all(is.na(x)), logical(1))))
   expect_true(all(vapply(out[pending_components], typeof, character(1)) == "integer"))
+})
+
+test_that("IPM component builder keeps unsupported components pending in strict false", {
+  out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expected_pending <- vapply(
+    c(
+      "ipm_i02_no_acceso_superior_economico",
+      "ipm_i04_empleo_infantil_adolescente",
+      "ipm_i06_no_contribucion_pensiones",
+      "ipm_i10_deficit_habitacional"
+    ),
+    .ipm_component_name,
+    character(1)
+  )
+
+  expect_setequal(diagnostics$components_pending, expected_pending)
+  expect_true(all(vapply(out[expected_pending], function(x) all(is.na(x)), logical(1))))
+  expect_true(all(vapply(out[expected_pending], typeof, character(1)) == "integer"))
 })
 
 test_that("IPM component builder aborts in strict mode when not all components are available", {
@@ -224,6 +425,28 @@ test_that("IPM component builder output can feed IPM flags when all components a
   expect_equal(flagged$ipm_score[2], 0.125)
 })
 
+test_that("IPM component builder output can feed IPM flags when pending components are precomputed", {
+  data <- .ipm_operational_component_data()
+  pending_ids <- c(
+    "ipm_i02_no_acceso_superior_economico",
+    "ipm_i04_empleo_infantil_adolescente",
+    "ipm_i06_no_contribucion_pensiones",
+    "ipm_i10_deficit_habitacional"
+  )
+
+  for (indicator_id in pending_ids) {
+    data[[.ipm_component_name(indicator_id)]] <- 0L
+  }
+
+  out <- enemdu_build_ipm_components(data, strict = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  flagged <- enemdu_build_ipm_flags(out)
+
+  expect_equal(diagnostics$components_pending, character())
+  expect_true(all(c("ipm_score", "tpm", "tpem") %in% names(flagged)))
+  expect_false(any(is.na(flagged$ipm_score)))
+})
+
 test_that("IPM component builder can prepare source data from household_data", {
   data <- .ipm_component_test_data()
   data$vi10 <- NULL
@@ -249,4 +472,38 @@ test_that("IPM component builder preserves unrelated NBI, poverty, and labor out
   expect_equal(out$nbi, data$nbi)
   expect_equal(out$pobre, data$pobre)
   expect_equal(out$labor_empleo, data$labor_empleo)
+})
+
+test_that("IPM inadequate employment derivation ignores irrelevant sector variables", {
+  component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h2"),
+    p01 = c(1, 1),
+    p03 = c(18, 18),
+    condact = c(1, 7),
+    secemp = c("invalid_sector", "also_invalid")
+  )
+
+  expect_no_error({
+    result <- .enemdu_build_ipm_labor_inadequate_component(
+      data = data,
+      component_var = component,
+      household_id = "id_hogar",
+      age_var = "p03",
+      condact_var = "condact",
+      labor_inadequate_flags = c(
+        "labor_desempleo",
+        "labor_subempleo",
+        "labor_otro_empleo_no_pleno",
+        "labor_empleo_no_remunerado",
+        "labor_empleo_no_clasificado"
+      ),
+      overwrite = TRUE,
+      strict = TRUE
+    )
+  })
+
+  expect_true(component %in% names(result$data))
+  expect_false("secemp" %in% result$variables_used$labor_inadequate_employment$source_vars)
 })
