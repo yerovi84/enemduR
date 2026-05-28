@@ -15,7 +15,31 @@ enemdu_build_ipm_components(
   strict = TRUE,
   extreme_poverty_var = "expobre",
   build_from_precomputed = TRUE,
-  water_public_network_codes = 1
+  water_public_network_codes = 1,
+  extreme_poverty_alias_vars = "epobreza",
+  area_var = "area",
+  age_var = "p03",
+  attendance_var = "p07",
+  attendance_yes_codes = 1,
+  attendance_no_codes = 2,
+  school_age_min = 5,
+  school_age_max = 17,
+  education_level_var = "p10a",
+  education_grade_var = "p10b",
+  incomplete_education_age_min = 18,
+  incomplete_education_age_max = 64,
+  incomplete_schooling_years = 10,
+  condact_var = "condact",
+  labor_inadequate_flags = c("labor_desempleo", "labor_subempleo",
+    "labor_otro_empleo_no_pleno", "labor_empleo_no_remunerado",
+    "labor_empleo_no_clasificado"),
+  sanitation_var = "vi09",
+  sanitation_urban_area_codes = 1,
+  sanitation_rural_area_codes = 2,
+  sanitation_sewer_codes = 1,
+  sanitation_septic_codes = 2,
+  garbage_var = "vi13",
+  garbage_collection_codes = c(1, 2)
 )
 }
 \arguments{
@@ -49,6 +73,60 @@ component columns are accepted as precomputed inputs after binary validation.}
 \item{water_public_network_codes}{Codes that identify public-network water in
 the source water variable. The default \code{1} is profile-specific and still
 requires real-data reproducibility validation.}
+
+\item{extreme_poverty_alias_vars}{Alias variables checked when
+\code{extreme_poverty_var} is absent. Defaults to \code{"epobreza"} for the 2025
+annual ENEMDU profile.}
+
+\item{area_var}{Urban/rural area variable used by sanitation rules.}
+
+\item{age_var}{Age variable.}
+
+\item{attendance_var}{School-attendance variable.}
+
+\item{attendance_yes_codes}{Codes that mean attending formal education.}
+
+\item{attendance_no_codes}{Codes that mean not attending formal education.}
+
+\item{school_age_min}{Minimum age for basic and bachillerato attendance.}
+
+\item{school_age_max}{Maximum age for basic and bachillerato attendance.}
+
+\item{education_level_var}{Educational level variable.}
+
+\item{education_grade_var}{Completed grade/year variable within educational
+level.}
+
+\item{incomplete_education_age_min}{Minimum age for incomplete educational
+attainment.}
+
+\item{incomplete_education_age_max}{Maximum age for incomplete educational
+attainment.}
+
+\item{incomplete_schooling_years}{Schooling-year cutoff for incomplete
+educational attainment.}
+
+\item{condact_var}{Consolidated ENEMDU condition-of-activity variable used
+through \code{enemdu_build_labor_flags()}.}
+
+\item{labor_inadequate_flags}{Existing or derived labor flags treated as
+unemployment or inadequate employment.}
+
+\item{sanitation_var}{Excreta-sanitation source variable.}
+
+\item{sanitation_urban_area_codes}{Area codes treated as urban.}
+
+\item{sanitation_rural_area_codes}{Area codes treated as rural.}
+
+\item{sanitation_sewer_codes}{Sanitation codes treated as sewerage.}
+
+\item{sanitation_septic_codes}{Sanitation codes treated as septic tank.}
+
+\item{garbage_var}{Garbage-disposal source variable.}
+
+\item{garbage_collection_codes}{Garbage-disposal codes treated as collection
+service. The default includes contracted and municipal collection, based on
+2025 SPSS labels, and remains profile-specific.}
 }
 \value{
 A data frame with the 12 registered IPM component columns when
@@ -58,16 +136,20 @@ A data frame with the 12 registered IPM component columns when
 \description{
 Builds the IPM component columns that are auditable in the current package
 contract and marks the remaining registered components as pending. The
-current operational rules cover public-network water, overcrowding, and
-extreme income poverty when a precomputed binary poverty flag is supplied.
+current operational rules cover school attendance, incomplete education,
+inadequate employment from consolidated labor flags, precomputed extreme
+income poverty, public-network water, overcrowding, excreta sanitation, and
+garbage collection for the \code{enemdu_2025_anual} profile.
 }
 \details{
-This function does not invent rules for education, labor, pensions, housing
-deficit, sanitation, or garbage collection. When \code{strict = TRUE}, the
-function aborts if the full set of 12 registered IPM components cannot be
-completed from implemented rules or accepted precomputed component columns.
-When \code{strict = FALSE}, pending components are returned as \code{NA_integer_} and
-documented in the diagnostics attribute.
+This function does not invent unsupported rules. Access to higher education
+for economic reasons, child and adolescent labor, pension contribution, and
+housing deficit remain pending unless supplied as accepted precomputed
+component columns. When \code{strict = TRUE}, the function aborts if the full set
+of 12 registered IPM components cannot be completed from implemented rules or
+accepted precomputed component columns. When \code{strict = FALSE}, pending
+components are returned as \code{NA_integer_} and documented in the diagnostics
+attribute.
 
 This function does not compute \code{ipm_score}, \code{tpm}, \code{tpem}, \code{A}, or aggregate
 \code{ipm}, and it does not claim official validation.
