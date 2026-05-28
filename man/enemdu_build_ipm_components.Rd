@@ -33,6 +33,37 @@ enemdu_build_ipm_components(
   labor_inadequate_flags = c("labor_desempleo", "labor_subempleo",
     "labor_otro_empleo_no_pleno", "labor_empleo_no_remunerado",
     "labor_empleo_no_clasificado"),
+  higher_education_reason_var = "p09",
+  higher_education_economic_reason_codes = NULL,
+  bachillerato_completed_levels = NULL,
+  bachillerato_completed_min_grade = NULL,
+  child_work_var = "empleo",
+  child_hours_var = "p24",
+  child_income_var = "ingrl",
+  child_sbu = 470,
+  hours_sentinel_codes = 999,
+  income_negative_sentinel_codes = -1,
+  income_missing_sentinel_codes = 999999,
+  social_security_var = "p61b1",
+  pension_income_var = "p72a",
+  human_development_bonus_var = "p75",
+  disability_bonus_var = "p77",
+  social_security_contribution_codes = c(1, 2, 3, 4),
+  social_security_no_contribution_codes = 5,
+  social_security_unknown_codes = 6,
+  unemployment_var = "desempleo",
+  roof_material_var = "vi03a",
+  roof_state_var = "vi03b",
+  floor_material_var = "vi04a",
+  floor_state_var = "vi04b",
+  wall_material_var = "vi05a",
+  wall_state_var = "vi05b",
+  housing_material_valid_codes = NULL,
+  housing_state_valid_codes = 1:3,
+  deficit_roof_material_codes = NULL,
+  deficit_floor_material_codes = NULL,
+  deficit_wall_material_codes = NULL,
+  deficit_state_codes = 3,
   sanitation_var = "vi09",
   sanitation_urban_area_codes = 1,
   sanitation_rural_area_codes = 2,
@@ -114,6 +145,80 @@ through \code{enemdu_build_labor_flags()}.}
 \item{labor_inadequate_flags}{Existing or derived labor flags treated as
 unemployment or inadequate employment.}
 
+\item{higher_education_reason_var}{Reason for not attending higher education.}
+
+\item{higher_education_economic_reason_codes}{Codes treated as economic
+reasons for not accessing higher education. If \code{NULL}, the builder attempts
+to infer the code from value labels containing economic-resource wording.}
+
+\item{bachillerato_completed_levels}{Optional education-level codes that
+identify completed bachillerato when paired with
+\code{bachillerato_completed_min_grade}. If \code{NULL}, the profile-specific
+schooling-years helper is used.}
+
+\item{bachillerato_completed_min_grade}{Optional minimum grade/year for the
+levels in \code{bachillerato_completed_levels}.}
+
+\item{child_work_var}{Binary employment/work variable for children and
+adolescents.}
+
+\item{child_hours_var}{Weekly-hours variable for working adolescents.}
+
+\item{child_income_var}{Labor-income variable for working adolescents.}
+
+\item{child_sbu}{Profile-specific basic salary cutoff used for adolescents.
+The default \code{470} is for the 2025 annual profile.}
+
+\item{hours_sentinel_codes}{Hour codes treated as non-evaluable sentinels.}
+
+\item{income_negative_sentinel_codes}{Income codes treated as negative-income
+sentinels.}
+
+\item{income_missing_sentinel_codes}{Income codes treated as missing-income
+sentinels.}
+
+\item{social_security_var}{Social-security contribution variable.}
+
+\item{pension_income_var}{Retirement or pension receipt variable.}
+
+\item{human_development_bonus_var}{Human-development bonus receipt variable.}
+
+\item{disability_bonus_var}{Disability-bonus proxy variable.}
+
+\item{social_security_contribution_codes}{Contribution codes.}
+
+\item{social_security_no_contribution_codes}{No-contribution codes.}
+
+\item{social_security_unknown_codes}{Unknown contribution codes.}
+
+\item{unemployment_var}{Binary unemployment variable used for diagnostics in
+the pension component.}
+
+\item{roof_material_var}{Roof-material variable.}
+
+\item{roof_state_var}{Roof-state variable.}
+
+\item{floor_material_var}{Floor-material variable.}
+
+\item{floor_state_var}{Floor-state variable.}
+
+\item{wall_material_var}{Wall-material variable.}
+
+\item{wall_state_var}{Wall-state variable.}
+
+\item{housing_material_valid_codes}{Confirmed valid material codes. If
+\code{NULL}, labels are used when available.}
+
+\item{housing_state_valid_codes}{Confirmed valid state codes.}
+
+\item{deficit_roof_material_codes}{Roof-material codes treated as deficit.}
+
+\item{deficit_floor_material_codes}{Floor-material codes treated as deficit.}
+
+\item{deficit_wall_material_codes}{Wall-material codes treated as deficit.}
+
+\item{deficit_state_codes}{State codes treated as deficit.}
+
 \item{sanitation_var}{Excreta-sanitation source variable.}
 
 \item{sanitation_urban_area_codes}{Area codes treated as urban.}
@@ -144,20 +249,16 @@ A data frame with the 12 registered IPM component columns when
 \description{
 Builds the IPM component columns that are auditable in the current package
 contract and marks the remaining registered components as pending. The
-current operational rules cover school attendance, incomplete education,
-inadequate employment from consolidated labor flags, precomputed extreme
-income poverty, public-network water, overcrowding, excreta sanitation, and
-garbage collection for the \code{enemdu_2025_anual} profile.
+current operational rules cover all 12 registered components for the
+\code{enemdu_2025_anual} profile when the required source variables are present.
 }
 \details{
-This function does not invent unsupported rules. Access to higher education
-for economic reasons, child and adolescent labor, pension contribution, and
-housing deficit remain pending unless supplied as accepted precomputed
-component columns. When \code{strict = TRUE}, the function aborts if the full set
-of 12 registered IPM components cannot be completed from implemented rules or
-accepted precomputed component columns. When \code{strict = FALSE}, pending
-components are returned as \code{NA_integer_} and documented in the diagnostics
-attribute.
+This function does not invent unsupported rules. Rule details that depend on
+questionnaire codes are explicit arguments. When \code{strict = TRUE}, the
+function aborts if the full set of 12 registered IPM components cannot be
+completed from implemented rules or accepted precomputed component columns.
+When \code{strict = FALSE}, pending or non-evaluable components are returned as
+\code{NA_integer_} and documented in the diagnostics attribute.
 
 This function does not compute \code{ipm_score}, \code{tpm}, \code{tpem}, \code{A}, or aggregate
 \code{ipm}, and it does not claim official validation.

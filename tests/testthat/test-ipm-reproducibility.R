@@ -104,6 +104,46 @@ if (!exists("enemdu_run_ipm_reproducibility")) {
   out
 }
 
+.ipm_repro_operational_source_data <- function() {
+  tibble::tibble(
+    id_hogar = c("h1", "h1", "h2", "h2", "h3", "h3", "h4", "h4"),
+    p01 = rep(c(1, 2), 4),
+    upm = seq_len(8),
+    estrato = rep(seq_len(4), each = 2),
+    fexp = rep(1, 8),
+    area = c(1, 1, 1, 1, 2, 2, 2, 2),
+    p03 = c(10, 25, 16, 35, 40, 70, 12, 45),
+    p07 = c(1, 2, 1, 2, 2, 2, 2, 2),
+    p09 = c(1, 3, 1, 1, 1, 1, 3, 1),
+    p10a = c(5, 7, 6, 4, 6, 6, 5, 7),
+    p10b = c(5, 3, 4, 6, 6, 6, 7, 3),
+    empleo = c(0, 1, 1, 1, 1, 0, 0, 1),
+    desempleo = c(0, 0, 0, 1, 0, 0, 0, 0),
+    p24 = c(NA, 20, 31, 20, 40, NA, NA, 20),
+    ingrl = c(NA, 600, 600, 300, 600, NA, NA, 600),
+    p61b1 = c(6, 1, 1, 5, 1, 6, 6, 1),
+    p72a = c(2, 2, 2, 2, 2, 2, 2, 2),
+    p75 = c(2, 2, 2, 2, 2, 1, 2, 2),
+    p77 = c(2, 2, 2, 2, 2, 2, 2, 2),
+    labor_desempleo = c(0, 0, 0, 1, 0, 0, 0, 0),
+    labor_subempleo = 0L,
+    labor_otro_empleo_no_pleno = 0L,
+    labor_empleo_no_remunerado = 0L,
+    labor_empleo_no_clasificado = 0L,
+    vi03a = 1,
+    vi03b = c(1, 1, 3, 3, 1, 1, 1, 1),
+    vi04a = 1,
+    vi04b = c(1, 1, 1, 1, 1, 1, 1, 1),
+    vi05a = 1,
+    vi05b = 1,
+    vi10 = c(1, 1, 2, 2, 1, 1, 1, 1),
+    vi07 = c(2, 2, 1, 1, 0, 0, 1, 1),
+    vi09 = c(1, 1, 2, 2, 2, 2, 3, 3),
+    vi13 = c(2, 2, 3, 3, 1, 1, 4, 4),
+    epobreza = c(0, 0, 1, 1, 0, 0, 0, 0)
+  )
+}
+
 test_that("IPM reproducibility functions are exported when namespace is available", {
   if (!"enemduR" %in% loadedNamespaces()) {
     testthat::skip("Export checks require the package namespace.")
@@ -259,6 +299,23 @@ test_that("IPM reproducibility workflow builds custom score and flag names from 
   expect_equal(policy$flags_diagnostics$score_var, "custom_score")
   expect_equal(policy$flags_diagnostics$tpm_var, "custom_tpm")
   expect_equal(policy$flags_diagnostics$tpem_var, "custom_tpem")
+})
+
+test_that("IPM reproducibility workflow can build flags from operational sources", {
+  result <- enemdu_run_ipm_reproducibility(
+    .ipm_repro_operational_source_data(),
+    build_components = TRUE,
+    build_flags = TRUE,
+    strict = TRUE,
+    sample_n_min = 1,
+    higher_education_economic_reason_codes = 3
+  )
+  policy <- attr(result, "reproducibility_policy")
+
+  expect_equal(policy$components_diagnostics$components_pending, character())
+  expect_true(all(c("tpm", "tpem", "A", "ipm") %in% result$estimates$indicator_id))
+  expect_true(isTRUE(policy$build_components))
+  expect_true(isTRUE(policy$build_flags))
 })
 
 test_that("IPM reproducibility workflow does not require raw microdata files", {

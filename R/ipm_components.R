@@ -2,19 +2,15 @@
 #'
 #' Builds the IPM component columns that are auditable in the current package
 #' contract and marks the remaining registered components as pending. The
-#' current operational rules cover school attendance, incomplete education,
-#' inadequate employment from consolidated labor flags, precomputed extreme
-#' income poverty, public-network water, overcrowding, excreta sanitation, and
-#' garbage collection for the `enemdu_2025_anual` profile.
+#' current operational rules cover all 12 registered components for the
+#' `enemdu_2025_anual` profile when the required source variables are present.
 #'
-#' This function does not invent unsupported rules. Access to higher education
-#' for economic reasons, child and adolescent labor, pension contribution, and
-#' housing deficit remain pending unless supplied as accepted precomputed
-#' component columns. When `strict = TRUE`, the function aborts if the full set
-#' of 12 registered IPM components cannot be completed from implemented rules or
-#' accepted precomputed component columns. When `strict = FALSE`, pending
-#' components are returned as `NA_integer_` and documented in the diagnostics
-#' attribute.
+#' This function does not invent unsupported rules. Rule details that depend on
+#' questionnaire codes are explicit arguments. When `strict = TRUE`, the
+#' function aborts if the full set of 12 registered IPM components cannot be
+#' completed from implemented rules or accepted precomputed component columns.
+#' When `strict = FALSE`, pending or non-evaluable components are returned as
+#' `NA_integer_` and documented in the diagnostics attribute.
 #'
 #' This function does not compute `ipm_score`, `tpm`, `tpem`, `A`, or aggregate
 #' `ipm`, and it does not claim official validation.
@@ -62,6 +58,49 @@
 #' through `enemdu_build_labor_flags()`.
 #' @param labor_inadequate_flags Existing or derived labor flags treated as
 #' unemployment or inadequate employment.
+#' @param higher_education_reason_var Reason for not attending higher education.
+#' @param higher_education_economic_reason_codes Codes treated as economic
+#' reasons for not accessing higher education. If `NULL`, the builder attempts
+#' to infer the code from value labels containing economic-resource wording.
+#' @param bachillerato_completed_levels Optional education-level codes that
+#' identify completed bachillerato when paired with
+#' `bachillerato_completed_min_grade`. If `NULL`, the profile-specific
+#' schooling-years helper is used.
+#' @param bachillerato_completed_min_grade Optional minimum grade/year for the
+#' levels in `bachillerato_completed_levels`.
+#' @param child_work_var Binary employment/work variable for children and
+#' adolescents.
+#' @param child_hours_var Weekly-hours variable for working adolescents.
+#' @param child_income_var Labor-income variable for working adolescents.
+#' @param child_sbu Profile-specific basic salary cutoff used for adolescents.
+#' The default `470` is for the 2025 annual profile.
+#' @param hours_sentinel_codes Hour codes treated as non-evaluable sentinels.
+#' @param income_negative_sentinel_codes Income codes treated as negative-income
+#' sentinels.
+#' @param income_missing_sentinel_codes Income codes treated as missing-income
+#' sentinels.
+#' @param social_security_var Social-security contribution variable.
+#' @param pension_income_var Retirement or pension receipt variable.
+#' @param human_development_bonus_var Human-development bonus receipt variable.
+#' @param disability_bonus_var Disability-bonus proxy variable.
+#' @param social_security_contribution_codes Contribution codes.
+#' @param social_security_no_contribution_codes No-contribution codes.
+#' @param social_security_unknown_codes Unknown contribution codes.
+#' @param unemployment_var Binary unemployment variable used for diagnostics in
+#' the pension component.
+#' @param roof_material_var Roof-material variable.
+#' @param roof_state_var Roof-state variable.
+#' @param floor_material_var Floor-material variable.
+#' @param floor_state_var Floor-state variable.
+#' @param wall_material_var Wall-material variable.
+#' @param wall_state_var Wall-state variable.
+#' @param housing_material_valid_codes Confirmed valid material codes. If
+#' `NULL`, labels are used when available.
+#' @param housing_state_valid_codes Confirmed valid state codes.
+#' @param deficit_roof_material_codes Roof-material codes treated as deficit.
+#' @param deficit_floor_material_codes Floor-material codes treated as deficit.
+#' @param deficit_wall_material_codes Wall-material codes treated as deficit.
+#' @param deficit_state_codes State codes treated as deficit.
 #' @param sanitation_var Excreta-sanitation source variable.
 #' @param sanitation_urban_area_codes Area codes treated as urban.
 #' @param sanitation_rural_area_codes Area codes treated as rural.
@@ -113,6 +152,37 @@ enemdu_build_ipm_components <- function(
     "labor_empleo_no_remunerado",
     "labor_empleo_no_clasificado"
   ),
+  higher_education_reason_var = "p09",
+  higher_education_economic_reason_codes = NULL,
+  bachillerato_completed_levels = NULL,
+  bachillerato_completed_min_grade = NULL,
+  child_work_var = "empleo",
+  child_hours_var = "p24",
+  child_income_var = "ingrl",
+  child_sbu = 470,
+  hours_sentinel_codes = 999,
+  income_negative_sentinel_codes = -1,
+  income_missing_sentinel_codes = 999999,
+  social_security_var = "p61b1",
+  pension_income_var = "p72a",
+  human_development_bonus_var = "p75",
+  disability_bonus_var = "p77",
+  social_security_contribution_codes = c(1, 2, 3, 4),
+  social_security_no_contribution_codes = 5,
+  social_security_unknown_codes = 6,
+  unemployment_var = "desempleo",
+  roof_material_var = "vi03a",
+  roof_state_var = "vi03b",
+  floor_material_var = "vi04a",
+  floor_state_var = "vi04b",
+  wall_material_var = "vi05a",
+  wall_state_var = "vi05b",
+  housing_material_valid_codes = NULL,
+  housing_state_valid_codes = 1:3,
+  deficit_roof_material_codes = NULL,
+  deficit_floor_material_codes = NULL,
+  deficit_wall_material_codes = NULL,
+  deficit_state_codes = 3,
   sanitation_var = "vi09",
   sanitation_urban_area_codes = 1,
   sanitation_rural_area_codes = 2,
@@ -160,8 +230,103 @@ enemdu_build_ipm_components <- function(
     labor_inadequate_flags,
     "labor_inadequate_flags"
   )
+  higher_education_reason_var <- .enemdu_ipm_single_var_name(
+    higher_education_reason_var,
+    "higher_education_reason_var",
+    caller
+  )
+  child_work_var <- .enemdu_ipm_single_var_name(child_work_var, "child_work_var", caller)
+  child_hours_var <- .enemdu_ipm_single_var_name(child_hours_var, "child_hours_var", caller)
+  child_income_var <- .enemdu_ipm_single_var_name(child_income_var, "child_income_var", caller)
+  social_security_var <- .enemdu_ipm_single_var_name(
+    social_security_var,
+    "social_security_var",
+    caller
+  )
+  pension_income_var <- .enemdu_ipm_single_var_name(
+    pension_income_var,
+    "pension_income_var",
+    caller
+  )
+  human_development_bonus_var <- .enemdu_ipm_single_var_name(
+    human_development_bonus_var,
+    "human_development_bonus_var",
+    caller
+  )
+  disability_bonus_var <- .enemdu_ipm_single_var_name(
+    disability_bonus_var,
+    "disability_bonus_var",
+    caller
+  )
+  unemployment_var <- .enemdu_ipm_single_var_name(unemployment_var, "unemployment_var", caller)
+  roof_material_var <- .enemdu_ipm_single_var_name(roof_material_var, "roof_material_var", caller)
+  roof_state_var <- .enemdu_ipm_single_var_name(roof_state_var, "roof_state_var", caller)
+  floor_material_var <- .enemdu_ipm_single_var_name(floor_material_var, "floor_material_var", caller)
+  floor_state_var <- .enemdu_ipm_single_var_name(floor_state_var, "floor_state_var", caller)
+  wall_material_var <- .enemdu_ipm_single_var_name(wall_material_var, "wall_material_var", caller)
+  wall_state_var <- .enemdu_ipm_single_var_name(wall_state_var, "wall_state_var", caller)
   sanitation_var <- .enemdu_ipm_single_var_name(sanitation_var, "sanitation_var", caller)
   garbage_var <- .enemdu_ipm_single_var_name(garbage_var, "garbage_var", caller)
+  higher_education_economic_reason_codes <- .enemdu_ipm_optional_code_set(
+    higher_education_economic_reason_codes,
+    "higher_education_economic_reason_codes"
+  )
+  bachillerato_completed_levels <- .enemdu_ipm_optional_code_set(
+    bachillerato_completed_levels,
+    "bachillerato_completed_levels"
+  )
+  bachillerato_completed_min_grade <- .enemdu_ipm_optional_code_set(
+    bachillerato_completed_min_grade,
+    "bachillerato_completed_min_grade"
+  )
+  hours_sentinel_codes <- .enemdu_ipm_optional_code_set(
+    hours_sentinel_codes,
+    "hours_sentinel_codes"
+  )
+  income_negative_sentinel_codes <- .enemdu_ipm_optional_code_set(
+    income_negative_sentinel_codes,
+    "income_negative_sentinel_codes"
+  )
+  income_missing_sentinel_codes <- .enemdu_ipm_optional_code_set(
+    income_missing_sentinel_codes,
+    "income_missing_sentinel_codes"
+  )
+  social_security_contribution_codes <- .enemdu_ipm_validate_code_set(
+    social_security_contribution_codes,
+    "social_security_contribution_codes"
+  )
+  social_security_no_contribution_codes <- .enemdu_ipm_validate_code_set(
+    social_security_no_contribution_codes,
+    "social_security_no_contribution_codes"
+  )
+  social_security_unknown_codes <- .enemdu_ipm_validate_code_set(
+    social_security_unknown_codes,
+    "social_security_unknown_codes"
+  )
+  housing_material_valid_codes <- .enemdu_ipm_optional_code_set(
+    housing_material_valid_codes,
+    "housing_material_valid_codes"
+  )
+  housing_state_valid_codes <- .enemdu_ipm_validate_code_set(
+    housing_state_valid_codes,
+    "housing_state_valid_codes"
+  )
+  deficit_roof_material_codes <- .enemdu_ipm_optional_code_set(
+    deficit_roof_material_codes,
+    "deficit_roof_material_codes"
+  )
+  deficit_floor_material_codes <- .enemdu_ipm_optional_code_set(
+    deficit_floor_material_codes,
+    "deficit_floor_material_codes"
+  )
+  deficit_wall_material_codes <- .enemdu_ipm_optional_code_set(
+    deficit_wall_material_codes,
+    "deficit_wall_material_codes"
+  )
+  deficit_state_codes <- .enemdu_ipm_validate_code_set(
+    deficit_state_codes,
+    "deficit_state_codes"
+  )
   sanitation_valid_codes <- .enemdu_ipm_validate_code_set(
     sanitation_valid_codes,
     "sanitation_valid_codes"
@@ -257,6 +422,29 @@ enemdu_build_ipm_components <- function(
   pending_reasons <- c(pending_reasons, school_attendance$pending_reasons)
   variables_used <- c(variables_used, school_attendance$variables_used)
 
+  higher_education_access <- .enemdu_build_ipm_higher_education_access_component(
+    data = out,
+    component_var = component_vars[["ipm_i02_no_acceso_superior_economico"]],
+    household_id = household_id,
+    age_var = age_var,
+    attendance_var = attendance_var,
+    attendance_yes_codes = attendance_yes_codes,
+    attendance_no_codes = attendance_no_codes,
+    higher_education_reason_var = higher_education_reason_var,
+    higher_education_economic_reason_codes = higher_education_economic_reason_codes,
+    education_level_var = education_level_var,
+    education_grade_var = education_grade_var,
+    bachillerato_completed_levels = bachillerato_completed_levels,
+    bachillerato_completed_min_grade = bachillerato_completed_min_grade,
+    overwrite = overwrite,
+    strict = strict
+  )
+  out <- higher_education_access$data
+  built_components <- unique(c(built_components, higher_education_access$built_components))
+  pending_components <- unique(c(pending_components, higher_education_access$pending_components))
+  pending_reasons <- c(pending_reasons, higher_education_access$pending_reasons)
+  variables_used <- c(variables_used, higher_education_access$variables_used)
+
   incomplete_education <- .enemdu_build_ipm_incomplete_education_component(
     data = out,
     component_var = component_vars[["ipm_i03_logro_educativo_incompleto"]],
@@ -278,6 +466,30 @@ enemdu_build_ipm_components <- function(
   pending_reasons <- c(pending_reasons, incomplete_education$pending_reasons)
   variables_used <- c(variables_used, incomplete_education$variables_used)
 
+  child_adolescent_employment <- .enemdu_build_ipm_child_adolescent_employment_component(
+    data = out,
+    component_var = component_vars[["ipm_i04_empleo_infantil_adolescente"]],
+    household_id = household_id,
+    age_var = age_var,
+    attendance_var = attendance_var,
+    attendance_yes_codes = attendance_yes_codes,
+    attendance_no_codes = attendance_no_codes,
+    child_work_var = child_work_var,
+    child_hours_var = child_hours_var,
+    child_income_var = child_income_var,
+    child_sbu = child_sbu,
+    hours_sentinel_codes = hours_sentinel_codes,
+    income_negative_sentinel_codes = income_negative_sentinel_codes,
+    income_missing_sentinel_codes = income_missing_sentinel_codes,
+    overwrite = overwrite,
+    strict = strict
+  )
+  out <- child_adolescent_employment$data
+  built_components <- unique(c(built_components, child_adolescent_employment$built_components))
+  pending_components <- unique(c(pending_components, child_adolescent_employment$pending_components))
+  pending_reasons <- c(pending_reasons, child_adolescent_employment$pending_reasons)
+  variables_used <- c(variables_used, child_adolescent_employment$variables_used)
+
   labor_inadequate <- .enemdu_build_ipm_labor_inadequate_component(
     data = out,
     component_var = component_vars[["ipm_i05_desempleo_empleo_inadecuado"]],
@@ -293,6 +505,29 @@ enemdu_build_ipm_components <- function(
   pending_components <- unique(c(pending_components, labor_inadequate$pending_components))
   pending_reasons <- c(pending_reasons, labor_inadequate$pending_reasons)
   variables_used <- c(variables_used, labor_inadequate$variables_used)
+
+  pension_contribution <- .enemdu_build_ipm_pension_contribution_component(
+    data = out,
+    component_var = component_vars[["ipm_i06_no_contribucion_pensiones"]],
+    household_id = household_id,
+    age_var = age_var,
+    employment_var = child_work_var,
+    unemployment_var = unemployment_var,
+    social_security_var = social_security_var,
+    pension_income_var = pension_income_var,
+    human_development_bonus_var = human_development_bonus_var,
+    disability_bonus_var = disability_bonus_var,
+    social_security_contribution_codes = social_security_contribution_codes,
+    social_security_no_contribution_codes = social_security_no_contribution_codes,
+    social_security_unknown_codes = social_security_unknown_codes,
+    overwrite = overwrite,
+    strict = strict
+  )
+  out <- pension_contribution$data
+  built_components <- unique(c(built_components, pension_contribution$built_components))
+  pending_components <- unique(c(pending_components, pension_contribution$pending_components))
+  pending_reasons <- c(pending_reasons, pension_contribution$pending_reasons)
+  variables_used <- c(variables_used, pension_contribution$variables_used)
 
   sanitation <- .enemdu_build_ipm_sanitation_component(
     data = out,
@@ -328,15 +563,44 @@ enemdu_build_ipm_components <- function(
   pending_reasons <- c(pending_reasons, garbage$pending_reasons)
   variables_used <- c(variables_used, garbage$variables_used)
 
+  housing_deficit <- .enemdu_build_ipm_housing_deficit_component(
+    data = out,
+    component_var = component_vars[["ipm_i10_deficit_habitacional"]],
+    household_id = household_id,
+    roof_material_var = roof_material_var,
+    roof_state_var = roof_state_var,
+    floor_material_var = floor_material_var,
+    floor_state_var = floor_state_var,
+    wall_material_var = wall_material_var,
+    wall_state_var = wall_state_var,
+    housing_material_valid_codes = housing_material_valid_codes,
+    housing_state_valid_codes = housing_state_valid_codes,
+    deficit_roof_material_codes = deficit_roof_material_codes,
+    deficit_floor_material_codes = deficit_floor_material_codes,
+    deficit_wall_material_codes = deficit_wall_material_codes,
+    deficit_state_codes = deficit_state_codes,
+    overwrite = overwrite,
+    strict = strict
+  )
+  out <- housing_deficit$data
+  built_components <- unique(c(built_components, housing_deficit$built_components))
+  pending_components <- unique(c(pending_components, housing_deficit$pending_components))
+  pending_reasons <- c(pending_reasons, housing_deficit$pending_reasons)
+  variables_used <- c(variables_used, housing_deficit$variables_used)
+
   unavailable_indicator_ids <- setdiff(
     names(component_vars),
     c(
       "ipm_i01_inasistencia_basica_bach",
+      "ipm_i02_no_acceso_superior_economico",
       "ipm_i03_logro_educativo_incompleto",
+      "ipm_i04_empleo_infantil_adolescente",
       "ipm_i05_desempleo_empleo_inadecuado",
+      "ipm_i06_no_contribucion_pensiones",
       "ipm_i07_pobreza_extrema_ingresos",
       "ipm_i08_sin_agua_red_publica",
       "ipm_i09_hacinamiento",
+      "ipm_i10_deficit_habitacional",
       "ipm_i11_sin_saneamiento_excretas",
       "ipm_i12_sin_recoleccion_basura"
     )
@@ -845,6 +1109,306 @@ enemdu_build_ipm_components <- function(
   )
 }
 
+.enemdu_build_ipm_higher_education_access_component <- function(data,
+                                                                 component_var,
+                                                                 household_id,
+                                                                 age_var,
+                                                                 attendance_var,
+                                                                 attendance_yes_codes,
+                                                                 attendance_no_codes,
+                                                                 higher_education_reason_var,
+                                                                 higher_education_economic_reason_codes,
+                                                                 education_level_var,
+                                                                 education_grade_var,
+                                                                 bachillerato_completed_levels,
+                                                                 bachillerato_completed_min_grade,
+                                                                 overwrite,
+                                                                 strict) {
+  if (component_var %in% names(data) && !isTRUE(overwrite)) {
+    return(.enemdu_ipm_noop_component_result(data))
+  }
+
+  required_vars <- c(
+    household_id,
+    age_var,
+    attendance_var,
+    higher_education_reason_var,
+    education_level_var,
+    education_grade_var
+  )
+  missing_vars <- setdiff(required_vars, names(data))
+
+  if (length(missing_vars) > 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Missing source variables for higher-education access: ",
+        paste(missing_vars, collapse = ", "),
+        "."
+      )
+    ))
+  }
+
+  economic_reason_codes <- higher_education_economic_reason_codes
+  economic_reason_source <- "argument"
+
+  if (length(economic_reason_codes) == 0) {
+    economic_reason_codes <- .enemdu_ipm_infer_codes_from_labels(
+      values = data[[higher_education_reason_var]],
+      patterns = c("econ", "recurso", "dinero", "falta.*recurso")
+    )
+    economic_reason_source <- "value_labels"
+  }
+
+  if (length(economic_reason_codes) == 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Economic reason codes for higher-education access were not supplied ",
+        "and could not be inferred from source value labels."
+      )
+    ))
+  }
+
+  age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
+  attendance <- .enemdu_ipm_coerce_source_numeric(data[[attendance_var]], attendance_var)
+  reason <- .enemdu_ipm_coerce_source_numeric(
+    data[[higher_education_reason_var]],
+    higher_education_reason_var
+  )
+  education_level <- .enemdu_ipm_coerce_source_numeric(
+    data[[education_level_var]],
+    education_level_var
+  )
+  education_grade <- .enemdu_ipm_coerce_source_numeric(
+    data[[education_grade_var]],
+    education_grade_var
+  )
+
+  yes_codes <- .enemdu_ipm_validate_code_set(attendance_yes_codes, "attendance_yes_codes")
+  no_codes <- .enemdu_ipm_validate_code_set(attendance_no_codes, "attendance_no_codes")
+  valid_attendance_codes <- unique(c(yes_codes, no_codes))
+  invalid_attendance <- !is.na(attendance) & !(attendance %in% valid_attendance_codes)
+
+  applicable <- !is.na(age) & age >= 18 & age <= 29
+
+  if (any(applicable & invalid_attendance) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(attendance_var, valid_attendance_codes)
+  }
+
+  bachillerato_completed <- .enemdu_ipm_bachillerato_completed_2025(
+    education_level = education_level,
+    education_grade = education_grade,
+    completed_levels = bachillerato_completed_levels,
+    completed_min_grade = bachillerato_completed_min_grade
+  )
+
+  not_attending <- applicable & !is.na(attendance) & attendance %in% no_codes
+  person_deprivation <- rep(0L, length(age))
+  person_deprivation[is.na(age)] <- NA_integer_
+  person_deprivation[applicable & (is.na(attendance) | invalid_attendance)] <- NA_integer_
+  person_deprivation[not_attending & is.na(bachillerato_completed)] <- NA_integer_
+
+  candidate <- not_attending & bachillerato_completed %in% TRUE
+  person_deprivation[candidate & is.na(reason)] <- NA_integer_
+
+  observed_candidate <- candidate & !is.na(reason)
+  person_deprivation[observed_candidate] <- as.integer(
+    reason[observed_candidate] %in% economic_reason_codes
+  )
+
+  component <- .enemdu_ipm_household_max_complete(
+    household_id = data[[household_id]],
+    values = person_deprivation
+  )
+  .enemdu_ipm_abort_component_missing_if_strict(
+    component = component,
+    component_var = component_var,
+    strict = strict
+  )
+
+  out <- data
+  out[[component_var]] <- component
+
+  list(
+    data = out,
+    built_components = component_var,
+    pending_components = character(),
+    pending_reasons = list(),
+    variables_used = list(
+      higher_education_access = list(
+        source_vars = c(
+          household_id,
+          age_var,
+          attendance_var,
+          higher_education_reason_var,
+          education_level_var,
+          education_grade_var
+        ),
+        applicable_age_range = c(18, 29),
+        attendance_yes_codes = yes_codes,
+        attendance_no_codes = no_codes,
+        economic_reason_codes = economic_reason_codes,
+        economic_reason_source = economic_reason_source,
+        bachillerato_completed_levels = bachillerato_completed_levels,
+        bachillerato_completed_min_grade = bachillerato_completed_min_grade,
+        output_component = component_var,
+        rule_status = "profile_specific_operational_rule"
+      )
+    )
+  )
+}
+
+.enemdu_build_ipm_child_adolescent_employment_component <- function(data,
+                                                                    component_var,
+                                                                    household_id,
+                                                                    age_var,
+                                                                    attendance_var,
+                                                                    attendance_yes_codes,
+                                                                    attendance_no_codes,
+                                                                    child_work_var,
+                                                                    child_hours_var,
+                                                                    child_income_var,
+                                                                    child_sbu,
+                                                                    hours_sentinel_codes,
+                                                                    income_negative_sentinel_codes,
+                                                                    income_missing_sentinel_codes,
+                                                                    overwrite,
+                                                                    strict) {
+  if (component_var %in% names(data) && !isTRUE(overwrite)) {
+    return(.enemdu_ipm_noop_component_result(data))
+  }
+
+  required_vars <- c(
+    household_id,
+    age_var,
+    attendance_var,
+    child_work_var,
+    child_hours_var,
+    child_income_var
+  )
+  missing_vars <- setdiff(required_vars, names(data))
+
+  if (length(missing_vars) > 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Missing source variables for child and adolescent employment: ",
+        paste(missing_vars, collapse = ", "),
+        "."
+      )
+    ))
+  }
+
+  child_sbu <- .enemdu_ipm_single_positive_number(child_sbu, "child_sbu")
+  age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
+  attendance <- .enemdu_ipm_coerce_source_numeric(data[[attendance_var]], attendance_var)
+  work <- .enemdu_ipm_coerce_binary_source(data[[child_work_var]], child_work_var, strict)
+  hours <- .enemdu_ipm_coerce_source_numeric(data[[child_hours_var]], child_hours_var)
+  income <- .enemdu_ipm_coerce_source_numeric(data[[child_income_var]], child_income_var)
+
+  yes_codes <- .enemdu_ipm_validate_code_set(attendance_yes_codes, "attendance_yes_codes")
+  no_codes <- .enemdu_ipm_validate_code_set(attendance_no_codes, "attendance_no_codes")
+  valid_attendance_codes <- unique(c(yes_codes, no_codes))
+  invalid_attendance <- !is.na(attendance) & !(attendance %in% valid_attendance_codes)
+
+  child <- !is.na(age) & age >= 5 & age <= 14
+  adolescent <- !is.na(age) & age >= 15 & age <= 17
+  applicable <- child | adolescent
+  working <- !is.na(work) & work == 1
+  adolescent_working <- adolescent & working
+
+  invalid_hours <- !is.na(hours) & (
+    hours < 0 |
+      hours %in% hours_sentinel_codes
+  )
+  invalid_income <- !is.na(income) & (
+    income < 0 |
+      income %in% c(income_negative_sentinel_codes, income_missing_sentinel_codes)
+  )
+
+  if (any(adolescent_working & invalid_attendance) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(attendance_var, valid_attendance_codes)
+  }
+  if (any(adolescent_working & invalid_hours) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_values(child_hours_var)
+  }
+  if (any(adolescent_working & invalid_income) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_values(child_income_var)
+  }
+
+  person_deprivation <- rep(0L, length(age))
+  person_deprivation[is.na(age)] <- NA_integer_
+  person_deprivation[applicable & is.na(work)] <- NA_integer_
+
+  person_deprivation[child & working] <- 1L
+  person_deprivation[child & !is.na(work) & work == 0] <- 0L
+
+  not_attending <- !is.na(attendance) & attendance %in% no_codes
+  long_hours <- !is.na(hours) & !invalid_hours & hours > 30
+  low_income <- !is.na(income) & !invalid_income & income < child_sbu
+
+  adolescent_deprived <- adolescent_working & (not_attending | long_hours | low_income)
+  unknown_adolescent <- adolescent_working & (
+    is.na(attendance) |
+      invalid_attendance |
+      is.na(hours) |
+      invalid_hours |
+      is.na(income) |
+      invalid_income
+  )
+
+  person_deprivation[adolescent & !is.na(work) & work == 0] <- 0L
+  person_deprivation[adolescent_deprived] <- 1L
+  person_deprivation[adolescent_working & !adolescent_deprived & unknown_adolescent] <-
+    NA_integer_
+  person_deprivation[adolescent_working & !adolescent_deprived & !unknown_adolescent] <-
+    0L
+
+  component <- .enemdu_ipm_household_max_complete(
+    household_id = data[[household_id]],
+    values = person_deprivation
+  )
+  .enemdu_ipm_abort_component_missing_if_strict(
+    component = component,
+    component_var = component_var,
+    strict = strict
+  )
+
+  out <- data
+  out[[component_var]] <- component
+
+  list(
+    data = out,
+    built_components = component_var,
+    pending_components = character(),
+    pending_reasons = list(),
+    variables_used = list(
+      child_adolescent_employment = list(
+        source_vars = c(
+          household_id,
+          age_var,
+          attendance_var,
+          child_work_var,
+          child_hours_var,
+          child_income_var
+        ),
+        child_age_range = c(5, 14),
+        adolescent_age_range = c(15, 17),
+        attendance_no_codes = no_codes,
+        child_sbu = child_sbu,
+        hours_sentinel_codes = hours_sentinel_codes,
+        income_sentinel_codes = c(income_negative_sentinel_codes, income_missing_sentinel_codes),
+        output_component = component_var,
+        rule_status = "profile_specific_operational_rule"
+      )
+    )
+  )
+}
+
 .enemdu_build_ipm_labor_inadequate_component <- function(data,
                                                          component_var,
                                                          household_id,
@@ -969,6 +1533,366 @@ enemdu_build_ipm_components <- function(
           "Labor flags are derived only from the consolidated ENEMDU condact variable when needed.",
           "Sector variables such as secemp are intentionally ignored for this IPM component."
         )
+      )
+    )
+  )
+}
+
+.enemdu_build_ipm_pension_contribution_component <- function(data,
+                                                             component_var,
+                                                             household_id,
+                                                             age_var,
+                                                             employment_var,
+                                                             unemployment_var,
+                                                             social_security_var,
+                                                             pension_income_var,
+                                                             human_development_bonus_var,
+                                                             disability_bonus_var,
+                                                             social_security_contribution_codes,
+                                                             social_security_no_contribution_codes,
+                                                             social_security_unknown_codes,
+                                                             overwrite,
+                                                             strict) {
+  if (component_var %in% names(data) && !isTRUE(overwrite)) {
+    return(.enemdu_ipm_noop_component_result(data))
+  }
+
+required_vars <- c(
+  household_id,
+  age_var,
+  employment_var,
+  social_security_var,
+  pension_income_var,
+  human_development_bonus_var,
+  disability_bonus_var
+)
+  missing_vars <- setdiff(required_vars, names(data))
+
+  if (length(missing_vars) > 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Missing source variables for pension contribution: ",
+        paste(missing_vars, collapse = ", "),
+        "."
+      )
+    ))
+  }
+
+  age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
+  employment <- .enemdu_ipm_coerce_binary_source(data[[employment_var]], employment_var, strict)
+  unemployment_available <- !is.null(unemployment_var) &&
+    unemployment_var %in% names(data)
+
+  unemployment <- NULL
+
+  if (isTRUE(unemployment_available)) {
+    unemployment <- .enemdu_ipm_coerce_binary_source(
+      data[[unemployment_var]],
+      unemployment_var,
+      strict
+    )
+  }
+  social_security <- .enemdu_ipm_coerce_source_numeric(
+    data[[social_security_var]],
+    social_security_var
+  )
+  pension <- .enemdu_ipm_yes_no_source(data[[pension_income_var]], pension_income_var, strict)
+  bonus <- .enemdu_ipm_yes_no_source(
+    data[[human_development_bonus_var]],
+    human_development_bonus_var,
+    strict
+  )
+  disability_bonus <- .enemdu_ipm_yes_no_source(
+    data[[disability_bonus_var]],
+    disability_bonus_var,
+    strict
+  )
+
+  valid_social_security_codes <- unique(c(
+    social_security_contribution_codes,
+    social_security_no_contribution_codes,
+    social_security_unknown_codes
+  ))
+  invalid_social_security <- !is.na(social_security) &
+    !(social_security %in% valid_social_security_codes)
+
+  if (any(invalid_social_security) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(
+      social_security_var,
+      valid_social_security_codes
+    )
+  }
+
+  contributes <- !is.na(social_security) &
+    !invalid_social_security &
+    social_security %in% social_security_contribution_codes
+  no_contribution <- !is.na(social_security) &
+    !invalid_social_security &
+    social_security %in% social_security_no_contribution_codes
+  unknown_contribution <- is.na(social_security) |
+    invalid_social_security |
+    social_security %in% social_security_unknown_codes
+
+  person_deprivation <- rep(0L, length(age))
+  person_deprivation[is.na(age)] <- NA_integer_
+
+  age_15_plus <- !is.na(age) & age >= 15
+  employed <- age_15_plus & !is.na(employment) & employment == 1
+  employment_unknown <- age_15_plus & is.na(employment)
+  person_deprivation[employment_unknown] <- NA_integer_
+
+  employed_under_65 <- employed & age < 65
+  person_deprivation[employed_under_65 & contributes] <- 0L
+  person_deprivation[employed_under_65 & no_contribution] <- 1L
+  person_deprivation[employed_under_65 & unknown_contribution] <- NA_integer_
+
+  employed_65_plus <- employed & age >= 65
+  person_deprivation[employed_65_plus & pension$yes] <- 0L
+  person_deprivation[employed_65_plus & !pension$yes & contributes] <- 0L
+  person_deprivation[employed_65_plus & pension$no & no_contribution] <- 1L
+  person_deprivation[
+    employed_65_plus &
+      !pension$yes &
+      !contributes &
+      (pension$unknown | unknown_contribution)
+  ] <- NA_integer_
+
+  older_not_employed <- age_15_plus & age >= 65 & !is.na(employment) & employment == 0
+  benefit_yes <- pension$yes | bonus$yes | disability_bonus$yes
+  benefit_all_no <- pension$no & bonus$no & disability_bonus$no
+  benefit_unknown <- !benefit_yes & !benefit_all_no
+
+  person_deprivation[older_not_employed & benefit_yes] <- 0L
+  person_deprivation[older_not_employed & benefit_all_no] <- 1L
+  person_deprivation[older_not_employed & benefit_unknown] <- NA_integer_
+
+  component <- .enemdu_ipm_household_max_complete(
+    household_id = data[[household_id]],
+    values = person_deprivation
+  )
+  .enemdu_ipm_abort_component_missing_if_strict(
+    component = component,
+    component_var = component_var,
+    strict = strict
+  )
+
+  out <- data
+  out[[component_var]] <- component
+
+  list(
+    data = out,
+    built_components = component_var,
+    pending_components = character(),
+    pending_reasons = list(),
+    variables_used = list(
+      pension_contribution = list(
+        source_vars = c(
+          household_id,
+          age_var,
+          employment_var,
+          social_security_var,
+          pension_income_var,
+          human_development_bonus_var,
+          disability_bonus_var
+        ),
+        contribution_codes = social_security_contribution_codes,
+        no_contribution_codes = social_security_no_contribution_codes,
+        unknown_codes = social_security_unknown_codes,
+        pension_exception_age_min = 65,
+        disability_bonus_note = "The disability bonus input is treated as a profile-specific proxy.",
+        unemployment_var_available = !is.null(unemployment),
+        unemployment_var_used_for_diagnostics = if (!is.null(unemployment)) {
+          unemployment_var
+        } else {
+          NA_character_
+        },
+        unemployment_missing_n = if (!is.null(unemployment)) {
+          sum(is.na(unemployment))
+        } else {
+          NA_integer_
+        },
+        output_component = component_var,
+        rule_status = "profile_specific_operational_rule"
+      )
+    )
+  )
+}
+
+.enemdu_build_ipm_housing_deficit_component <- function(data,
+                                                        component_var,
+                                                        household_id,
+                                                        roof_material_var,
+                                                        roof_state_var,
+                                                        floor_material_var,
+                                                        floor_state_var,
+                                                        wall_material_var,
+                                                        wall_state_var,
+                                                        housing_material_valid_codes,
+                                                        housing_state_valid_codes,
+                                                        deficit_roof_material_codes,
+                                                        deficit_floor_material_codes,
+                                                        deficit_wall_material_codes,
+                                                        deficit_state_codes,
+                                                        overwrite,
+                                                        strict) {
+  if (component_var %in% names(data) && !isTRUE(overwrite)) {
+    return(.enemdu_ipm_noop_component_result(data))
+  }
+
+  required_vars <- c(
+    household_id,
+    roof_material_var,
+    roof_state_var,
+    floor_material_var,
+    floor_state_var,
+    wall_material_var,
+    wall_state_var
+  )
+  missing_vars <- setdiff(required_vars, names(data))
+
+  if (length(missing_vars) > 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Missing source variables for housing deficit: ",
+        paste(missing_vars, collapse = ", "),
+        "."
+      )
+    ))
+  }
+
+  roof_material <- .enemdu_ipm_coerce_source_numeric(data[[roof_material_var]], roof_material_var)
+  floor_material <- .enemdu_ipm_coerce_source_numeric(data[[floor_material_var]], floor_material_var)
+  wall_material <- .enemdu_ipm_coerce_source_numeric(data[[wall_material_var]], wall_material_var)
+  roof_state <- .enemdu_ipm_coerce_source_numeric(data[[roof_state_var]], roof_state_var)
+  floor_state <- .enemdu_ipm_coerce_source_numeric(data[[floor_state_var]], floor_state_var)
+  wall_state <- .enemdu_ipm_coerce_source_numeric(data[[wall_state_var]], wall_state_var)
+
+  material_vars <- c(roof_material_var, floor_material_var, wall_material_var)
+  if (length(housing_material_valid_codes) == 0) {
+    housing_material_valid_codes <- .enemdu_ipm_infer_code_set_from_labels(
+      data = data,
+      vars = material_vars
+    )
+    material_validation_source <- if (length(housing_material_valid_codes) > 0) {
+      "value_labels"
+    } else {
+      "not_configured"
+    }
+  } else {
+    material_validation_source <- "argument"
+  }
+
+  invalid_roof_material <- .enemdu_ipm_invalid_against_optional_codes(
+    roof_material,
+    housing_material_valid_codes
+  )
+  invalid_floor_material <- .enemdu_ipm_invalid_against_optional_codes(
+    floor_material,
+    housing_material_valid_codes
+  )
+  invalid_wall_material <- .enemdu_ipm_invalid_against_optional_codes(
+    wall_material,
+    housing_material_valid_codes
+  )
+  invalid_roof_state <- !is.na(roof_state) & !(roof_state %in% housing_state_valid_codes)
+  invalid_floor_state <- !is.na(floor_state) & !(floor_state %in% housing_state_valid_codes)
+  invalid_wall_state <- !is.na(wall_state) & !(wall_state %in% housing_state_valid_codes)
+
+  if (any(invalid_roof_state | invalid_floor_state | invalid_wall_state) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(
+      paste(c(roof_state_var, floor_state_var, wall_state_var), collapse = ", "),
+      housing_state_valid_codes
+    )
+  }
+  if (
+    any(invalid_roof_material | invalid_floor_material | invalid_wall_material) &&
+      isTRUE(strict)
+  ) {
+    .enemdu_abort_invalid_ipm_source_codes(
+      paste(material_vars, collapse = ", "),
+      housing_material_valid_codes
+    )
+  }
+
+  bad_state <- .enemdu_ipm_any_true(
+    roof_state %in% deficit_state_codes & !invalid_roof_state,
+    floor_state %in% deficit_state_codes & !invalid_floor_state,
+    wall_state %in% deficit_state_codes & !invalid_wall_state
+  )
+
+  material_sets_configured <- any(lengths(list(
+    deficit_roof_material_codes,
+    deficit_floor_material_codes,
+    deficit_wall_material_codes
+  )) > 0)
+  material_deficit <- .enemdu_ipm_any_true(
+    roof_material %in% deficit_roof_material_codes & !invalid_roof_material,
+    floor_material %in% deficit_floor_material_codes & !invalid_floor_material,
+    wall_material %in% deficit_wall_material_codes & !invalid_wall_material
+  )
+
+  source_unknown <- is.na(roof_state) |
+    is.na(floor_state) |
+    is.na(wall_state) |
+    invalid_roof_state |
+    invalid_floor_state |
+    invalid_wall_state
+
+  if (isTRUE(material_sets_configured)) {
+    source_unknown <- source_unknown |
+      is.na(roof_material) |
+      is.na(floor_material) |
+      is.na(wall_material) |
+      invalid_roof_material |
+      invalid_floor_material |
+      invalid_wall_material
+  }
+
+  row_component <- rep(NA_integer_, length(roof_state))
+  row_component[bad_state | material_deficit] <- 1L
+  row_component[!bad_state & !material_deficit & !source_unknown] <- 0L
+
+  component <- .enemdu_ipm_household_max_complete(
+    household_id = data[[household_id]],
+    values = row_component
+  )
+  .enemdu_ipm_abort_component_missing_if_strict(
+    component = component,
+    component_var = component_var,
+    strict = strict
+  )
+
+  out <- data
+  out[[component_var]] <- component
+
+  rule <- if (isTRUE(material_sets_configured)) {
+    "deficit_by_bad_state_or_configured_material_sets"
+  } else {
+    "deficit_by_bad_state_only_when_material_sets_not_configured"
+  }
+
+  list(
+    data = out,
+    built_components = component_var,
+    pending_components = character(),
+    pending_reasons = list(),
+    variables_used = list(
+      housing_deficit = list(
+        source_vars = required_vars,
+        housing_material_valid_codes = housing_material_valid_codes,
+        material_validation_source = material_validation_source,
+        housing_state_valid_codes = housing_state_valid_codes,
+        deficit_roof_material_codes = deficit_roof_material_codes,
+        deficit_floor_material_codes = deficit_floor_material_codes,
+        deficit_wall_material_codes = deficit_wall_material_codes,
+        deficit_state_codes = deficit_state_codes,
+        output_component = component_var,
+        rule = rule,
+        rule_status = "profile_specific_operational_rule"
       )
     )
   )
@@ -1185,6 +2109,43 @@ enemdu_build_ipm_components <- function(
   numeric_values
 }
 
+.enemdu_ipm_coerce_binary_source <- function(values, var, strict) {
+  numeric_values <- .enemdu_ipm_coerce_source_numeric(values, var)
+  invalid <- !is.na(numeric_values) & !(numeric_values %in% c(0, 1))
+
+  if (any(invalid) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(var, c(0, 1))
+  }
+
+  numeric_values[invalid] <- NA_real_
+  numeric_values
+}
+
+.enemdu_ipm_yes_no_source <- function(values, var, strict) {
+  numeric_values <- .enemdu_ipm_coerce_source_numeric(values, var)
+  invalid <- !is.na(numeric_values) & !(numeric_values %in% c(1, 2))
+
+  if (any(invalid) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(var, c(1, 2))
+  }
+
+  numeric_values[invalid] <- NA_real_
+
+  list(
+    yes = !is.na(numeric_values) & numeric_values == 1,
+    no = !is.na(numeric_values) & numeric_values == 2,
+    unknown = is.na(numeric_values)
+  )
+}
+
+.enemdu_ipm_optional_code_set <- function(codes, arg) {
+  if (is.null(codes)) {
+    return(numeric(0))
+  }
+
+  .enemdu_ipm_validate_code_set(codes, arg)
+}
+
 .enemdu_ipm_validate_code_set <- function(codes, arg) {
   numeric_codes <- .enemdu_coerce_ipm_numeric(codes)
 
@@ -1202,6 +2163,138 @@ enemdu_build_ipm_components <- function(
   unique(numeric_codes)
 }
 
+.enemdu_ipm_single_positive_number <- function(value, arg) {
+  numeric_value <- suppressWarnings(as.numeric(value))
+
+  if (
+    length(numeric_value) != 1 ||
+      is.na(numeric_value) ||
+      !is.finite(numeric_value) ||
+      numeric_value <= 0
+  ) {
+    rlang::abort(
+      message = glue::glue("`{arg}` must be a single positive number."),
+      class = c("enemdu_error_invalid_ipm_component_input", "enemdu_error")
+    )
+  }
+
+  numeric_value
+}
+
+.enemdu_ipm_bachillerato_completed_2025 <- function(education_level,
+                                                    education_grade,
+                                                    completed_levels,
+                                                    completed_min_grade) {
+  if (length(completed_levels) > 0 || length(completed_min_grade) > 0) {
+    if (length(completed_levels) == 0 || length(completed_min_grade) == 0) {
+      rlang::abort(
+        message = paste(
+          "`bachillerato_completed_levels` and",
+          "`bachillerato_completed_min_grade` must be supplied together."
+        ),
+        class = c("enemdu_error_invalid_ipm_component_input", "enemdu_error")
+      )
+    }
+
+    if (length(completed_min_grade) == 1) {
+      completed_min_grade <- rep(completed_min_grade, length(completed_levels))
+    }
+
+    if (length(completed_min_grade) != length(completed_levels)) {
+      rlang::abort(
+        message = paste(
+          "`bachillerato_completed_min_grade` must have length 1 or match",
+          "`bachillerato_completed_levels`."
+        ),
+        class = c("enemdu_error_invalid_ipm_component_input", "enemdu_error")
+      )
+    }
+
+    completed <- rep(FALSE, length(education_level))
+
+    for (i in seq_along(completed_levels)) {
+      rows <- !is.na(education_level) & education_level == completed_levels[[i]]
+      completed[rows & is.na(education_grade)] <- NA
+      observed <- rows & !is.na(education_grade)
+      completed[observed] <- education_grade[observed] >= completed_min_grade[[i]]
+    }
+
+    completed[is.na(education_level)] <- NA
+    return(completed)
+  }
+
+  schooling_years <- .enemdu_ipm_schooling_years_2025(
+    education_level = education_level,
+    education_grade = education_grade
+  )
+  completed <- schooling_years >= 13
+  completed[is.na(schooling_years)] <- NA
+  completed
+}
+
+.enemdu_ipm_label_codes <- function(values) {
+  labels <- attr(values, "labels", exact = TRUE)
+
+  if (is.null(labels) || length(labels) == 0) {
+    return(numeric(0))
+  }
+
+  numeric_labels <- suppressWarnings(as.numeric(labels))
+  unique(numeric_labels[!is.na(numeric_labels)])
+}
+
+.enemdu_ipm_infer_codes_from_labels <- function(values, patterns) {
+  labels <- attr(values, "labels", exact = TRUE)
+
+  if (is.null(labels) || length(labels) == 0 || is.null(names(labels))) {
+    return(numeric(0))
+  }
+
+  label_text <- tolower(iconv(names(labels), to = "ASCII//TRANSLIT"))
+  matched <- rep(FALSE, length(label_text))
+
+  for (pattern in patterns) {
+    matched <- matched | grepl(pattern, label_text, perl = TRUE)
+  }
+
+  numeric_labels <- suppressWarnings(as.numeric(labels[matched]))
+  unique(numeric_labels[!is.na(numeric_labels)])
+}
+
+.enemdu_ipm_infer_code_set_from_labels <- function(data, vars) {
+  codes <- unlist(lapply(vars, function(var) {
+    .enemdu_ipm_label_codes(data[[var]])
+  }), use.names = FALSE)
+
+  unique(codes[!is.na(codes)])
+}
+
+.enemdu_ipm_invalid_against_optional_codes <- function(values, valid_codes) {
+  if (length(valid_codes) == 0) {
+    return(rep(FALSE, length(values)))
+  }
+
+  !is.na(values) & !(values %in% valid_codes)
+}
+
+.enemdu_ipm_any_true <- function(...) {
+  values <- list(...)
+
+  if (length(values) == 0) {
+    return(logical())
+  }
+
+  out <- values[[1]]
+
+  if (length(values) > 1) {
+    for (i in 2:length(values)) {
+      out <- out | values[[i]]
+    }
+  }
+
+  out
+}
+
 .enemdu_abort_invalid_ipm_source_codes <- function(var, valid_codes) {
   rlang::abort(
     message = glue::glue(
@@ -1209,6 +2302,15 @@ enemdu_build_ipm_components <- function(
       "{paste(valid_codes, collapse = ', ')}."
     ),
     class = c("enemdu_error_invalid_ipm_source_codes", "enemdu_error")
+  )
+}
+
+.enemdu_abort_invalid_ipm_source_values <- function(var) {
+  rlang::abort(
+    message = glue::glue(
+      "IPM source variable `{var}` contains sentinel or invalid values for this rule."
+    ),
+    class = c("enemdu_error_invalid_ipm_source_values", "enemdu_error")
   )
 }
 
