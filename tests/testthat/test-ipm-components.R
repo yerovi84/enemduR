@@ -518,6 +518,38 @@ test_that("IPM pension contribution treats unknown contribution as non-evaluable
   expect_true(is.na(out[[component]][out$id_hogar == "h4"]))
 })
 
+test_that("IPM pension contribution component does not require unemployment diagnostics", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h2"),
+    p01 = c(1, 1),
+    p03 = c(30, 30),
+    empleo = c(1L, 1L),
+    p61b1 = c(1L, 5L),
+    p72a = c(2L, 2L),
+    p75 = c(2L, 2L),
+    p77 = c(2L, 2L)
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    household_id = "id_hogar",
+    person_id = "p01",
+    strict = FALSE,
+    overwrite = TRUE,
+    unemployment_var = "desempleo"
+  )
+
+  expect_true(component %in% names(out))
+  expect_equal(out[[component]][out$id_hogar == "h1"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "h2"], 1L)
+
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expect_false("desempleo" %in% diagnostics$variables_used$pension_contribution$source_vars)
+  expect_false(isTRUE(diagnostics$variables_used$pension_contribution$unemployment_var_available))
+})
+
 test_that("IPM housing deficit uses state and configured material rules", {
   component <- .ipm_component_name("ipm_i10_deficit_habitacional")
   data <- .ipm_operational_component_data()

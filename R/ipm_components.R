@@ -1557,16 +1557,15 @@ enemdu_build_ipm_components <- function(
     return(.enemdu_ipm_noop_component_result(data))
   }
 
-  required_vars <- c(
-    household_id,
-    age_var,
-    employment_var,
-    unemployment_var,
-    social_security_var,
-    pension_income_var,
-    human_development_bonus_var,
-    disability_bonus_var
-  )
+required_vars <- c(
+  household_id,
+  age_var,
+  employment_var,
+  social_security_var,
+  pension_income_var,
+  human_development_bonus_var,
+  disability_bonus_var
+)
   missing_vars <- setdiff(required_vars, names(data))
 
   if (length(missing_vars) > 0) {
@@ -1583,7 +1582,18 @@ enemdu_build_ipm_components <- function(
 
   age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
   employment <- .enemdu_ipm_coerce_binary_source(data[[employment_var]], employment_var, strict)
-  unemployment <- .enemdu_ipm_coerce_binary_source(data[[unemployment_var]], unemployment_var, strict)
+  unemployment_available <- !is.null(unemployment_var) &&
+    unemployment_var %in% names(data)
+
+  unemployment <- NULL
+
+  if (isTRUE(unemployment_available)) {
+    unemployment <- .enemdu_ipm_coerce_binary_source(
+      data[[unemployment_var]],
+      unemployment_var,
+      strict
+    )
+  }
   social_security <- .enemdu_ipm_coerce_source_numeric(
     data[[social_security_var]],
     social_security_var
@@ -1682,7 +1692,6 @@ enemdu_build_ipm_components <- function(
           household_id,
           age_var,
           employment_var,
-          unemployment_var,
           social_security_var,
           pension_income_var,
           human_development_bonus_var,
@@ -1693,8 +1702,17 @@ enemdu_build_ipm_components <- function(
         unknown_codes = social_security_unknown_codes,
         pension_exception_age_min = 65,
         disability_bonus_note = "The disability bonus input is treated as a profile-specific proxy.",
-        unemployment_var_used_for_diagnostics = unemployment_var,
-        unemployment_missing_n = sum(is.na(unemployment)),
+        unemployment_var_available = !is.null(unemployment),
+        unemployment_var_used_for_diagnostics = if (!is.null(unemployment)) {
+          unemployment_var
+        } else {
+          NA_character_
+        },
+        unemployment_missing_n = if (!is.null(unemployment)) {
+          sum(is.na(unemployment))
+        } else {
+          NA_integer_
+        },
         output_component = component_var,
         rule_status = "profile_specific_operational_rule"
       )
