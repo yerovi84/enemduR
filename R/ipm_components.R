@@ -904,6 +904,10 @@ enemdu_build_ipm_components <- function(
   names(flag_matrix) <- labor_inadequate_flags
 
   person_deprivation <- rep(0L, length(age))
+
+    # The Ecuador IPM component "desempleo o empleo inadecuado" applies to
+  # people aged 18 years and older. This cutoff intentionally differs from
+  # the general ENEMDU labor helper working-age cutoff.
   applicable <- !is.na(age) & age >= 18
   row_missing_flag <- !stats::complete.cases(flag_matrix)
   any_inadequate <- rowSums(flag_matrix == 1, na.rm = TRUE) > 0

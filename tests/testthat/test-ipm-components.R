@@ -271,6 +271,48 @@ test_that("IPM component builder derives inadequate employment from consolidated
   expect_equal(out[[labor_component]][out$id_hogar == "h4"], 1L)
 })
 
+test_that("IPM inadequate employment component uses the official 18+ universe", {
+  output_component <- "ipm_i05_desempleo_empleo_inadecuado_flag"
+
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h2"),
+    p01 = c(1, 1),
+    p03 = c(17, 18),
+    labor_desempleo = c(1L, 1L),
+    labor_subempleo = c(0L, 0L),
+    labor_otro_empleo_no_pleno = c(0L, 0L),
+    labor_empleo_no_remunerado = c(0L, 0L),
+    labor_empleo_no_clasificado = c(0L, 0L)
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    household_id = "id_hogar",
+    person_id = "p01",
+    strict = FALSE,
+    overwrite = TRUE,
+    labor_inadequate_flags = c(
+      "labor_desempleo",
+      "labor_subempleo",
+      "labor_otro_empleo_no_pleno",
+      "labor_empleo_no_remunerado",
+      "labor_empleo_no_clasificado"
+    )
+  )
+
+  expect_true(output_component %in% names(out))
+
+  expect_equal(
+    out[[output_component]][out$id_hogar == "h1"],
+    0L
+  )
+
+  expect_equal(
+    out[[output_component]][out$id_hogar == "h2"],
+    1L
+  )
+})
+
 test_that("IPM component builder does not create score, flags, or aggregate columns", {
   out <- enemdu_build_ipm_components(.ipm_component_test_data(), strict = FALSE)
 
