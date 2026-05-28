@@ -167,6 +167,16 @@ if (!exists("enemdu_build_ipm_components")) {
   )
 }
 
+.ipm_build_component_policy_data <- function(data, strict = FALSE, ...) {
+  enemdu_build_ipm_components(
+    data,
+    strict = strict,
+    overwrite = TRUE,
+    higher_education_economic_reason_codes = 3,
+    ...
+  )
+}
+
 test_that("IPM component builder exists and is exported", {
   expect_true(exists("enemdu_build_ipm_components"))
   expect_true("enemdu_build_ipm_components" %in% getNamespaceExports("enemduR"))
@@ -232,6 +242,31 @@ test_that("IPM component builder accepts epobreza alias for extreme poverty", {
   extreme_component <- .ipm_component_name("ipm_i07_pobreza_extrema_ingresos")
 
   expect_equal(out[[extreme_component]], data$epobreza)
+})
+
+test_that("IPM extreme poverty fallback fills only missing binary flags", {
+  component <- .ipm_component_name("ipm_i07_pobreza_extrema_ingresos")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:4),
+    p01 = 1L,
+    expobre = c(1L, NA_integer_, NA_integer_, NA_integer_),
+    ingpc = c(1000, 40, 60, NA)
+  )
+
+  out <- .ipm_build_component_policy_data(
+    data,
+    extreme_poverty_income_var = "ingpc",
+    extreme_poverty_line = 52.07
+  )
+  expect_equal(out[[component]], c(1, 1, 0, NA))
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  extreme_diagnostics <- diagnostics$variables_used$extreme_income_poverty
+  expect_equal(extreme_diagnostics$fallback_filled_n, 2L)
+  expect_equal(extreme_diagnostics$fallback_missing_income_n, 1L)
+  expect_equal(extreme_diagnostics$still_missing_n, 1L)
+
+  out_without_fallback <- .ipm_build_component_policy_data(data)
+  expect_equal(out_without_fallback[[component]], c(1, NA, NA, NA))
 })
 
 test_that("IPM component builder aborts when expobre and other components are pending in strict mode", {
@@ -441,6 +476,97 @@ test_that("IPM child and adolescent employment applies age-specific rules", {
   expect_equal(out[[component]][out$id_hogar == "h4"], 0L)
 })
 
+test_that("IPM child and adolescent employment applies NA policy by applicability", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = c("no_applicable", "no_applicable", "non_working", "working_child",
+                 "not_attending_adolescent", "adult_missing"),
+    p01 = c(1, 2, 1, 1, 1, 1),
+    p03 = c(30, 70, 10, 10, 16, 30),
+    p07 = c(NA, NA, NA, NA, 2, NA),
+    empleo = c(NA, NA, 0, 1, 1, NA),
+    p24 = c(NA, NA, NA, NA, NA, 999),
+    ingrl = c(NA, NA, NA, NA, NA, 999999),
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data)
+
+  expect_equal(out[[component]][out$id_hogar == "no_applicable"], c(0L, 0L))
+  expect_equal(out[[component]][out$id_hogar == "non_working"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "working_child"], 1L)
+  expect_equal(out[[component]][out$id_hogar == "not_attending_adolescent"], 1L)
+  expect_equal(out[[component]][out$id_hogar == "adult_missing"], 0L)
+
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  child_diagnostics <- diagnostics$variables_used$child_adolescent_employment
+  expect_equal(child_diagnostics$applicable_persons_n, 3L)
+  expect_equal(child_diagnostics$working_adolescents_unknown_hours_n, 1L)
+  expect_equal(child_diagnostics$working_adolescents_unknown_income_n, 1L)
+  expect_equal(child_diagnostics$household_na_n, 0L)
+})
+
+test_that("IPM child and adolescent employment treats ENEMDU employment NA by policy", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = c("child_na", "adolescent_na", "adult_missing", "not_attending_sentinel"),
+    p01 = 1L,
+    p03 = c(10, 16, 30, 16),
+    p07 = c(NA, 1, NA, 2),
+    empleo = c(NA, NA, NA, 1),
+    p24 = c(NA, NA, 999, 999),
+    ingrl = c(NA, NA, 999999, 999999),
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data)
+
+  expect_equal(out[[component]][out$id_hogar == "child_na"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "adolescent_na"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "adult_missing"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "not_attending_sentinel"], 1L)
+
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  child_diagnostics <- diagnostics$variables_used$child_adolescent_employment
+  expect_true(child_diagnostics$employment_na_as_not_employed)
+  expect_equal(child_diagnostics$employment_na_treated_as_not_employed_n, 2L)
+  expect_equal(child_diagnostics$remaining_unknown_employment_cases_n, 0L)
+  expect_equal(child_diagnostics$working_adolescents_unknown_hours_n, 1L)
+  expect_equal(child_diagnostics$working_adolescents_unknown_income_n, 1L)
+
+  out_unknown <- .ipm_build_component_policy_data(
+    data,
+    employment_na_as_not_employed = FALSE
+  )
+  expect_true(is.na(out_unknown[[component]][out_unknown$id_hogar == "child_na"]))
+  expect_true(is.na(out_unknown[[component]][out_unknown$id_hogar == "adolescent_na"]))
+  expect_equal(out_unknown[[component]][out_unknown$id_hogar == "adult_missing"], 0L)
+})
+
+test_that("IPM child and adolescent employment leaves undecidable adolescents as NA", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = "h1",
+    p01 = 1L,
+    p03 = 16,
+    p07 = 1,
+    empleo = 1,
+    p24 = 999,
+    ingrl = 600,
+    vi10 = 1,
+    vi07 = 1,
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data, strict = FALSE)
+  expect_true(is.na(out[[component]]))
+
+  expect_error(
+    .ipm_build_component_policy_data(data, strict = TRUE),
+    class = "enemdu_error_invalid_ipm_source_values"
+  )
+})
+
 test_that("IPM child and adolescent employment rejects hour and income sentinels", {
   component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
   data <- .ipm_operational_component_data()
@@ -485,11 +611,11 @@ test_that("IPM pension contribution applies contribution and older-person except
   expect_equal(out[[component]][out$id_hogar == "h4"], 1L)
 
   data$p03[7] <- 65
+  data$empleo[7] <- 0
   data$p72a[7] <- 1
   out <- .ipm_build_complete_components(data)
   expect_equal(out[[component]][out$id_hogar == "h4"], 0L)
 
-  data$empleo[7] <- 0
   data$desempleo[7] <- 0
   data$p72a[7] <- 2
   data$p75[7] <- 2
@@ -500,6 +626,79 @@ test_that("IPM pension contribution applies contribution and older-person except
   data$p77[7] <- 1
   out <- .ipm_build_complete_components(data)
   expect_equal(out[[component]][out$id_hogar == "h4"], 0L)
+})
+
+test_that("IPM pension contribution applies NA policy by applicable case", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = c("under_15", "non_employed_15_64", "contributes",
+                 "no_contribution", "older_benefit", "older_all_no"),
+    p01 = 1L,
+    p03 = c(14, 30, 30, 30, 65, 65),
+    empleo = c(NA, 0, 1, 1, 0, 0),
+    p61b1 = c(NA, NA, 1, 5, NA, NA),
+    p72a = c(NA, NA, NA, NA, 1, 2),
+    p75 = c(NA, NA, NA, NA, NA, 2),
+    p77 = c(NA, NA, NA, NA, NA, 2),
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data)
+
+  expect_equal(out[[component]][out$id_hogar == "under_15"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "non_employed_15_64"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "contributes"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "no_contribution"], 1L)
+  expect_equal(out[[component]][out$id_hogar == "older_benefit"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "older_all_no"], 1L)
+
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  pension_diagnostics <- diagnostics$variables_used$pension_contribution
+  expect_equal(pension_diagnostics$occupied_15_plus_evaluated_n, 2L)
+  expect_equal(pension_diagnostics$occupied_15_plus_unknown_contribution_n, 0L)
+  expect_equal(pension_diagnostics$older_non_employed_evaluated_n, 2L)
+  expect_equal(pension_diagnostics$older_non_employed_unknown_benefit_status_n, 0L)
+  expect_equal(pension_diagnostics$household_na_n, 0L)
+})
+
+test_that("IPM pension contribution treats ENEMDU employment NA by policy", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = c("under_15", "na_15_64", "older_all_no", "older_benefit",
+                 "occupied_contributes", "occupied_no_contribution"),
+    p01 = 1L,
+    p03 = c(14, 30, 65, 65, 30, 30),
+    empleo = c(NA, NA, NA, NA, 1, 1),
+    p61b1 = c(NA, NA, NA, NA, 1, 5),
+    p72a = c(NA, NA, 2, 1, NA, NA),
+    p75 = c(NA, NA, 2, NA, NA, NA),
+    p77 = c(NA, NA, 2, NA, NA, NA),
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data)
+
+  expect_equal(out[[component]][out$id_hogar == "under_15"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "na_15_64"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "older_all_no"], 1L)
+  expect_equal(out[[component]][out$id_hogar == "older_benefit"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "occupied_contributes"], 0L)
+  expect_equal(out[[component]][out$id_hogar == "occupied_no_contribution"], 1L)
+
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  pension_diagnostics <- diagnostics$variables_used$pension_contribution
+  expect_true(pension_diagnostics$employment_na_as_not_employed)
+  expect_equal(pension_diagnostics$employment_na_treated_as_not_employed_15_plus_n, 3L)
+  expect_equal(pension_diagnostics$remaining_unknown_employment_cases_n, 0L)
+  expect_equal(pension_diagnostics$occupied_15_plus_evaluated_n, 2L)
+  expect_equal(pension_diagnostics$older_non_employed_evaluated_n, 2L)
+
+  out_unknown <- .ipm_build_component_policy_data(
+    data,
+    employment_na_as_not_employed = FALSE
+  )
+  expect_equal(out_unknown[[component]][out_unknown$id_hogar == "under_15"], 0L)
+  expect_true(is.na(out_unknown[[component]][out_unknown$id_hogar == "na_15_64"]))
 })
 
 test_that("IPM pension contribution treats unknown contribution as non-evaluable", {
@@ -516,6 +715,30 @@ test_that("IPM pension contribution treats unknown contribution as non-evaluable
 
   out <- .ipm_build_complete_components(data, strict = FALSE)
   expect_true(is.na(out[[component]][out$id_hogar == "h4"]))
+})
+
+test_that("IPM pension contribution leaves unknown older benefit status as non-evaluable", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = "h1",
+    p01 = 1L,
+    p03 = 65,
+    empleo = 0,
+    p72a = NA,
+    p75 = 2,
+    p77 = 2,
+    vi10 = 1,
+    vi07 = 1,
+    expobre = 0L
+  )
+
+  out <- .ipm_build_component_policy_data(data, strict = FALSE)
+  expect_true(is.na(out[[component]]))
+
+  expect_error(
+    .ipm_build_component_policy_data(data, strict = TRUE),
+    class = "enemdu_error_missing_ipm_component_derivation"
+  )
 })
 
 test_that("IPM pension contribution component does not require unemployment diagnostics", {

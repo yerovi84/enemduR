@@ -30,6 +30,13 @@
 #' pending or when implemented source values are invalid or missing.
 #' @param extreme_poverty_var Precomputed binary extreme-income-poverty flag.
 #' Defaults to `"expobre"`.
+#' @param extreme_poverty_income_var Optional per-capita income variable used
+#' only to fill missing values in the selected `extreme_poverty_var` or alias
+#' when `extreme_poverty_line` is also supplied. This local reproducibility
+#' fallback does not constitute official validation by itself.
+#' @param extreme_poverty_line Optional extreme-poverty line used with
+#' `extreme_poverty_income_var` to fill missing selected binary-flag cases via
+#' `income < line`. The line is never hard-coded by this builder.
 #' @param build_from_precomputed Logical. If `TRUE`, existing registered
 #' component columns are accepted as precomputed inputs after binary validation.
 #' @param water_public_network_codes Codes that identify public-network water in
@@ -74,6 +81,10 @@
 #' @param child_income_var Labor-income variable for working adolescents.
 #' @param child_sbu Profile-specific basic salary cutoff used for adolescents.
 #' The default `470` is for the 2025 annual profile.
+#' @param employment_na_as_not_employed Logical. If `TRUE`, missing values in
+#' the operational employment flag are treated as not employed for IPM
+#' components that use `employment_var`. This matches the ENEMDU 2025 annual
+#' profile where `empleo` is coded as `1/NA`.
 #' @param hours_sentinel_codes Hour codes treated as non-evaluable sentinels.
 #' @param income_negative_sentinel_codes Income codes treated as negative-income
 #' sentinels.
@@ -129,6 +140,8 @@ enemdu_build_ipm_components <- function(
   overwrite = FALSE,
   strict = TRUE,
   extreme_poverty_var = "expobre",
+  extreme_poverty_income_var = NULL,
+  extreme_poverty_line = NULL,
   build_from_precomputed = TRUE,
   water_public_network_codes = 1,
   extreme_poverty_alias_vars = "epobreza",
@@ -160,6 +173,7 @@ enemdu_build_ipm_components <- function(
   child_hours_var = "p24",
   child_income_var = "ingrl",
   child_sbu = 470,
+  employment_na_as_not_employed = TRUE,
   hours_sentinel_codes = 999,
   income_negative_sentinel_codes = -1,
   income_missing_sentinel_codes = 999999,
@@ -208,6 +222,19 @@ enemdu_build_ipm_components <- function(
     "extreme_poverty_var",
     caller
   )
+  if (!is.null(extreme_poverty_income_var)) {
+    extreme_poverty_income_var <- .enemdu_ipm_single_var_name(
+      extreme_poverty_income_var,
+      "extreme_poverty_income_var",
+      caller
+    )
+  }
+  if (!is.null(extreme_poverty_line)) {
+    extreme_poverty_line <- .enemdu_ipm_single_positive_number(
+      extreme_poverty_line,
+      "extreme_poverty_line"
+    )
+  }
   extreme_poverty_alias_vars <- .enemdu_ipm_var_names(
     extreme_poverty_alias_vars,
     "extreme_poverty_alias_vars"
@@ -238,6 +265,10 @@ enemdu_build_ipm_components <- function(
   child_work_var <- .enemdu_ipm_single_var_name(child_work_var, "child_work_var", caller)
   child_hours_var <- .enemdu_ipm_single_var_name(child_hours_var, "child_hours_var", caller)
   child_income_var <- .enemdu_ipm_single_var_name(child_income_var, "child_income_var", caller)
+  employment_na_as_not_employed <- .enemdu_ipm_single_logical(
+    employment_na_as_not_employed,
+    "employment_na_as_not_employed"
+  )
   social_security_var <- .enemdu_ipm_single_var_name(
     social_security_var,
     "social_security_var",
@@ -393,6 +424,8 @@ enemdu_build_ipm_components <- function(
     data = out,
     component_var = component_vars[["ipm_i07_pobreza_extrema_ingresos"]],
     extreme_poverty_var = extreme_poverty_var,
+    extreme_poverty_income_var = extreme_poverty_income_var,
+    extreme_poverty_line = extreme_poverty_line,
     extreme_poverty_alias_vars = extreme_poverty_alias_vars,
     overwrite = overwrite,
     strict = strict
@@ -478,6 +511,7 @@ enemdu_build_ipm_components <- function(
     child_hours_var = child_hours_var,
     child_income_var = child_income_var,
     child_sbu = child_sbu,
+    employment_na_as_not_employed = employment_na_as_not_employed,
     hours_sentinel_codes = hours_sentinel_codes,
     income_negative_sentinel_codes = income_negative_sentinel_codes,
     income_missing_sentinel_codes = income_missing_sentinel_codes,
@@ -520,6 +554,7 @@ enemdu_build_ipm_components <- function(
     social_security_contribution_codes = social_security_contribution_codes,
     social_security_no_contribution_codes = social_security_no_contribution_codes,
     social_security_unknown_codes = social_security_unknown_codes,
+    employment_na_as_not_employed = employment_na_as_not_employed,
     overwrite = overwrite,
     strict = strict
   )
@@ -869,6 +904,8 @@ enemdu_build_ipm_components <- function(
 .enemdu_build_ipm_extreme_poverty_component <- function(data,
                                                         component_var,
                                                         extreme_poverty_var,
+                                                        extreme_poverty_income_var,
+                                                        extreme_poverty_line,
                                                         extreme_poverty_alias_vars,
                                                         overwrite,
                                                         strict) {
@@ -907,6 +944,38 @@ enemdu_build_ipm_components <- function(
   out[[component_var]] <- .enemdu_coerce_ipm_component(
     values = out[[source_var]],
     var = source_var,
+    strict = FALSE
+  )
+  fallback_requested <- !is.null(extreme_poverty_income_var) &&
+    !is.null(extreme_poverty_line)
+  fallback_available <- fallback_requested &&
+    extreme_poverty_income_var %in% names(out)
+  fallback_filled_n <- 0L
+  fallback_missing_income_n <- NA_integer_
+
+  if (isTRUE(fallback_available)) {
+    missing_flag <- is.na(out[[component_var]])
+    fallback_missing_income_n <- 0L
+
+    if (any(missing_flag)) {
+      income_subset <- .enemdu_ipm_coerce_source_numeric(
+        out[[extreme_poverty_income_var]][missing_flag],
+        extreme_poverty_income_var
+      )
+      fillable <- !is.na(income_subset)
+      component_subset <- out[[component_var]][missing_flag]
+      component_subset[fillable] <- as.integer(
+        income_subset[fillable] < extreme_poverty_line
+      )
+      out[[component_var]][missing_flag] <- component_subset
+      fallback_filled_n <- sum(fillable)
+      fallback_missing_income_n <- sum(is.na(income_subset))
+    }
+  }
+
+  .enemdu_ipm_abort_component_missing_if_strict(
+    component = out[[component_var]],
+    component_var = component_var,
     strict = strict
   )
 
@@ -919,8 +988,23 @@ enemdu_build_ipm_components <- function(
       extreme_income_poverty = list(
         source_var = source_var,
         checked_aliases = c(extreme_poverty_var, extreme_poverty_alias_vars),
+        fallback_income_var = if (!is.null(extreme_poverty_income_var)) {
+          extreme_poverty_income_var
+        } else {
+          NA_character_
+        },
+        fallback_line = if (!is.null(extreme_poverty_line)) {
+          extreme_poverty_line
+        } else {
+          NA_real_
+        },
+        fallback_requested = fallback_requested,
+        fallback_available = fallback_available,
+        fallback_filled_n = fallback_filled_n,
+        fallback_missing_income_n = fallback_missing_income_n,
+        still_missing_n = sum(is.na(out[[component_var]])),
         output_component = component_var,
-        rule = "copy_precomputed_binary_extreme_poverty_flag"
+        rule = "copy_precomputed_binary_extreme_poverty_flag_with_optional_income_line_fallback"
       )
     )
   )
@@ -1272,6 +1356,7 @@ enemdu_build_ipm_components <- function(
                                                                     child_hours_var,
                                                                     child_income_var,
                                                                     child_sbu,
+                                                                    employment_na_as_not_employed,
                                                                     hours_sentinel_codes,
                                                                     income_negative_sentinel_codes,
                                                                     income_missing_sentinel_codes,
@@ -1306,7 +1391,7 @@ enemdu_build_ipm_components <- function(
   child_sbu <- .enemdu_ipm_single_positive_number(child_sbu, "child_sbu")
   age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
   attendance <- .enemdu_ipm_coerce_source_numeric(data[[attendance_var]], attendance_var)
-  work <- .enemdu_ipm_coerce_binary_source(data[[child_work_var]], child_work_var, strict)
+  employment <- .enemdu_ipm_coerce_source_numeric(data[[child_work_var]], child_work_var)
   hours <- .enemdu_ipm_coerce_source_numeric(data[[child_hours_var]], child_hours_var)
   income <- .enemdu_ipm_coerce_source_numeric(data[[child_income_var]], child_income_var)
 
@@ -1318,7 +1403,11 @@ enemdu_build_ipm_components <- function(
   child <- !is.na(age) & age >= 5 & age <= 14
   adolescent <- !is.na(age) & age >= 15 & age <= 17
   applicable <- child | adolescent
-  working <- !is.na(work) & work == 1
+  invalid_employment <- !is.na(employment) & !(employment %in% c(0, 1))
+  working <- !is.na(employment) & !invalid_employment & employment == 1
+  not_working <- (!is.na(employment) & !invalid_employment & employment == 0) |
+    (is.na(employment) & isTRUE(employment_na_as_not_employed))
+  employment_unknown <- is.na(employment) & !isTRUE(employment_na_as_not_employed)
   adolescent_working <- adolescent & working
 
   invalid_hours <- !is.na(hours) & (
@@ -1330,38 +1419,46 @@ enemdu_build_ipm_components <- function(
       income %in% c(income_negative_sentinel_codes, income_missing_sentinel_codes)
   )
 
-  if (any(adolescent_working & invalid_attendance) && isTRUE(strict)) {
-    .enemdu_abort_invalid_ipm_source_codes(attendance_var, valid_attendance_codes)
-  }
-  if (any(adolescent_working & invalid_hours) && isTRUE(strict)) {
-    .enemdu_abort_invalid_ipm_source_values(child_hours_var)
-  }
-  if (any(adolescent_working & invalid_income) && isTRUE(strict)) {
-    .enemdu_abort_invalid_ipm_source_values(child_income_var)
+  if (any(applicable & invalid_employment) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(child_work_var, c(0, 1))
   }
 
   person_deprivation <- rep(0L, length(age))
   person_deprivation[is.na(age)] <- NA_integer_
-  person_deprivation[applicable & is.na(work)] <- NA_integer_
+  person_deprivation[applicable & (employment_unknown | invalid_employment)] <- NA_integer_
 
   person_deprivation[child & working] <- 1L
-  person_deprivation[child & !is.na(work) & work == 0] <- 0L
+  person_deprivation[child & not_working] <- 0L
 
   not_attending <- !is.na(attendance) & attendance %in% no_codes
   long_hours <- !is.na(hours) & !invalid_hours & hours > 30
   low_income <- !is.na(income) & !invalid_income & income < child_sbu
 
   adolescent_deprived <- adolescent_working & (not_attending | long_hours | low_income)
-  unknown_adolescent <- adolescent_working & (
-    is.na(attendance) |
-      invalid_attendance |
-      is.na(hours) |
-      invalid_hours |
-      is.na(income) |
-      invalid_income
-  )
+  unknown_attendance_needed <- adolescent_working &
+    !adolescent_deprived &
+    (is.na(attendance) | invalid_attendance)
+  unknown_hours_needed <- adolescent_working &
+    !adolescent_deprived &
+    (is.na(hours) | invalid_hours)
+  unknown_income_needed <- adolescent_working &
+    !adolescent_deprived &
+    (is.na(income) | invalid_income)
+  unknown_adolescent <- unknown_attendance_needed |
+    unknown_hours_needed |
+    unknown_income_needed
 
-  person_deprivation[adolescent & !is.na(work) & work == 0] <- 0L
+  if (any(unknown_attendance_needed & invalid_attendance) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(attendance_var, valid_attendance_codes)
+  }
+  if (any(unknown_hours_needed & invalid_hours) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_values(child_hours_var)
+  }
+  if (any(unknown_income_needed & invalid_income) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_values(child_income_var)
+  }
+
+  person_deprivation[adolescent & not_working] <- 0L
   person_deprivation[adolescent_deprived] <- 1L
   person_deprivation[adolescent_working & !adolescent_deprived & unknown_adolescent] <-
     NA_integer_
@@ -1372,6 +1469,7 @@ enemdu_build_ipm_components <- function(
     household_id = data[[household_id]],
     values = person_deprivation
   )
+  household_na_n <- sum(is.na(component))
   .enemdu_ipm_abort_component_missing_if_strict(
     component = component,
     component_var = component_var,
@@ -1402,6 +1500,21 @@ enemdu_build_ipm_components <- function(
         child_sbu = child_sbu,
         hours_sentinel_codes = hours_sentinel_codes,
         income_sentinel_codes = c(income_negative_sentinel_codes, income_missing_sentinel_codes),
+        employment_na_as_not_employed = isTRUE(employment_na_as_not_employed),
+        employment_na_treated_as_not_employed_n = sum(
+          applicable & is.na(employment) & isTRUE(employment_na_as_not_employed)
+        ),
+        remaining_unknown_employment_cases_n = sum(
+          applicable & (employment_unknown | invalid_employment)
+        ),
+        applicable_persons_n = sum(applicable),
+        working_adolescents_unknown_hours_n = sum(
+          adolescent_working & (is.na(hours) | invalid_hours)
+        ),
+        working_adolescents_unknown_income_n = sum(
+          adolescent_working & (is.na(income) | invalid_income)
+        ),
+        household_na_n = household_na_n,
         output_component = component_var,
         rule_status = "profile_specific_operational_rule"
       )
@@ -1551,21 +1664,18 @@ enemdu_build_ipm_components <- function(
                                                              social_security_contribution_codes,
                                                              social_security_no_contribution_codes,
                                                              social_security_unknown_codes,
+                                                             employment_na_as_not_employed,
                                                              overwrite,
                                                              strict) {
   if (component_var %in% names(data) && !isTRUE(overwrite)) {
     return(.enemdu_ipm_noop_component_result(data))
   }
 
-required_vars <- c(
-  household_id,
-  age_var,
-  employment_var,
-  social_security_var,
-  pension_income_var,
-  human_development_bonus_var,
-  disability_bonus_var
-)
+  required_vars <- c(
+    household_id,
+    age_var,
+    employment_var
+  )
   missing_vars <- setdiff(required_vars, names(data))
 
   if (length(missing_vars) > 0) {
@@ -1581,34 +1691,83 @@ required_vars <- c(
   }
 
   age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
-  employment <- .enemdu_ipm_coerce_binary_source(data[[employment_var]], employment_var, strict)
+  employment <- .enemdu_ipm_coerce_source_numeric(data[[employment_var]], employment_var)
   unemployment_available <- !is.null(unemployment_var) &&
     unemployment_var %in% names(data)
 
   unemployment <- NULL
 
   if (isTRUE(unemployment_available)) {
-    unemployment <- .enemdu_ipm_coerce_binary_source(
-      data[[unemployment_var]],
-      unemployment_var,
-      strict
+    unemployment <- .enemdu_coerce_ipm_numeric(data[[unemployment_var]])
+    unemployment[!is.na(unemployment) & !(unemployment %in% c(0, 1))] <- NA_real_
+  }
+
+  invalid_employment <- !is.na(employment) & !(employment %in% c(0, 1))
+  age_15_plus <- !is.na(age) & age >= 15
+  employed <- age_15_plus & !invalid_employment & !is.na(employment) & employment == 1
+  not_employed <- age_15_plus & !invalid_employment & (
+    (!is.na(employment) & employment == 0) |
+      (is.na(employment) & isTRUE(employment_na_as_not_employed))
+  )
+  employment_unknown <- age_15_plus &
+    is.na(employment) &
+    !isTRUE(employment_na_as_not_employed)
+  older_not_employed <- not_employed & age >= 65
+
+  applicable_missing_vars <- character()
+  if (any(employed) && !social_security_var %in% names(data)) {
+    applicable_missing_vars <- c(applicable_missing_vars, social_security_var)
+  }
+  benefit_vars <- c(pension_income_var, human_development_bonus_var, disability_bonus_var)
+  if (any(older_not_employed)) {
+    applicable_missing_vars <- c(
+      applicable_missing_vars,
+      setdiff(benefit_vars, names(data))
     )
   }
-  social_security <- .enemdu_ipm_coerce_source_numeric(
-    data[[social_security_var]],
-    social_security_var
-  )
-  pension <- .enemdu_ipm_yes_no_source(data[[pension_income_var]], pension_income_var, strict)
-  bonus <- .enemdu_ipm_yes_no_source(
-    data[[human_development_bonus_var]],
-    human_development_bonus_var,
-    strict
-  )
-  disability_bonus <- .enemdu_ipm_yes_no_source(
-    data[[disability_bonus_var]],
-    disability_bonus_var,
-    strict
-  )
+
+  if (length(applicable_missing_vars) > 0) {
+    return(.enemdu_ipm_pending_component_result(
+      data = data,
+      component_var = component_var,
+      reason = paste0(
+        "Missing applicable source variables for pension contribution: ",
+        paste(unique(applicable_missing_vars), collapse = ", "),
+        "."
+      )
+    ))
+  }
+
+  social_security <- rep(NA_real_, length(age))
+  if (social_security_var %in% names(data)) {
+    social_security <- .enemdu_ipm_coerce_source_numeric(
+      data[[social_security_var]],
+      social_security_var
+    )
+  }
+
+  pension_values <- rep(NA_real_, length(age))
+  bonus_values <- rep(NA_real_, length(age))
+  disability_bonus_values <- rep(NA_real_, length(age))
+
+  if (pension_income_var %in% names(data)) {
+    pension_values <- .enemdu_ipm_coerce_source_numeric(
+      data[[pension_income_var]],
+      pension_income_var
+    )
+  }
+  if (human_development_bonus_var %in% names(data)) {
+    bonus_values <- .enemdu_ipm_coerce_source_numeric(
+      data[[human_development_bonus_var]],
+      human_development_bonus_var
+    )
+  }
+  if (disability_bonus_var %in% names(data)) {
+    disability_bonus_values <- .enemdu_ipm_coerce_source_numeric(
+      data[[disability_bonus_var]],
+      disability_bonus_var
+    )
+  }
 
   valid_social_security_codes <- unique(c(
     social_security_contribution_codes,
@@ -1618,7 +1777,7 @@ required_vars <- c(
   invalid_social_security <- !is.na(social_security) &
     !(social_security %in% valid_social_security_codes)
 
-  if (any(invalid_social_security) && isTRUE(strict)) {
+  if (any(employed & invalid_social_security) && isTRUE(strict)) {
     .enemdu_abort_invalid_ipm_source_codes(
       social_security_var,
       valid_social_security_codes
@@ -1635,34 +1794,47 @@ required_vars <- c(
     invalid_social_security |
     social_security %in% social_security_unknown_codes
 
+  pension_invalid <- !is.na(pension_values) & !(pension_values %in% c(1, 2))
+  bonus_invalid <- !is.na(bonus_values) & !(bonus_values %in% c(1, 2))
+  disability_bonus_invalid <- !is.na(disability_bonus_values) &
+    !(disability_bonus_values %in% c(1, 2))
+
+  pension_yes <- !is.na(pension_values) & !pension_invalid & pension_values == 1
+  bonus_yes <- !is.na(bonus_values) & !bonus_invalid & bonus_values == 1
+  disability_bonus_yes <- !is.na(disability_bonus_values) &
+    !disability_bonus_invalid &
+    disability_bonus_values == 1
+  pension_no <- !is.na(pension_values) & !pension_invalid & pension_values == 2
+  bonus_no <- !is.na(bonus_values) & !bonus_invalid & bonus_values == 2
+  disability_bonus_no <- !is.na(disability_bonus_values) &
+    !disability_bonus_invalid &
+    disability_bonus_values == 2
+  benefit_yes <- pension_yes | bonus_yes | disability_bonus_yes
+  benefit_all_no <- pension_no & bonus_no & disability_bonus_no
+  benefit_unknown <- !benefit_yes & !benefit_all_no
+
+  if (any(older_not_employed & !benefit_yes & pension_invalid) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(pension_income_var, c(1, 2))
+  }
+  if (any(older_not_employed & !benefit_yes & bonus_invalid) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(human_development_bonus_var, c(1, 2))
+  }
+  if (any(older_not_employed & !benefit_yes & disability_bonus_invalid) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(disability_bonus_var, c(1, 2))
+  }
+
   person_deprivation <- rep(0L, length(age))
   person_deprivation[is.na(age)] <- NA_integer_
 
-  age_15_plus <- !is.na(age) & age >= 15
-  employed <- age_15_plus & !is.na(employment) & employment == 1
-  employment_unknown <- age_15_plus & is.na(employment)
-  person_deprivation[employment_unknown] <- NA_integer_
+  if (any(age_15_plus & invalid_employment) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(employment_var, c(0, 1))
+  }
 
-  employed_under_65 <- employed & age < 65
-  person_deprivation[employed_under_65 & contributes] <- 0L
-  person_deprivation[employed_under_65 & no_contribution] <- 1L
-  person_deprivation[employed_under_65 & unknown_contribution] <- NA_integer_
+  person_deprivation[employment_unknown | (age_15_plus & invalid_employment)] <- NA_integer_
 
-  employed_65_plus <- employed & age >= 65
-  person_deprivation[employed_65_plus & pension$yes] <- 0L
-  person_deprivation[employed_65_plus & !pension$yes & contributes] <- 0L
-  person_deprivation[employed_65_plus & pension$no & no_contribution] <- 1L
-  person_deprivation[
-    employed_65_plus &
-      !pension$yes &
-      !contributes &
-      (pension$unknown | unknown_contribution)
-  ] <- NA_integer_
-
-  older_not_employed <- age_15_plus & age >= 65 & !is.na(employment) & employment == 0
-  benefit_yes <- pension$yes | bonus$yes | disability_bonus$yes
-  benefit_all_no <- pension$no & bonus$no & disability_bonus$no
-  benefit_unknown <- !benefit_yes & !benefit_all_no
+  person_deprivation[employed & contributes] <- 0L
+  person_deprivation[employed & no_contribution] <- 1L
+  person_deprivation[employed & unknown_contribution] <- NA_integer_
 
   person_deprivation[older_not_employed & benefit_yes] <- 0L
   person_deprivation[older_not_employed & benefit_all_no] <- 1L
@@ -1672,6 +1844,7 @@ required_vars <- c(
     household_id = data[[household_id]],
     values = person_deprivation
   )
+  household_na_n <- sum(is.na(component))
   .enemdu_ipm_abort_component_missing_if_strict(
     component = component,
     component_var = component_var,
@@ -1692,16 +1865,35 @@ required_vars <- c(
           household_id,
           age_var,
           employment_var,
-          social_security_var,
-          pension_income_var,
-          human_development_bonus_var,
-          disability_bonus_var
+          intersect(
+            c(
+              social_security_var,
+              pension_income_var,
+              human_development_bonus_var,
+              disability_bonus_var
+            ),
+            names(data)
+          )
         ),
         contribution_codes = social_security_contribution_codes,
         no_contribution_codes = social_security_no_contribution_codes,
         unknown_codes = social_security_unknown_codes,
         pension_exception_age_min = 65,
         disability_bonus_note = "The disability bonus input is treated as a profile-specific proxy.",
+        employment_na_as_not_employed = isTRUE(employment_na_as_not_employed),
+        employment_na_treated_as_not_employed_15_plus_n = sum(
+          age_15_plus & is.na(employment) & isTRUE(employment_na_as_not_employed)
+        ),
+        remaining_unknown_employment_cases_n = sum(
+          employment_unknown | (age_15_plus & invalid_employment)
+        ),
+        occupied_15_plus_evaluated_n = sum(employed),
+        occupied_15_plus_unknown_contribution_n = sum(employed & unknown_contribution),
+        older_non_employed_evaluated_n = sum(older_not_employed),
+        older_non_employed_unknown_benefit_status_n = sum(
+          older_not_employed & benefit_unknown
+        ),
+        household_na_n = household_na_n,
         unemployment_var_available = !is.null(unemployment),
         unemployment_var_used_for_diagnostics = if (!is.null(unemployment)) {
           unemployment_var
@@ -2179,6 +2371,21 @@ required_vars <- c(
   }
 
   numeric_value
+}
+
+.enemdu_ipm_single_logical <- function(value, arg) {
+  if (
+    !is.logical(value) ||
+      length(value) != 1 ||
+      is.na(value)
+  ) {
+    rlang::abort(
+      message = glue::glue("`{arg}` must be a single TRUE or FALSE value."),
+      class = c("enemdu_error_invalid_ipm_component_input", "enemdu_error")
+    )
+  }
+
+  value
 }
 
 .enemdu_ipm_bachillerato_completed_2025 <- function(education_level,
