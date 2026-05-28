@@ -38,8 +38,10 @@ enemdu_build_ipm_components(
   sanitation_rural_area_codes = 2,
   sanitation_sewer_codes = 1,
   sanitation_septic_codes = 2,
+  sanitation_valid_codes = 1:5,
   garbage_var = "vi13",
-  garbage_collection_codes = c(1, 2)
+  garbage_collection_codes = c(1, 2),
+  garbage_valid_codes = 1:4
 )
 }
 \arguments{
@@ -122,11 +124,17 @@ unemployment or inadequate employment.}
 
 \item{sanitation_septic_codes}{Sanitation codes treated as septic tank.}
 
+\item{sanitation_valid_codes}{Confirmed valid codes for the sanitation
+source variable.}
+
 \item{garbage_var}{Garbage-disposal source variable.}
 
 \item{garbage_collection_codes}{Garbage-disposal codes treated as collection
 service. The default includes contracted and municipal collection, based on
 2025 SPSS labels, and remains profile-specific.}
+
+\item{garbage_valid_codes}{Confirmed valid codes for the garbage-disposal
+source variable.}
 }
 \value{
 A data frame with the 12 registered IPM component columns when

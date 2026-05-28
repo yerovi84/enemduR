@@ -231,6 +231,32 @@ test_that("IPM component builder derives sanitation from area and vi09", {
   expect_equal(out[[sanitation_component]][out$id_hogar == "h4"], 1L)
 })
 
+test_that("IPM sanitation component rejects invalid source codes", {
+  component <- .ipm_component_name("ipm_i11_sin_saneamiento_excretas")
+  data <- .ipm_operational_component_data()
+  data$area <- 1
+  data$vi09 <- c(rep(1, nrow(data) - 1), 999)
+
+  expect_error(
+    enemdu_build_ipm_components(
+      data,
+      strict = TRUE,
+      overwrite = TRUE,
+      sanitation_valid_codes = 1:5
+    ),
+    class = "enemdu_error_invalid_ipm_source_codes"
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    strict = FALSE,
+    overwrite = TRUE,
+    sanitation_valid_codes = 1:5
+  )
+
+  expect_true(is.na(out[[component]][nrow(out)]))
+})
+
 test_that("IPM component builder derives garbage collection from vi13", {
   out <- enemdu_build_ipm_components(.ipm_operational_component_data(), strict = FALSE)
   garbage_component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
@@ -239,6 +265,31 @@ test_that("IPM component builder derives garbage collection from vi13", {
   expect_equal(out[[garbage_component]][out$id_hogar == "h3"], c(0L, 0L))
   expect_equal(out[[garbage_component]][out$id_hogar == "h2"], c(1L, 1L))
   expect_equal(out[[garbage_component]][out$id_hogar == "h4"], 1L)
+})
+
+test_that("IPM garbage component rejects invalid source codes", {
+  component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
+  data <- .ipm_operational_component_data()
+  data$vi13 <- c(rep(2, nrow(data) - 1), 999)
+
+  expect_error(
+    enemdu_build_ipm_components(
+      data,
+      strict = TRUE,
+      overwrite = TRUE,
+      garbage_valid_codes = 1:4
+    ),
+    class = "enemdu_error_invalid_ipm_source_codes"
+  )
+
+  out <- enemdu_build_ipm_components(
+    data,
+    strict = FALSE,
+    overwrite = TRUE,
+    garbage_valid_codes = 1:4
+  )
+
+  expect_true(is.na(out[[component]][nrow(out)]))
 })
 
 test_that("IPM component builder derives school attendance from p03 and p07", {

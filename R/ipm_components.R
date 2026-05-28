@@ -67,10 +67,14 @@
 #' @param sanitation_rural_area_codes Area codes treated as rural.
 #' @param sanitation_sewer_codes Sanitation codes treated as sewerage.
 #' @param sanitation_septic_codes Sanitation codes treated as septic tank.
+#' @param sanitation_valid_codes Confirmed valid codes for the sanitation
+#' source variable.
 #' @param garbage_var Garbage-disposal source variable.
 #' @param garbage_collection_codes Garbage-disposal codes treated as collection
 #' service. The default includes contracted and municipal collection, based on
 #' 2025 SPSS labels, and remains profile-specific.
+#' @param garbage_valid_codes Confirmed valid codes for the garbage-disposal
+#' source variable.
 #'
 #' @return A data frame with the 12 registered IPM component columns when
 #' `strict = FALSE` or when all components are available, plus an
@@ -114,8 +118,10 @@ enemdu_build_ipm_components <- function(
   sanitation_rural_area_codes = 2,
   sanitation_sewer_codes = 1,
   sanitation_septic_codes = 2,
+  sanitation_valid_codes = 1:5,
   garbage_var = "vi13",
-  garbage_collection_codes = c(1, 2)
+  garbage_collection_codes = c(1, 2),
+  garbage_valid_codes = 1:4
 ) {
   caller <- "enemdu_build_ipm_components"
 
@@ -156,6 +162,14 @@ enemdu_build_ipm_components <- function(
   )
   sanitation_var <- .enemdu_ipm_single_var_name(sanitation_var, "sanitation_var", caller)
   garbage_var <- .enemdu_ipm_single_var_name(garbage_var, "garbage_var", caller)
+  sanitation_valid_codes <- .enemdu_ipm_validate_code_set(
+    sanitation_valid_codes,
+    "sanitation_valid_codes"
+  )
+  garbage_valid_codes <- .enemdu_ipm_validate_code_set(
+    garbage_valid_codes,
+    "garbage_valid_codes"
+  )
 
   component_registry <- .enemdu_ipm_component_registry_for_builder()
   .enemdu_validate_ipm_profile(profile)
@@ -289,6 +303,7 @@ enemdu_build_ipm_components <- function(
     sanitation_rural_area_codes = sanitation_rural_area_codes,
     sanitation_sewer_codes = sanitation_sewer_codes,
     sanitation_septic_codes = sanitation_septic_codes,
+    sanitation_valid_codes = sanitation_valid_codes,
     overwrite = overwrite,
     strict = strict
   )
@@ -303,6 +318,7 @@ enemdu_build_ipm_components <- function(
     component_var = component_vars[["ipm_i12_sin_recoleccion_basura"]],
     garbage_var = garbage_var,
     garbage_collection_codes = garbage_collection_codes,
+    garbage_valid_codes = garbage_valid_codes,
     overwrite = overwrite,
     strict = strict
   )
@@ -955,6 +971,7 @@ enemdu_build_ipm_components <- function(
                                                    sanitation_rural_area_codes,
                                                    sanitation_sewer_codes,
                                                    sanitation_septic_codes,
+                                                   sanitation_valid_codes,
                                                    overwrite,
                                                    strict) {
   if (component_var %in% names(data) && !isTRUE(overwrite)) {
@@ -982,16 +999,29 @@ enemdu_build_ipm_components <- function(
   rural_codes <- .enemdu_ipm_validate_code_set(sanitation_rural_area_codes, "sanitation_rural_area_codes")
   sewer_codes <- .enemdu_ipm_validate_code_set(sanitation_sewer_codes, "sanitation_sewer_codes")
   septic_codes <- .enemdu_ipm_validate_code_set(sanitation_septic_codes, "sanitation_septic_codes")
+  valid_sanitation_codes <- .enemdu_ipm_validate_code_set(
+    sanitation_valid_codes,
+    "sanitation_valid_codes"
+  )
+
+  invalid_sanitation <- !is.na(sanitation) &
+    !(sanitation %in% valid_sanitation_codes)
+
+  if (any(invalid_sanitation) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(sanitation_var, valid_sanitation_codes)
+  }
 
   urban <- !is.na(area) & area %in% urban_codes
   rural <- !is.na(area) & area %in% rural_codes
   known_area <- urban | rural
 
   component <- rep(NA_integer_, length(area))
-  component[urban & !is.na(sanitation)] <-
-    as.integer(!(sanitation[urban & !is.na(sanitation)] %in% sewer_codes))
-  component[rural & !is.na(sanitation)] <-
-    as.integer(!(sanitation[rural & !is.na(sanitation)] %in% c(sewer_codes, septic_codes)))
+  valid_urban <- urban & !is.na(sanitation) & !invalid_sanitation
+  valid_rural <- rural & !is.na(sanitation) & !invalid_sanitation
+  component[valid_urban] <- as.integer(!(sanitation[valid_urban] %in% sewer_codes))
+  component[valid_rural] <- as.integer(
+    !(sanitation[valid_rural] %in% c(sewer_codes, septic_codes))
+  )
   component[!is.na(area) & !known_area] <- NA_integer_
 
   .enemdu_ipm_abort_component_missing_if_strict(
@@ -1015,6 +1045,7 @@ enemdu_build_ipm_components <- function(
         rural_area_codes = rural_codes,
         sewer_codes = sewer_codes,
         septic_codes = septic_codes,
+        sanitation_valid_codes = valid_sanitation_codes,
         output_component = component_var,
         rule = "urban_requires_sewerage_rural_requires_sewerage_or_septic_tank"
       )
@@ -1026,6 +1057,7 @@ enemdu_build_ipm_components <- function(
                                                 component_var,
                                                 garbage_var,
                                                 garbage_collection_codes,
+                                                garbage_valid_codes,
                                                 overwrite,
                                                 strict) {
   if (component_var %in% names(data) && !isTRUE(overwrite)) {
@@ -1045,9 +1077,20 @@ enemdu_build_ipm_components <- function(
     garbage_collection_codes,
     "garbage_collection_codes"
   )
+  valid_garbage_codes <- .enemdu_ipm_validate_code_set(
+    garbage_valid_codes,
+    "garbage_valid_codes"
+  )
+
+  invalid_garbage <- !is.na(garbage) &
+    !(garbage %in% valid_garbage_codes)
+
+  if (any(invalid_garbage) && isTRUE(strict)) {
+    .enemdu_abort_invalid_ipm_source_codes(garbage_var, valid_garbage_codes)
+  }
 
   component <- rep(NA_integer_, length(garbage))
-  observed <- !is.na(garbage)
+  observed <- !is.na(garbage) & !invalid_garbage
   component[observed] <- as.integer(!(garbage[observed] %in% collection_codes))
 
   .enemdu_ipm_abort_component_missing_if_strict(
@@ -1068,6 +1111,7 @@ enemdu_build_ipm_components <- function(
       garbage_collection = list(
         source_var = garbage_var,
         garbage_collection_codes = collection_codes,
+        garbage_valid_codes = valid_garbage_codes,
         output_component = component_var,
         rule = "not_deprived_when_garbage_disposal_is_contracted_or_municipal_collection"
       )
