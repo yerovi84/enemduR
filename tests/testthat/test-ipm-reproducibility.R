@@ -190,6 +190,39 @@ test_that("IPM reproducibility workflow can run on prebuilt score and flags", {
   expect_true(all(c("national", "urban", "rural") %in% result$estimates$domain_value))
 })
 
+test_that("IPM reproducibility workflow honors custom score and flag names", {
+  data <- .ipm_repro_flag_data()
+  data$custom_score <- data$ipm_score
+  data$custom_tpm <- data$tpm
+  data$custom_tpem <- data$tpem
+  data$ipm_score <- NULL
+  data$tpm <- NULL
+  data$tpem <- NULL
+
+  result <- enemdu_run_ipm_reproducibility(
+    data,
+    build_flags = FALSE,
+    strict = TRUE,
+    sample_n_min = 1,
+    score_var = "custom_score",
+    tpm_var = "custom_tpm",
+    tpem_var = "custom_tpem"
+  )
+
+  expect_true(all(c(
+    "custom_score",
+    "custom_tpm",
+    "custom_tpem"
+  ) %in% result$preflight$variable))
+
+  policy <- attr(result, "reproducibility_policy")
+  expect_equal(policy$score_var, "custom_score")
+  expect_equal(policy$tpm_var, "custom_tpm")
+  expect_equal(policy$tpem_var, "custom_tpem")
+
+  expect_true(all(c("tpm", "tpem", "A", "ipm") %in% result$estimates$indicator_id))
+})
+
 test_that("IPM reproducibility workflow can run from synthetic components", {
   result <- enemdu_run_ipm_reproducibility(
     .ipm_repro_component_data(),
@@ -200,6 +233,32 @@ test_that("IPM reproducibility workflow can run from synthetic components", {
 
   expect_true(all(c("tpm", "tpem", "ipm") %in% result$comparison$indicator_id))
   expect_true(all(c("national", "urban", "rural") %in% result$comparison$domain_value))
+})
+
+test_that("IPM reproducibility workflow builds custom score and flag names from components", {
+  result <- enemdu_run_ipm_reproducibility(
+    .ipm_repro_component_data(),
+    build_flags = TRUE,
+    strict = TRUE,
+    sample_n_min = 1,
+    score_var = "custom_score",
+    tpm_var = "custom_tpm",
+    tpem_var = "custom_tpem"
+  )
+
+  expect_true(all(c(
+    "custom_score",
+    "custom_tpm",
+    "custom_tpem"
+  ) %in% result$preflight$variable))
+
+  policy <- attr(result, "reproducibility_policy")
+  expect_equal(policy$score_var, "custom_score")
+  expect_equal(policy$tpm_var, "custom_tpm")
+  expect_equal(policy$tpem_var, "custom_tpem")
+  expect_equal(policy$flags_diagnostics$score_var, "custom_score")
+  expect_equal(policy$flags_diagnostics$tpm_var, "custom_tpm")
+  expect_equal(policy$flags_diagnostics$tpem_var, "custom_tpem")
 })
 
 test_that("IPM reproducibility workflow does not require raw microdata files", {

@@ -146,16 +146,45 @@ enemdu_run_ipm_reproducibility <- function(
 
   survey_type <- .enemdu_normalize_survey_type(survey_type, caller = caller)
   dots <- list(...)
-  split_dots <- .enemdu_ipm_split_dots(dots)
+  component_cols <- if (!is.null(dots$component_cols)) {
+    dots$component_cols
+  } else {
+    NULL
+  }
+
+  score_var <- if (!is.null(dots$score_var)) {
+    dots$score_var
+  } else {
+    "ipm_score"
+  }
+
+  tpm_var <- if (!is.null(dots$tpm_var)) {
+    dots$tpm_var
+  } else {
+    "tpm"
+  }
+
+  tpem_var <- if (!is.null(dots$tpem_var)) {
+    dots$tpem_var
+  } else {
+    "tpem"
+  }
+
+  dots_for_split <- dots[setdiff(
+    names(dots),
+    c("component_cols", "score_var", "tpm_var", "tpem_var")
+  )]
+
+  split_dots <- .enemdu_ipm_split_dots(dots_for_split)
 
   prepared <- .enemdu_prepare_ipm_kpi_data(
     data = data,
     build_components = build_components,
     build_flags = build_flags,
-    component_cols = NULL,
-    score_var = "ipm_score",
-    tpm_var = "tpm",
-    tpem_var = "tpem",
+    component_cols = component_cols,
+    score_var = score_var,
+    tpm_var = tpm_var,
+    tpem_var = tpem_var,
     strict = strict,
     component_dots = split_dots$component_dots
   )
@@ -168,6 +197,9 @@ enemdu_run_ipm_reproducibility <- function(
     ids = ids,
     strata = strata,
     weight = weight,
+    score_var = score_var,
+    tpm_var = tpm_var,
+    tpem_var = tpem_var,
     strict = strict
   )
 
@@ -194,6 +226,10 @@ enemdu_run_ipm_reproducibility <- function(
         weight = weight,
         build_components = FALSE,
         build_flags = FALSE,
+        component_cols = component_cols,
+        score_var = score_var,
+        tpm_var = tpm_var,
+        tpem_var = tpem_var,
         strict = strict
       ),
       split_dots$survey_dots
@@ -215,6 +251,10 @@ enemdu_run_ipm_reproducibility <- function(
           weight = weight,
           build_components = FALSE,
           build_flags = FALSE,
+          component_cols = component_cols,
+          score_var = score_var,
+          tpm_var = tpm_var,
+          tpem_var = tpem_var,
           strict = strict
         ),
         split_dots$survey_dots
@@ -266,6 +306,10 @@ enemdu_run_ipm_reproducibility <- function(
     build_components = isTRUE(build_components),
     build_flags = isTRUE(build_flags),
     tolerance_pp = tolerance_pp,
+    component_cols = component_cols,
+    score_var = score_var,
+    tpm_var = tpm_var,
+    tpem_var = tpem_var,
     strict = isTRUE(strict),
     components_diagnostics = prepared$component_diagnostics,
     flags_diagnostics = prepared$flags_diagnostics,
