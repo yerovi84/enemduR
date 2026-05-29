@@ -275,6 +275,168 @@ test_that("IPM reproducibility workflow can run from synthetic components", {
   expect_true(all(c("national", "urban", "rural") %in% result$comparison$domain_value))
 })
 
+test_that("IPM reproducibility default missing component policy errors on incomplete evidence", {
+  flag_data <- .ipm_repro_flag_data()
+  flag_data$ipm_score[2] <- NA_real_
+
+  expect_error(
+    enemdu_run_ipm_reproducibility(
+      flag_data,
+      build_flags = FALSE,
+      strict = TRUE,
+      sample_n_min = 1
+    ),
+    class = "enemdu_error_ipm_reproducibility_incomplete_cases"
+  )
+
+  component_data <- .ipm_repro_component_data()
+  component_data[[.ipm_repro_component_names()[[1]]]][2] <- NA_integer_
+
+  expect_error(
+    enemdu_run_ipm_reproducibility(
+      component_data,
+      build_flags = TRUE,
+      strict = TRUE,
+      sample_n_min = 1
+    ),
+    class = "enemdu_error_ipm_reproducibility_incomplete_cases"
+  )
+})
+
+test_that("IPM reproducibility complete-case policy filters incomplete flags", {
+  data <- .ipm_repro_flag_data()
+  data$fexp <- c(1, 2, 3, 4, 5, 6, 7, 8)
+  data$ipm_score[2] <- NA_real_
+  data$tpm[2] <- NA_integer_
+  data$tpem[2] <- NA_integer_
+
+  result <- enemdu_run_ipm_reproducibility(
+    data,
+    build_flags = FALSE,
+    strict = TRUE,
+    sample_n_min = 1,
+    missing_component_policy = "complete_case"
+  )
+
+  diagnostics <- result$complete_case_diagnostics
+
+  expect_true(all(c("tpm", "tpem", "A", "ipm") %in% result$estimates$indicator_id))
+  expect_equal(diagnostics$rows_total, 8L)
+  expect_equal(diagnostics$rows_complete, 7L)
+  expect_equal(diagnostics$rows_excluded, 1L)
+  expect_equal(diagnostics$weighted_total, 36)
+  expect_equal(diagnostics$weighted_complete, 34)
+  expect_equal(diagnostics$weighted_excluded, 2)
+  expect_equal(diagnostics$share_rows_excluded, 1 / 8)
+  expect_equal(diagnostics$share_weighted_excluded, 2 / 36)
+  expect_equal(diagnostics$missing_component_policy, "complete_case")
+  expect_equal(diagnostics$complete_case_source, "flags")
+})
+
+test_that("IPM reproducibility complete-case policy filters incomplete components before flags", {
+  component_names <- .ipm_repro_component_names()
+  data <- .ipm_repro_component_data()
+  data$fexp <- c(1, 2, 3, 4, 5, 6, 7, 8)
+  data[[component_names[[1]]]][2] <- NA_integer_
+
+  result <- enemdu_run_ipm_reproducibility(
+    data,
+    build_flags = TRUE,
+    strict = TRUE,
+    sample_n_min = 1,
+    missing_component_policy = "complete_case"
+  )
+
+  diagnostics <- result$complete_case_diagnostics
+
+  expect_true(all(c("tpm", "tpem", "A", "ipm") %in% result$estimates$indicator_id))
+  expect_equal(diagnostics$rows_total, 8L)
+  expect_equal(diagnostics$rows_complete, 7L)
+  expect_equal(diagnostics$rows_excluded, 1L)
+  expect_equal(diagnostics$weighted_excluded, 2)
+  expect_equal(diagnostics$complete_case_source, "components")
+  expect_equal(
+    result$complete_case_diagnostics$official_validation_status,
+    "not_officially_validated"
+  )
+})
+
+test_that("IPM reproducibility complete-case diagnostics include domain exclusions", {
+  component_names <- .ipm_repro_component_names()
+  data <- .ipm_repro_component_data()
+  data$fexp <- c(1, 2, 3, 4, 5, 6, 7, 8)
+  data[[component_names[[1]]]][2] <- NA_integer_
+  data[[component_names[[2]]]][6] <- NA_integer_
+
+  result <- enemdu_run_ipm_reproducibility(
+    data,
+    build_flags = TRUE,
+    strict = TRUE,
+    sample_n_min = 1,
+    missing_component_policy = "complete_case"
+  )
+
+  by_domain <- result$complete_case_by_domain
+  area_1_incomplete <- by_domain[
+    by_domain$domain_value == "1" &
+      by_domain$complete_case_status == "incomplete",
+    ,
+    drop = FALSE
+  ]
+  area_2_incomplete <- by_domain[
+    by_domain$domain_value == "2" &
+      by_domain$complete_case_status == "incomplete",
+    ,
+    drop = FALSE
+  ]
+
+  expect_true(all(c("complete", "incomplete") %in% by_domain$complete_case_status))
+  expect_equal(unique(by_domain$domain_variable), "area")
+  expect_equal(area_1_incomplete$n, 1L)
+  expect_equal(area_1_incomplete$weighted_n, 2)
+  expect_equal(area_2_incomplete$n, 1L)
+  expect_equal(area_2_incomplete$weighted_n, 6)
+})
+
+test_that("IPM reproducibility complete-case policy does not impute missing components", {
+  component_names <- .ipm_repro_component_names()
+  data <- .ipm_repro_component_data()
+  data[[component_names[[1]]]][2] <- NA_integer_
+
+  result <- enemdu_run_ipm_reproducibility(
+    data,
+    build_flags = TRUE,
+    strict = TRUE,
+    sample_n_min = 1,
+    missing_component_policy = "complete_case"
+  )
+
+  expect_true(is.na(data[[component_names[[1]]]][2]))
+  expect_equal(result$complete_case_diagnostics$rows_excluded, 1L)
+  expect_equal(
+    result$complete_case_diagnostics$official_validation_status,
+    "not_officially_validated"
+  )
+  expect_equal(result$official_validation_status, "not_officially_validated")
+})
+
+test_that("IPM reproducibility complete-case policy aborts when all rows are incomplete", {
+  component_names <- .ipm_repro_component_names()
+  data <- .ipm_repro_component_data()
+  data[[component_names[[1]]]] <- NA_integer_
+
+  expect_error(
+    enemdu_run_ipm_reproducibility(
+      data,
+      build_flags = TRUE,
+      strict = TRUE,
+      sample_n_min = 1,
+      missing_component_policy = "complete_case"
+    ),
+    class = "enemdu_error_ipm_reproducibility_complete_case_empty"
+  )
+})
+
 test_that("IPM reproducibility workflow builds custom score and flag names from components", {
   result <- enemdu_run_ipm_reproducibility(
     .ipm_repro_component_data(),

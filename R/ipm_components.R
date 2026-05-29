@@ -1702,16 +1702,21 @@ enemdu_build_ipm_components <- function(
     unemployment[!is.na(unemployment) & !(unemployment %in% c(0, 1))] <- NA_real_
   }
 
+  person_deprivation <- rep(0L, length(age))
+  person_deprivation[is.na(age)] <- NA_integer_
+
   invalid_employment <- !is.na(employment) & !(employment %in% c(0, 1))
   age_15_plus <- !is.na(age) & age >= 15
-  employed <- age_15_plus & !invalid_employment & !is.na(employment) & employment == 1
-  not_employed <- age_15_plus & !invalid_employment & (
+  employed <- age_15_plus & !is.na(employment) & employment == 1
+  not_employed <- age_15_plus & (
     (!is.na(employment) & employment == 0) |
       (is.na(employment) & isTRUE(employment_na_as_not_employed))
   )
   employment_unknown <- age_15_plus &
     is.na(employment) &
     !isTRUE(employment_na_as_not_employed)
+  employed_older <- employed & age >= 65
+  employed_non_older <- employed & age < 65
   older_not_employed <- not_employed & age >= 65
 
   applicable_missing_vars <- character()
@@ -1809,6 +1814,7 @@ enemdu_build_ipm_components <- function(
   disability_bonus_no <- !is.na(disability_bonus_values) &
     !disability_bonus_invalid &
     disability_bonus_values == 2
+
   benefit_yes <- pension_yes | bonus_yes | disability_bonus_yes
   benefit_all_no <- pension_no & bonus_no & disability_bonus_no
   benefit_unknown <- !benefit_yes & !benefit_all_no
@@ -1823,18 +1829,22 @@ enemdu_build_ipm_components <- function(
     .enemdu_abort_invalid_ipm_source_codes(disability_bonus_var, c(1, 2))
   }
 
-  person_deprivation <- rep(0L, length(age))
-  person_deprivation[is.na(age)] <- NA_integer_
-
   if (any(age_15_plus & invalid_employment) && isTRUE(strict)) {
     .enemdu_abort_invalid_ipm_source_codes(employment_var, c(0, 1))
   }
 
-  person_deprivation[employment_unknown | (age_15_plus & invalid_employment)] <- NA_integer_
+  person_deprivation[employment_unknown] <- NA_integer_
+  person_deprivation[age_15_plus & invalid_employment] <- NA_integer_
 
   person_deprivation[employed & contributes] <- 0L
-  person_deprivation[employed & no_contribution] <- 1L
-  person_deprivation[employed & unknown_contribution] <- NA_integer_
+
+  person_deprivation[employed_non_older & no_contribution] <- 1L
+  person_deprivation[employed_non_older & unknown_contribution] <- NA_integer_
+
+  person_deprivation[employed_older & benefit_yes] <- 0L
+  person_deprivation[employed_older & no_contribution & benefit_all_no] <- 1L
+  person_deprivation[employed_older & no_contribution & benefit_unknown] <- NA_integer_
+  person_deprivation[employed_older & unknown_contribution & !benefit_yes] <- NA_integer_
 
   person_deprivation[older_not_employed & benefit_yes] <- 0L
   person_deprivation[older_not_employed & benefit_all_no] <- 1L
