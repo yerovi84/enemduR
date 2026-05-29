@@ -1478,6 +1478,93 @@ test_that("IPM i06 official missingness is branch-specific", {
   )
 })
 
+test_that("IPM i06 derives labor status from one-NA membership flags", {
+  data <- tibble::tibble(
+    p03 = c(14, 15, 20, 20, 99, NA),
+    empleo = c(1, 1, NA, NA, 1, 1),
+    desempleo = c(NA, NA, 1, NA, NA, NA),
+    condact = c(NA, 1, 7, 9, NA, NA)
+  )
+
+  info <- .enemdu_ipm_i06_labor_status_source(
+    data = data,
+    age = data$p03,
+    employment = data$empleo,
+    unemployment_var = "desempleo",
+    unemployed_var = "desem",
+    inactive_var = "pei",
+    working_age_var = "pet",
+    pea_var = "pea",
+    condactn_var = c("condactn", "condact")
+  )
+
+  expect_equal(info$pet, c(0L, 1L, 1L, 1L, 0L, NA))
+  expect_equal(info$desem, c(0L, 0L, 1L, 0L, 0L, 0L))
+  expect_equal(info$pea, c(0L, 1L, 1L, 0L, 0L, NA))
+  expect_equal(info$pei, c(0L, 0L, 0L, 1L, 0L, NA))
+  expect_equal(info$pet_source, "derived_from_age")
+  expect_equal(info$desem_source, "derived_from_desempleo")
+  expect_equal(info$pea_source, "derived_from_empleo_desem")
+  expect_equal(info$pei_source, "derived_from_pet_pea")
+  expect_equal(info$pet_derived_n, 3L)
+  expect_equal(info$desem_derived_n, 1L)
+  expect_equal(info$pea_derived_n, 2L)
+  expect_equal(info$pei_derived_n, 1L)
+  expect_equal(info$pet_missing_n, 1L)
+  expect_equal(info$pea_missing_n, 1L)
+  expect_equal(info$pei_missing_n, 1L)
+  expect_equal(info$labor_status_validation, "consistent_with_condact")
+  expect_equal(info$condact_pet_consistency_n, 3L)
+  expect_equal(info$condact_pea_mismatch_n, 0L)
+  expect_equal(info$condact_pei_mismatch_n, 0L)
+})
+
+test_that("IPM i06 uses derived labor status with branch-specific missingness", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:11),
+    p01 = 1L,
+    p03 = c(30, 30, 30, 65, 65, 70, 70, 70, 50, 14, 70),
+    empleo = c(1, 1, 1, 1, 1, NA, NA, NA, NA, NA, NA),
+    desempleo = c(NA, NA, NA, NA, NA, NA, NA, 1, NA, NA, 1),
+    condact = c(1, 1, 1, 1, 1, 9, 9, 7, 9, NA, 7),
+    p05a = c(1, 5, 1, 5, 5, NA, NA, NA, NA, NA, NA),
+    p05b = c(1, 5, 1, 5, 5, NA, NA, NA, NA, NA, NA),
+    p72a = c(NA, NA, NA, 1, 2, 2, 1, 2, NA, NA, NA),
+    p75 = c(NA, NA, NA, NA, 2, 2, NA, 1, NA, NA, 2),
+    p77 = c(NA, NA, NA, NA, 2, 2, NA, 2, NA, NA, 2)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  i06_diagnostics <- diagnostics$variables_used$pension_contribution
+
+  expect_equal(out[[component]][1:10], c(0L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L))
+  expect_true(is.na(out[[component]][11]))
+  expect_equal(i06_diagnostics$rule_status, "official_like_with_derived_labor_status")
+  expect_equal(i06_diagnostics$official_validation_status, "not_officially_validated")
+  expect_equal(i06_diagnostics$pet_source, "derived_from_age")
+  expect_equal(i06_diagnostics$desem_source, "derived_from_desempleo")
+  expect_equal(i06_diagnostics$pea_source, "derived_from_empleo_desem")
+  expect_equal(i06_diagnostics$pei_source, "derived_from_pet_pea")
+  expect_equal(i06_diagnostics$labor_status_validation, "consistent_with_condact")
+  expect_equal(i06_diagnostics$pet_derived_n, 10L)
+  expect_equal(i06_diagnostics$desem_derived_n, 2L)
+  expect_equal(i06_diagnostics$pea_derived_n, 7L)
+  expect_equal(i06_diagnostics$pei_derived_n, 3L)
+  expect_equal(i06_diagnostics$occupied_15_plus_evaluated_n, 5L)
+  expect_equal(i06_diagnostics$occupied_15_plus_unknown_contribution_n, 0L)
+  expect_equal(i06_diagnostics$older_non_employed_evaluated_n, 4L)
+  expect_equal(i06_diagnostics$older_non_employed_unknown_benefit_status_n, 1L)
+  expect_equal(i06_diagnostics$household_na_n, 1L)
+  expect_equal(i06_diagnostics$condact_pea_mismatch_n, 0L)
+  expect_equal(i06_diagnostics$condact_pei_mismatch_n, 0L)
+  expect_equal(
+    i06_diagnostics$missing_official_source_vars,
+    c("desem", "pei", "pet")
+  )
+})
+
 test_that("IPM i09 recodes zero bedrooms to one under official policy", {
   component <- .ipm_component_name("ipm_i09_hacinamiento")
   data <- tibble::tibble(

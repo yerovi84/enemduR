@@ -622,9 +622,11 @@ enemdu_build_ipm_components <- function(
     pension_income_var = pension_income_var,
     human_development_bonus_var = human_development_bonus_var,
     disability_bonus_var = disability_bonus_var,
+    pea_var = pea_var,
     unemployed_var = unemployed_var,
     inactive_var = inactive_var,
     working_age_var = working_age_var,
+    condactn_var = condactn_var,
     social_security_contribution_codes = social_security_contribution_codes,
     social_security_no_contribution_codes = social_security_no_contribution_codes,
     social_security_unknown_codes = social_security_unknown_codes,
@@ -2324,9 +2326,11 @@ enemdu_build_ipm_components <- function(
                                                              pension_income_var,
                                                              human_development_bonus_var,
                                                              disability_bonus_var,
+                                                             pea_var,
                                                              unemployed_var,
                                                              inactive_var,
                                                              working_age_var,
+                                                             condactn_var,
                                                              social_security_contribution_codes,
                                                              social_security_no_contribution_codes,
                                                              social_security_unknown_codes,
@@ -2337,7 +2341,7 @@ enemdu_build_ipm_components <- function(
     return(.enemdu_ipm_noop_component_result(data))
   }
 
-  official_vars <- c(
+  official_core_vars <- c(
     household_id,
     age_var,
     employment_var,
@@ -2345,27 +2349,50 @@ enemdu_build_ipm_components <- function(
     social_security_b_var,
     pension_income_var,
     human_development_bonus_var,
-    disability_bonus_var,
+    disability_bonus_var
+  )
+  official_labor_status_vars <- c(
     unemployed_var,
     inactive_var,
     working_age_var
   )
+  official_vars <- c(official_core_vars, official_labor_status_vars)
 
-  if (all(official_vars %in% names(data))) {
+  official_core_available <- all(official_core_vars %in% names(data))
+  official_labor_status_available <- all(official_labor_status_vars %in% names(data))
+  unemployment_status_available <- unemployed_var %in% names(data) ||
+    unemployment_var %in% names(data)
+  derived_labor_status_available <- isTRUE(official_core_available) &&
+    isTRUE(unemployment_status_available)
+
+  if (isTRUE(official_core_available) &&
+      (isTRUE(official_labor_status_available) ||
+        isTRUE(derived_labor_status_available))) {
+    rule_status <- if (isTRUE(official_labor_status_available)) {
+      "official_syntax_rule"
+    } else {
+      "official_like_with_derived_labor_status"
+    }
+
     return(.enemdu_build_ipm_pension_contribution_official_component(
       data = data,
       component_var = component_var,
       household_id = household_id,
       age_var = age_var,
       employment_var = employment_var,
+      unemployment_var = unemployment_var,
       social_security_a_var = social_security_a_var,
       social_security_b_var = social_security_b_var,
       pension_income_var = pension_income_var,
       human_development_bonus_var = human_development_bonus_var,
       disability_bonus_var = disability_bonus_var,
+      pea_var = pea_var,
       unemployed_var = unemployed_var,
       inactive_var = inactive_var,
       working_age_var = working_age_var,
+      condactn_var = condactn_var,
+      rule_status = rule_status,
+      missing_official_source_vars = setdiff(official_vars, names(data)),
       overwrite = overwrite,
       strict = strict
     ))
@@ -2617,9 +2644,153 @@ enemdu_build_ipm_components <- function(
         },
         output_component = component_var,
         rule_status = "proxy_fallback_not_official_syntax",
-        missing_official_source_vars = setdiff(official_vars, names(data))
+        missing_official_source_vars = setdiff(official_vars, names(data)),
+        official_validation_status = "not_officially_validated"
       )
     )
+  )
+}
+
+.enemdu_ipm_i06_labor_status_source <- function(data,
+                                                age,
+                                                employment,
+                                                unemployment_var,
+                                                unemployed_var,
+                                                inactive_var,
+                                                working_age_var,
+                                                pea_var,
+                                                condactn_var) {
+  n <- length(age)
+
+  if (working_age_var %in% names(data)) {
+    pet <- .enemdu_ipm_coerce_source_numeric(data[[working_age_var]], working_age_var)
+    pet_source <- "provided_pet"
+    pet_derived_n <- NA_integer_
+  } else {
+    pet <- rep(0L, n)
+    pet[is.na(age)] <- NA_integer_
+    pet[!is.na(age) & age >= 15 & age <= 98] <- 1L
+    pet[!is.na(age) & (age < 15 | age == 99)] <- 0L
+    pet_source <- "derived_from_age"
+    pet_derived_n <- as.integer(sum(pet == 1L, na.rm = TRUE))
+  }
+
+  if (unemployed_var %in% names(data)) {
+    desem <- .enemdu_ipm_coerce_source_numeric(data[[unemployed_var]], unemployed_var)
+    desem_source <- "provided_desem"
+    desem_derived_n <- NA_integer_
+  } else if (unemployment_var %in% names(data)) {
+    unemployment <- .enemdu_ipm_coerce_source_numeric(data[[unemployment_var]], unemployment_var)
+    desem <- rep(0L, n)
+    desem[!is.na(unemployment) & unemployment == 1] <- 1L
+    desem_source <- "derived_from_desempleo"
+    desem_derived_n <- as.integer(sum(desem == 1L, na.rm = TRUE))
+  } else {
+    desem <- rep(NA_real_, n)
+    desem_source <- "not_available"
+    desem_derived_n <- NA_integer_
+  }
+
+  if (pea_var %in% names(data)) {
+    pea <- .enemdu_ipm_coerce_source_numeric(data[[pea_var]], pea_var)
+    pea_source <- "provided_pea"
+    pea_derived_n <- NA_integer_
+  } else if (!identical(desem_source, "not_available")) {
+    pea <- rep(NA_integer_, n)
+    not_pet <- !is.na(pet) & pet == 0
+    pet_1 <- !is.na(pet) & pet == 1
+    employed <- !is.na(employment) & employment == 1
+    unemployed <- !is.na(desem) & desem == 1
+
+    pea[not_pet] <- 0L
+    pea[pet_1 & (employed | unemployed)] <- 1L
+    pea[pet_1 & !employed & !unemployed] <- 0L
+    pea_source <- "derived_from_empleo_desem"
+    pea_derived_n <- as.integer(sum(pea == 1L, na.rm = TRUE))
+  } else {
+    pea <- rep(NA_real_, n)
+    pea_source <- "not_available"
+    pea_derived_n <- NA_integer_
+  }
+
+  if (inactive_var %in% names(data)) {
+    pei <- .enemdu_ipm_coerce_source_numeric(data[[inactive_var]], inactive_var)
+    pei_source <- "provided_pei"
+    pei_derived_n <- NA_integer_
+  } else if (!identical(pea_source, "not_available")) {
+    pei <- rep(NA_integer_, n)
+    pei[!is.na(pet) & pet == 0] <- 0L
+    pei[!is.na(pet) & pet == 1 & !is.na(pea) & pea == 0] <- 1L
+    pei[!is.na(pet) & pet == 1 & !is.na(pea) & pea == 1] <- 0L
+    pei_source <- "derived_from_pet_pea"
+    pei_derived_n <- as.integer(sum(pei == 1L, na.rm = TRUE))
+  } else {
+    pei <- rep(NA_real_, n)
+    pei_source <- "not_available"
+    pei_derived_n <- NA_integer_
+  }
+
+  condactn_source_var <- .enemdu_ipm_first_existing_var(data, condactn_var)
+  condact_pet_consistency_n <- NA_integer_
+  condact_pea_mismatch_n <- NA_integer_
+  condact_pei_mismatch_n <- NA_integer_
+  labor_status_validation <- "not_checked"
+
+  if (!is.na(condactn_source_var)) {
+    condact <- .enemdu_ipm_coerce_source_numeric(data[[condactn_source_var]], condactn_source_var)
+    condact_pet <- !is.na(condact) & condact %in% 1:9
+    condact_pea <- !is.na(condact) & condact %in% 1:8
+    condact_pei <- !is.na(condact) & condact == 9
+
+    condact_pet_consistency_n <- as.integer(sum(
+      condact_pet & !is.na(pet) & pet == 1L
+    ))
+    condact_pea_mismatch_n <- as.integer(sum(
+      condact_pea & (is.na(pea) | pea != 1L)
+    ))
+    condact_pei_mismatch_n <- as.integer(sum(
+      condact_pei & (is.na(pei) | pei != 1L)
+    ))
+    labor_status_validation <- if (
+      condact_pea_mismatch_n == 0L &&
+        condact_pei_mismatch_n == 0L
+    ) {
+      "consistent_with_condact"
+    } else {
+      "mismatch_detected"
+    }
+  }
+
+  list(
+    pet = pet,
+    pea = pea,
+    pei = pei,
+    desem = desem,
+    pet_source = pet_source,
+    pea_source = pea_source,
+    pei_source = pei_source,
+    desem_source = desem_source,
+    labor_status_policy = if (
+      identical(pet_source, "provided_pet") &&
+        identical(pei_source, "provided_pei") &&
+        identical(desem_source, "provided_desem")
+    ) {
+      "provided_official_labor_status"
+    } else {
+      "one_na_membership_flags"
+    },
+    labor_status_validation = labor_status_validation,
+    pet_derived_n = pet_derived_n,
+    pea_derived_n = pea_derived_n,
+    pei_derived_n = pei_derived_n,
+    desem_derived_n = desem_derived_n,
+    pet_missing_n = as.integer(sum(is.na(pet))),
+    pea_missing_n = as.integer(sum(is.na(pea))),
+    pei_missing_n = as.integer(sum(is.na(pei))),
+    condactn_source_var = condactn_source_var,
+    condact_pet_consistency_n = condact_pet_consistency_n,
+    condact_pea_mismatch_n = condact_pea_mismatch_n,
+    condact_pei_mismatch_n = condact_pei_mismatch_n
   )
 }
 
@@ -2628,14 +2799,19 @@ enemdu_build_ipm_components <- function(
                                                                       household_id,
                                                                       age_var,
                                                                       employment_var,
+                                                                      unemployment_var,
                                                                       social_security_a_var,
                                                                       social_security_b_var,
                                                                       pension_income_var,
                                                                       human_development_bonus_var,
                                                                       disability_bonus_var,
+                                                                      pea_var,
                                                                       unemployed_var,
                                                                       inactive_var,
                                                                       working_age_var,
+                                                                      condactn_var,
+                                                                      rule_status,
+                                                                      missing_official_source_vars,
                                                                       overwrite,
                                                                       strict) {
   age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
@@ -2657,9 +2833,20 @@ enemdu_build_ipm_components <- function(
     data[[disability_bonus_var]],
     disability_bonus_var
   )
-  unemployed <- .enemdu_ipm_coerce_source_numeric(data[[unemployed_var]], unemployed_var)
-  inactive <- .enemdu_ipm_coerce_source_numeric(data[[inactive_var]], inactive_var)
-  working_age <- .enemdu_ipm_coerce_source_numeric(data[[working_age_var]], working_age_var)
+  labor_status <- .enemdu_ipm_i06_labor_status_source(
+    data = data,
+    age = age,
+    employment = employment,
+    unemployment_var = unemployment_var,
+    unemployed_var = unemployed_var,
+    inactive_var = inactive_var,
+    working_age_var = working_age_var,
+    pea_var = pea_var,
+    condactn_var = condactn_var
+  )
+  unemployed <- labor_status$desem
+  inactive <- labor_status$pei
+  working_age <- labor_status$pet
 
   age_15_98 <- !is.na(age) & age >= 15 & age <= 98
   working_age_out <- age_15_98 & !is.na(working_age) & working_age == 0
@@ -2742,15 +2929,47 @@ enemdu_build_ipm_components <- function(
           pension_income_var,
           human_development_bonus_var,
           disability_bonus_var,
-          unemployed_var,
-          inactive_var,
-          working_age_var
+          intersect(
+            c(
+              unemployment_var,
+              unemployed_var,
+              inactive_var,
+              working_age_var,
+              pea_var,
+              labor_status$condactn_source_var
+            ),
+            names(data)
+          )
         ),
+        pet_source = labor_status$pet_source,
+        pea_source = labor_status$pea_source,
+        pei_source = labor_status$pei_source,
+        desem_source = labor_status$desem_source,
+        labor_status_policy = labor_status$labor_status_policy,
+        labor_status_validation = labor_status$labor_status_validation,
+        pet_derived_n = labor_status$pet_derived_n,
+        pea_derived_n = labor_status$pea_derived_n,
+        pei_derived_n = labor_status$pei_derived_n,
+        desem_derived_n = labor_status$desem_derived_n,
+        pet_missing_n = labor_status$pet_missing_n,
+        pea_missing_n = labor_status$pea_missing_n,
+        pei_missing_n = labor_status$pei_missing_n,
+        condact_pet_consistency_n = labor_status$condact_pet_consistency_n,
+        condact_pea_mismatch_n = labor_status$condact_pea_mismatch_n,
+        condact_pei_mismatch_n = labor_status$condact_pei_mismatch_n,
         pension_exception_age_min = 65,
         critical_missing_n = sum(critical_missing),
+        occupied_15_plus_evaluated_n = sum(employed),
+        occupied_15_plus_unknown_contribution_n = sum(employed & !contribution_observed),
+        older_non_employed_evaluated_n = sum(older_not_employed),
+        older_non_employed_unknown_benefit_status_n = sum(
+          older_not_employed & benefit_unknown
+        ),
         household_na_n = household_na_n,
         output_component = component_var,
-        rule_status = "official_syntax_rule"
+        rule_status = rule_status,
+        missing_official_source_vars = missing_official_source_vars,
+        official_validation_status = "not_officially_validated"
       )
     ),
     critical_missing = list(
