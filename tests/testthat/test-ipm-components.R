@@ -1092,10 +1092,45 @@ test_that("IPM i03 uses official schooling formula and reports zero conversions"
 
   out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
 
-  expect_equal(out[[component]], c(1L, 0L, 0L, 1L))
+  expect_equal(out[[component]][1:3], c(1L, 0L, 0L))
+  expect_true(is.na(out[[component]][4]))
   diagnostics <- attr(out, "ipm_component_diagnostics")
   expect_equal(
     diagnostics$variables_used$incomplete_education$schooling_unmatched_converted_to_zero_n,
+    0L
+  )
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_unmatched_observed_n,
+    1L
+  )
+})
+
+test_that("IPM i03 keeps missing schooling inputs unknown and preserves true zero", {
+  component <- .ipm_component_name("ipm_i03_logro_educativo_incompleto")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(30, 30, 30),
+    p07 = c(2, 2, 2),
+    p10a = c(NA_real_, 4, 1),
+    p10b = c(0, NA_real_, 0)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  by_component <- diagnostics$critical_missing_by_component
+  i03 <- by_component[
+    by_component$indicator_id == "ipm_i03_logro_educativo_incompleto",
+    ,
+    drop = FALSE
+  ]
+
+  expect_true(is.na(out[[component]][1]))
+  expect_true(is.na(out[[component]][2]))
+  expect_equal(out[[component]][3], 1L)
+  expect_equal(i03$critical_missing_person_rows, 2L)
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_missing_required_grade_n,
     1L
   )
 })
@@ -1163,6 +1198,36 @@ test_that("IPM i04 preserves all-missing p51 hours as critical missing", {
     diagnostics$variables_used$child_adolescent_employment$working_adolescents_unknown_hours_n,
     2L
   )
+})
+
+test_that("IPM i04 does not overwrite decided adolescent deprivation with missing inputs", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(16, 16, 16),
+    p07 = c(2, NA_real_, 1),
+    empleo = 1L,
+    p20 = 1L,
+    p21 = 12L,
+    p22 = 2L,
+    p24 = c(NA_real_, 31, NA_real_),
+    pea = 1L,
+    condactn = 1L
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  by_component <- diagnostics$critical_missing_by_component
+  i04 <- by_component[
+    by_component$indicator_id == "ipm_i04_empleo_infantil_adolescente",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(out[[component]][1:2], c(1L, 1L))
+  expect_true(is.na(out[[component]][3]))
+  expect_equal(i04$critical_missing_person_rows, 1L)
 })
 
 test_that("IPM i05 uses official condactn in 2:8 syntax", {
@@ -1260,6 +1325,42 @@ test_that("IPM i06 uses official p05a/p05b and benefit exceptions", {
 
   expect_equal(out[[component]][1:6], c(1L, 0L, 0L, 1L, 0L, 0L))
   expect_true(is.na(out[[component]][7]))
+})
+
+test_that("IPM i06 official missingness is branch-specific", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:5),
+    p01 = 1L,
+    p03 = c(30, 30, 65, 65, 65),
+    empleo = 1L,
+    p05a = c(1, 5, 5, 5, 5),
+    p05b = c(1, 5, 5, 5, 5),
+    p72a = c(NA_real_, NA_real_, NA_real_, 1, 2),
+    p75 = c(NA_real_, NA_real_, 2, NA_real_, 2),
+    p77 = c(NA_real_, NA_real_, 2, NA_real_, 2),
+    desem = 0L,
+    pei = 0L,
+    pet = 1L
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  by_component <- diagnostics$critical_missing_by_component
+  i06 <- by_component[
+    by_component$indicator_id == "ipm_i06_no_contribucion_pensiones",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(out[[component]][1:2], c(0L, 1L))
+  expect_true(is.na(out[[component]][3]))
+  expect_equal(out[[component]][4:5], c(0L, 1L))
+  expect_equal(i06$critical_missing_person_rows, 1L)
+  expect_equal(
+    diagnostics$variables_used$pension_contribution$rule_status,
+    "official_syntax_rule"
+  )
 })
 
 test_that("IPM i09 recodes zero bedrooms to one under official policy", {

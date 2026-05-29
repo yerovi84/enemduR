@@ -1360,6 +1360,8 @@ enemdu_build_ipm_components <- function(
         applicable_age_range = c(incomplete_education_age_min, incomplete_education_age_max),
         incomplete_schooling_years = incomplete_schooling_years,
         schooling_unmatched_converted_to_zero_n = sum(schooling_info$converted_to_zero),
+        schooling_unmatched_observed_n = sum(schooling_info$unmatched_observed),
+        schooling_missing_required_grade_n = sum(schooling_info$missing_required_grade),
         critical_missing_n = sum(critical_missing),
         output_component = component_var,
         rule_status = "official_syntax_rule",
@@ -1844,14 +1846,22 @@ enemdu_build_ipm_components <- function(
         ((!is.na(attendance) & attendance == 2) | (!is.na(horas) & horas > 30)))
   )
 
+  adolescent_non_deprived <- adolescent &
+    !is.na(condactn) &
+    condactn == 1 &
+    !is.na(attendance) &
+    attendance == 1 &
+    !is.na(horas) &
+    horas <= 30
+  adolescent_unknown <- adolescent &
+    !is.na(condactn) &
+    condactn == 1 &
+    !adolescent_deprived &
+    !adolescent_non_deprived
+
   critical_missing <- (child & is.na(p20) & is.na(p21) & is.na(p22)) |
     (adolescent & is.na(condactn)) |
-    (
-      adolescent &
-        !is.na(condactn) &
-        condactn == 1 &
-        (is.na(attendance) | is.na(horas))
-    )
+    adolescent_unknown
 
   person_deprivation <- rep(0L, length(age))
   person_deprivation[is.na(age)] <- NA_integer_
@@ -2499,47 +2509,54 @@ enemdu_build_ipm_components <- function(
   working_age <- .enemdu_ipm_coerce_source_numeric(data[[working_age_var]], working_age_var)
 
   age_15_98 <- !is.na(age) & age >= 15 & age <= 98
-  critical_missing <- age_15_98 & (
-    is.na(pension) |
-      is.na(bonus) |
-      is.na(disability_bonus) |
-      is.na(social_security_a) |
-      is.na(social_security_b)
-  )
+  working_age_out <- age_15_98 & !is.na(working_age) & working_age == 0
+  employed <- age_15_98 & !is.na(employment) & employment == 1
+  employed_non_older <- employed & !is.na(age) & age < 65
+  employed_older <- employed & !is.na(age) & age >= 65
+  older_not_employed <- age_15_98 &
+    !is.na(age) &
+    age >= 65 &
+    ((!is.na(unemployed) & unemployed == 1) | (!is.na(inactive) & inactive == 1))
+
+  contribution_observed <- !is.na(social_security_a) & !is.na(social_security_b)
+  no_contribution <- contribution_observed &
+    social_security_a %in% 5:10 &
+    social_security_b %in% 5:10
+  contributes <- contribution_observed & !no_contribution
+
+  pension_yes <- !is.na(pension) & pension == 1
+  pension_no <- !is.na(pension) & pension == 2
+  bonus_yes <- !is.na(bonus) & bonus == 1
+  bonus_no <- !is.na(bonus) & bonus == 2
+  disability_bonus_yes <- !is.na(disability_bonus) & disability_bonus == 1
+  disability_bonus_no <- !is.na(disability_bonus) & disability_bonus == 2
+  disability_exception_yes <- !is.na(working_age) & working_age == 1 & disability_bonus_yes
+  benefit_yes <- pension_yes | (pension_no & bonus_yes) | disability_exception_yes
+  benefit_all_no <- pension_no & bonus_no & disability_bonus_no
+  benefit_unknown <- !benefit_yes & !benefit_all_no
 
   person_deprivation <- rep(0L, length(age))
   person_deprivation[is.na(age)] <- NA_integer_
 
-  no_contribution <- !is.na(employment) & employment == 1 &
-    !is.na(social_security_a) & social_security_a %in% 5:10 &
-    !is.na(social_security_b) & social_security_b %in% 5:10
-  person_deprivation[age_15_98 & no_contribution] <- 1L
+  person_deprivation[employed_non_older & no_contribution] <- 1L
+  person_deprivation[employed_non_older & contributes] <- 0L
+  person_deprivation[employed_non_older & disability_exception_yes] <- 0L
 
-  person_deprivation[
-    age_15_98 &
-      !is.na(employment) & employment == 1 &
-      !is.na(age) & age >= 65 &
-      !is.na(pension) & pension == 1
-  ] <- 0L
-  person_deprivation[
-    age_15_98 &
-      ((!is.na(unemployed) & unemployed == 1) | (!is.na(inactive) & inactive == 1)) &
-      !is.na(age) & age >= 65 &
-      !is.na(pension) & pension == 2
-  ] <- 1L
-  person_deprivation[
-    age_15_98 &
-      !is.na(age) & age >= 65 &
-      !is.na(pension) & pension == 2 &
-      !is.na(bonus) & bonus == 1
-  ] <- 0L
-  person_deprivation[
-    age_15_98 &
-      !is.na(working_age) & working_age == 1 &
-      !is.na(disability_bonus) & disability_bonus == 1
-  ] <- 0L
+  person_deprivation[employed_older & contributes] <- 0L
+  person_deprivation[employed_older & no_contribution] <- 1L
+  person_deprivation[employed_older & benefit_yes] <- 0L
 
-  person_deprivation[age_15_98 & !is.na(working_age) & working_age == 0] <- NA_integer_
+  person_deprivation[older_not_employed & benefit_all_no] <- 1L
+  person_deprivation[older_not_employed & benefit_yes] <- 0L
+
+  person_deprivation[working_age_out] <- NA_integer_
+
+  critical_missing <- !working_age_out & (
+    (employed_non_older & !contribution_observed) |
+      (employed_older & !contribution_observed & !benefit_yes) |
+      (employed_older & no_contribution & benefit_unknown) |
+      (older_not_employed & benefit_unknown)
+  )
   person_deprivation[critical_missing] <- NA_integer_
 
   component <- .enemdu_ipm_household_max_complete(
@@ -3385,12 +3402,20 @@ enemdu_build_ipm_components <- function(
   invalid_grade <- !is.na(education_grade) & education_grade < 0
   years[invalid_grade] <- NA_real_
 
-  converted_to_zero <- is.na(years) & !invalid_grade
-  years[converted_to_zero] <- 0
+  grade_required <- !is.na(education_level) &
+    education_level %in% c(1, 2, 4, 5, 6, 7, 8, 9, 10)
+  missing_required_grade <- grade_required & is.na(education_grade)
+  unmatched_observed <- !is.na(education_level) &
+    !missing_required_grade &
+    !invalid_grade &
+    is.na(years)
+  converted_to_zero <- rep(FALSE, length(years))
 
   list(
     years = years,
-    converted_to_zero = converted_to_zero
+    converted_to_zero = converted_to_zero,
+    unmatched_observed = unmatched_observed,
+    missing_required_grade = missing_required_grade
   )
 }
 
