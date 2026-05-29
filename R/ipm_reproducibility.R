@@ -118,11 +118,15 @@ enemdu_validate_ipm_reproducibility_inputs <- function(
 #' components when available.
 #' @param strict Logical. If `TRUE`, abort on invalid reproducibility inputs.
 #' @param tolerance_pp Benchmark-comparison tolerance in percentage points.
+#' @param missing_component_policy Missing IPM evidence policy. `"error"`
+#' refuses incomplete registered components or score/flag inputs. `"complete_case"`
+#' excludes rows with incomplete registered components, or incomplete score/flag
+#' inputs when components are unavailable, before estimation.
 #' @param ... Additional named arguments passed to `enemdu_kpi_ipm()` and,
 #' when relevant, `enemdu_build_ipm_components()`.
 #'
 #' @return A structured list with preflight, validation, estimates, benchmarks,
-#' comparison, and non-official validation metadata.
+#' comparison, complete-case diagnostics, and non-official validation metadata.
 #' @export
 enemdu_run_ipm_reproducibility <- function(
   data,
@@ -136,6 +140,7 @@ enemdu_run_ipm_reproducibility <- function(
   build_flags = TRUE,
   strict = TRUE,
   tolerance_pp = 0.5,
+  missing_component_policy = c("error", "complete_case"),
   ...
 ) {
   caller <- "enemdu_run_ipm_reproducibility"
@@ -145,6 +150,7 @@ enemdu_run_ipm_reproducibility <- function(
   }
 
   survey_type <- .enemdu_normalize_survey_type(survey_type, caller = caller)
+  missing_component_policy <- match.arg(missing_component_policy)
   dots <- list(...)
   component_cols <- if (!is.null(dots$component_cols)) {
     dots$component_cols
@@ -177,19 +183,82 @@ enemdu_run_ipm_reproducibility <- function(
 
   split_dots <- .enemdu_ipm_split_dots(dots_for_split)
 
-  prepared <- .enemdu_prepare_ipm_kpi_data(
-    data = data,
-    build_components = build_components,
-    build_flags = build_flags,
-    component_cols = component_cols,
-    score_var = score_var,
-    tpm_var = tpm_var,
-    tpem_var = tpem_var,
-    strict = strict,
-    component_dots = split_dots$component_dots
-  )
+  work_input <- data
+  component_diagnostics <- NULL
+  flags_diagnostics <- NULL
 
-  work_data <- prepared$data
+  if (isTRUE(build_components)) {
+    component_args <- c(
+      list(data = work_input, strict = strict),
+      split_dots$component_dots
+    )
+
+    work_input <- do.call(enemdu_build_ipm_components, component_args)
+    component_diagnostics <- attr(work_input, "ipm_component_diagnostics")
+  }
+
+  resolved_components <- .enemdu_resolve_ipm_components(component_cols)
+  flag_vars <- c(score_var, tpm_var, tpem_var)
+
+  complete_case <- .enemdu_ipm_reproducibility_complete_cases(
+    data = work_input,
+    component_cols = resolved_components$component_cols,
+    flag_vars = flag_vars,
+    weight = weight,
+    by = by,
+    missing_component_policy = missing_component_policy
+  )
+  complete_case_diagnostics <- complete_case$diagnostics
+  complete_case_by_domain <- complete_case$by_domain
+
+  if (
+    identical(missing_component_policy, "error") &&
+      complete_case_diagnostics$rows_excluded[[1]] > 0
+  ) {
+    .enemdu_abort_ipm_reproducibility_incomplete_cases(
+      diagnostics = complete_case_diagnostics
+    )
+  }
+
+  if (identical(missing_component_policy, "complete_case")) {
+    if (complete_case_diagnostics$rows_complete[[1]] == 0) {
+      .enemdu_abort_ipm_reproducibility_complete_case_empty(
+        diagnostics = complete_case_diagnostics
+      )
+    }
+
+    work_input <- work_input[complete_case$complete, , drop = FALSE]
+  }
+
+  components_available <- all(resolved_components$component_cols %in% names(work_input))
+  flags_available <- all(flag_vars %in% names(work_input))
+
+  if (isTRUE(build_flags) && isTRUE(components_available)) {
+    work_data <- enemdu_build_ipm_flags(
+      data = work_input,
+      component_cols = resolved_components$component_cols,
+      score_var = score_var,
+      tpm_var = tpm_var,
+      tpem_var = tpem_var,
+      overwrite = flags_available,
+      strict = strict
+    )
+    flags_diagnostics <- attr(work_data, "ipm_flags_diagnostics")
+  } else if (!isTRUE(flags_available)) {
+    missing_flags <- setdiff(flag_vars, names(work_input))
+
+    rlang::abort(
+      message = glue::glue(
+        "IPM KPI inputs are incomplete. Missing score or flag variables: ",
+        "{paste(missing_flags, collapse = ', ')}. ",
+        "Provide prebuilt flags or registered component columns."
+      ),
+      class = c("enemdu_error_missing_ipm_kpi_inputs", "enemdu_error"),
+      missing_vars = missing_flags
+    )
+  } else {
+    work_data <- work_input
+  }
 
   preflight <- enemdu_validate_ipm_reproducibility_inputs(
     data = work_data,
@@ -211,6 +280,7 @@ enemdu_run_ipm_reproducibility <- function(
     },
     preflight_passed = isTRUE(attr(preflight, "preflight_passed")),
     strict = isTRUE(strict),
+    missing_component_policy = missing_component_policy,
     official_validation_status = "not_officially_validated"
   )
 
@@ -289,6 +359,8 @@ enemdu_run_ipm_reproducibility <- function(
     estimates = estimates,
     benchmarks = benchmarks,
     comparison = comparison,
+    complete_case_diagnostics = complete_case_diagnostics,
+    complete_case_by_domain = complete_case_by_domain,
     official_validation_status = "not_officially_validated",
     official_validation_note = paste(
       "This workflow compares local IPM estimates against published benchmarks.",
@@ -306,13 +378,17 @@ enemdu_run_ipm_reproducibility <- function(
     build_components = isTRUE(build_components),
     build_flags = isTRUE(build_flags),
     tolerance_pp = tolerance_pp,
+    missing_component_policy = missing_component_policy,
     component_cols = component_cols,
     score_var = score_var,
     tpm_var = tpm_var,
     tpem_var = tpem_var,
     strict = isTRUE(strict),
-    components_diagnostics = prepared$component_diagnostics,
-    flags_diagnostics = prepared$flags_diagnostics,
+    components_diagnostics = component_diagnostics,
+    flags_diagnostics = flags_diagnostics,
+    complete_case_diagnostics = complete_case_diagnostics,
+    complete_case_by_domain = complete_case_by_domain,
+    official_validation_status = "not_officially_validated",
     note = paste(
       "IPM reproducibility workflow for local analytical comparison.",
       "Published benchmarks are not institutional validation."
@@ -343,6 +419,201 @@ enemdu_run_ipm_reproducibility <- function(
   }
 
   do.call(rbind, rows)
+}
+
+.enemdu_ipm_reproducibility_complete_cases <- function(data,
+                                                       component_cols,
+                                                       flag_vars,
+                                                       weight,
+                                                       by,
+                                                       missing_component_policy) {
+  components_available <- all(component_cols %in% names(data))
+  flags_available <- all(flag_vars %in% names(data))
+
+  if (isTRUE(components_available)) {
+    complete <- stats::complete.cases(data[, component_cols, drop = FALSE])
+    source <- "components"
+    variables <- component_cols
+  } else if (isTRUE(flags_available)) {
+    complete <- stats::complete.cases(data[, flag_vars, drop = FALSE])
+    source <- "flags"
+    variables <- flag_vars
+  } else {
+    complete <- rep(TRUE, nrow(data))
+    source <- "unavailable"
+    variables <- character()
+  }
+
+  diagnostics <- .enemdu_ipm_reproducibility_complete_case_diagnostics(
+    data = data,
+    complete = complete,
+    weight = weight,
+    missing_component_policy = missing_component_policy,
+    complete_case_source = source,
+    complete_case_variables = variables
+  )
+  by_domain <- .enemdu_ipm_reproducibility_complete_case_by_domain(
+    data = data,
+    complete = complete,
+    weight = weight,
+    by = by
+  )
+
+  list(
+    complete = complete,
+    diagnostics = diagnostics,
+    by_domain = by_domain
+  )
+}
+
+.enemdu_ipm_reproducibility_complete_case_diagnostics <- function(data,
+                                                                 complete,
+                                                                 weight,
+                                                                 missing_component_policy,
+                                                                 complete_case_source,
+                                                                 complete_case_variables) {
+  weights <- .enemdu_ipm_reproducibility_weights(data, weight)
+  rows_total <- length(complete)
+  rows_complete <- sum(complete)
+  rows_excluded <- rows_total - rows_complete
+  weighted_total <- .enemdu_ipm_reproducibility_weighted_sum(weights)
+  weighted_complete <- .enemdu_ipm_reproducibility_weighted_sum(weights[complete])
+  weighted_excluded <- if (is.na(weighted_total) || is.na(weighted_complete)) {
+    NA_real_
+  } else {
+    weighted_total - weighted_complete
+  }
+
+  tibble::tibble(
+    rows_total = as.integer(rows_total),
+    rows_complete = as.integer(rows_complete),
+    rows_excluded = as.integer(rows_excluded),
+    share_rows_excluded = .enemdu_ipm_reproducibility_share(
+      numerator = rows_excluded,
+      denominator = rows_total
+    ),
+    weighted_total = weighted_total,
+    weighted_complete = weighted_complete,
+    weighted_excluded = weighted_excluded,
+    share_weighted_excluded = .enemdu_ipm_reproducibility_share(
+      numerator = weighted_excluded,
+      denominator = weighted_total
+    ),
+    missing_component_policy = missing_component_policy,
+    complete_case_source = complete_case_source,
+    complete_case_variables = paste(complete_case_variables, collapse = ", "),
+    official_validation_status = "not_officially_validated"
+  )
+}
+
+.enemdu_ipm_reproducibility_complete_case_by_domain <- function(data,
+                                                               complete,
+                                                               weight,
+                                                               by) {
+  out <- tibble::tibble(
+    domain_variable = character(),
+    domain_value = character(),
+    complete_case_status = character(),
+    n = integer(),
+    weighted_n = numeric()
+  )
+
+  if (is.null(by)) {
+    return(out)
+  }
+
+  by <- as.character(by)
+  if (
+    length(by) == 0 ||
+      any(is.na(by)) ||
+      any(!nzchar(by)) ||
+      any(!by %in% names(data))
+  ) {
+    return(out)
+  }
+
+  domain_variable <- paste(by, collapse = "|")
+  domain_value <- .enemdu_ipm_reproducibility_domain_value(data, by)
+  complete_case_status <- ifelse(complete, "complete", "incomplete")
+  weights <- .enemdu_ipm_reproducibility_weights(data, weight)
+
+  groups <- unique(data.frame(
+    domain_value = domain_value,
+    complete_case_status = complete_case_status,
+    stringsAsFactors = FALSE
+  ))
+
+  if (nrow(groups) == 0) {
+    return(out)
+  }
+
+  rows <- vector("list", nrow(groups))
+
+  for (i in seq_len(nrow(groups))) {
+    same_domain <- domain_value == groups$domain_value[[i]]
+    same_domain[is.na(same_domain)] <- is.na(domain_value[is.na(same_domain)]) &
+      is.na(groups$domain_value[[i]])
+    idx <- same_domain &
+      complete_case_status == groups$complete_case_status[[i]]
+    rows[[i]] <- tibble::tibble(
+      domain_variable = domain_variable,
+      domain_value = groups$domain_value[[i]],
+      complete_case_status = groups$complete_case_status[[i]],
+      n = as.integer(sum(idx)),
+      weighted_n = .enemdu_ipm_reproducibility_weighted_sum(weights[idx])
+    )
+  }
+
+  do.call(rbind, rows)
+}
+
+.enemdu_ipm_reproducibility_domain_value <- function(data, by) {
+  values <- lapply(by, function(var) {
+    out <- as.character(data[[var]])
+    out[is.na(data[[var]])] <- NA_character_
+    out
+  })
+
+  if (length(values) == 1) {
+    return(values[[1]])
+  }
+
+  out <- do.call(paste, c(values, sep = "|"))
+  has_missing <- Reduce(`|`, lapply(values, is.na))
+  out[has_missing] <- NA_character_
+  out
+}
+
+.enemdu_ipm_reproducibility_weights <- function(data, weight) {
+  if (!weight %in% names(data)) {
+    return(rep(NA_real_, nrow(data)))
+  }
+
+  suppressWarnings(as.numeric(data[[weight]]))
+}
+
+.enemdu_ipm_reproducibility_weighted_sum <- function(weights) {
+  valid <- !is.na(weights) & is.finite(weights)
+
+  if (!any(valid)) {
+    return(NA_real_)
+  }
+
+  sum(weights[valid])
+}
+
+.enemdu_ipm_reproducibility_share <- function(numerator, denominator) {
+  if (
+    length(numerator) == 0 ||
+      length(denominator) == 0 ||
+      is.na(numerator) ||
+      is.na(denominator) ||
+      denominator == 0
+  ) {
+    return(NA_real_)
+  }
+
+  as.numeric(numerator) / as.numeric(denominator)
 }
 
 .enemdu_ipm_reproducibility_variable_issue <- function(role,
@@ -408,5 +679,35 @@ enemdu_run_ipm_reproducibility <- function(
     ),
     class = c("enemdu_error_ipm_reproducibility_preflight_failed", "enemdu_error"),
     preflight = preflight
+  )
+}
+
+.enemdu_abort_ipm_reproducibility_incomplete_cases <- function(diagnostics) {
+  rlang::abort(
+    message = glue::glue(
+      "IPM reproducibility inputs contain incomplete IPM evidence in ",
+      "{diagnostics$rows_excluded[[1]]} row(s). Use ",
+      "`missing_component_policy = \"complete_case\"` to exclude incomplete ",
+      "rows explicitly."
+    ),
+    class = c(
+      "enemdu_error_ipm_reproducibility_incomplete_cases",
+      "enemdu_error"
+    ),
+    complete_case_diagnostics = diagnostics
+  )
+}
+
+.enemdu_abort_ipm_reproducibility_complete_case_empty <- function(diagnostics) {
+  rlang::abort(
+    message = paste(
+      "Complete-case IPM reproducibility excluded all rows.",
+      "At least one row with complete IPM evidence is required."
+    ),
+    class = c(
+      "enemdu_error_ipm_reproducibility_complete_case_empty",
+      "enemdu_error"
+    ),
+    complete_case_diagnostics = diagnostics
   )
 }

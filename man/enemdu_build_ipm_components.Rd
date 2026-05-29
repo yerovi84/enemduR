@@ -14,6 +14,8 @@ enemdu_build_ipm_components(
   overwrite = FALSE,
   strict = TRUE,
   extreme_poverty_var = "expobre",
+  extreme_poverty_income_var = NULL,
+  extreme_poverty_line = NULL,
   build_from_precomputed = TRUE,
   water_public_network_codes = 1,
   extreme_poverty_alias_vars = "epobreza",
@@ -41,6 +43,7 @@ enemdu_build_ipm_components(
   child_hours_var = "p24",
   child_income_var = "ingrl",
   child_sbu = 470,
+  employment_na_as_not_employed = TRUE,
   hours_sentinel_codes = 999,
   income_negative_sentinel_codes = -1,
   income_missing_sentinel_codes = 999999,
@@ -99,6 +102,15 @@ pending or when implemented source values are invalid or missing.}
 
 \item{extreme_poverty_var}{Precomputed binary extreme-income-poverty flag.
 Defaults to \code{"expobre"}.}
+
+\item{extreme_poverty_income_var}{Optional per-capita income variable used
+only to fill missing values in the selected \code{extreme_poverty_var} or alias
+when \code{extreme_poverty_line} is also supplied. This local reproducibility
+fallback does not constitute official validation by itself.}
+
+\item{extreme_poverty_line}{Optional extreme-poverty line used with
+\code{extreme_poverty_income_var} to fill missing selected binary-flag cases via
+\code{income < line}. The line is never hard-coded by this builder.}
 
 \item{build_from_precomputed}{Logical. If \code{TRUE}, existing registered
 component columns are accepted as precomputed inputs after binary validation.}
@@ -168,6 +180,11 @@ adolescents.}
 
 \item{child_sbu}{Profile-specific basic salary cutoff used for adolescents.
 The default \code{470} is for the 2025 annual profile.}
+
+\item{employment_na_as_not_employed}{Logical. If \code{TRUE}, missing values in
+the operational employment flag are treated as not employed for IPM
+components that use \code{employment_var}. This matches the ENEMDU 2025 annual
+profile where \code{empleo} is coded as \code{1/NA}.}
 
 \item{hours_sentinel_codes}{Hour codes treated as non-evaluable sentinels.}
 

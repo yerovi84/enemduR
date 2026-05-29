@@ -16,6 +16,7 @@ enemdu_run_ipm_reproducibility(
   build_flags = TRUE,
   strict = TRUE,
   tolerance_pp = 0.5,
+  missing_component_policy = c("error", "complete_case"),
   ...
 )
 }
@@ -44,12 +45,17 @@ components when available.}
 
 \item{tolerance_pp}{Benchmark-comparison tolerance in percentage points.}
 
+\item{missing_component_policy}{Missing IPM evidence policy. \code{"error"}
+refuses incomplete registered components or score/flag inputs. \code{"complete_case"}
+excludes rows with incomplete registered components, or incomplete score/flag
+inputs when components are unavailable, before estimation.}
+
 \item{...}{Additional named arguments passed to \code{enemdu_kpi_ipm()} and,
 when relevant, \code{enemdu_build_ipm_components()}.}
 }
 \value{
 A structured list with preflight, validation, estimates, benchmarks,
-comparison, and non-official validation metadata.
+comparison, complete-case diagnostics, and non-official validation metadata.
 }
 \description{
 Runs a local IPM reproducibility workflow: validates inputs, estimates IPM
