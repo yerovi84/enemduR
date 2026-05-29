@@ -452,12 +452,14 @@ test_that("IPM child and adolescent employment applies age-specific rules", {
 
   data$p03[1] <- 10
   data$empleo[1] <- 1
+  data$p20[1] <- 1
   out <- .ipm_build_complete_components(data)
   expect_equal(out[[component]][out$id_hogar == "h1"], c(1L, 1L))
 
   data <- .ipm_operational_component_data()
   data$p03[7] <- 16
   data$empleo[7] <- 1
+  data$condact[7] <- 1
   data$p07[7] <- 2
   data$p24[7] <- 20
   data$ingrl[7] <- 600
@@ -472,7 +474,7 @@ test_that("IPM child and adolescent employment applies age-specific rules", {
   data$p24[7] <- 20
   data$ingrl[7] <- 100
   out <- .ipm_build_complete_components(data)
-  expect_equal(out[[component]][out$id_hogar == "h4"], 1L)
+  expect_equal(out[[component]][out$id_hogar == "h4"], 0L)
 
   data$ingrl[7] <- 470
   out <- .ipm_build_complete_components(data)
@@ -573,6 +575,7 @@ test_that("IPM child and adolescent employment leaves undecidable adolescents as
 test_that("IPM child and adolescent employment rejects hour and income sentinels", {
   component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
   data <- .ipm_operational_component_data()
+  data$p20 <- NULL
   data$p03[7] <- 16
   data$empleo[7] <- 1
   data$p07[7] <- 1
@@ -1260,6 +1263,86 @@ test_that("IPM i04 does not overwrite decided adolescent deprivation with missin
   expect_equal(out[[component]][1:2], c(1L, 1L))
   expect_true(is.na(out[[component]][3]))
   expect_equal(i04$critical_missing_person_rows, 1L)
+})
+
+test_that("IPM i04 derives internal PEA from employment and unemployment", {
+  info <- .enemdu_ipm_i04_pea_source(
+    age = c(16, 16, 16, 14, 99, NA),
+    employment = c(1, 0, 0, 1, 1, NA),
+    unemployment = c(0, 1, 0, 0, 0, NA),
+    data = data.frame(),
+    pea_var = "pea",
+    pea_source = "derived_from_empleo_desempleo"
+  )
+
+  expect_equal(info$pea, c(1L, 1L, 0L, 0L, NA, NA))
+  expect_equal(info$pet_derived_n, 3L)
+  expect_equal(info$pea_derived_n, 2L)
+  expect_equal(info$pea_derived_missing_n, 2L)
+})
+
+test_that("IPM i04 uses official-like rule with derived PEA", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:12),
+    p01 = 1L,
+    p03 = c(10, 10, 10, 10, 16, 16, 16, 16, 16, 16, 16, 16),
+    p07 = c(1, 1, 1, 1, 1, 1, 2, NA, 1, 1, 1, 1),
+    empleo = c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1),
+    desempleo = 0L,
+    p20 = c(1, 2, 2, NA, 2, 2, 1, 1, 1, 1, 2, 2),
+    p21 = c(12, 5, 12, NA, 12, 12, 12, 12, 12, 12, 12, 12),
+    p22 = c(2, 2, 1, NA, 2, 2, 2, 2, 2, 2, 1, 1),
+    p24 = c(0, 0, 0, NA, 20, 20, NA, 31, 20, 20, NA, NA),
+    condact = c(1, 1, 1, 1, 2, 6, 1, 1, 1, NA, 1, 1),
+    p51a = c(rep(NA_real_, 10), 999, 20),
+    p51b = c(rep(NA_real_, 11), 20)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  i04_diagnostics <- diagnostics$variables_used$child_adolescent_employment
+
+  expect_equal(
+    out[[component]],
+    c(1L, 1L, 1L, NA, 1L, 1L, 1L, 1L, 0L, NA, NA, 1L)
+  )
+  expect_equal(i04_diagnostics$rule_status, "official_like_with_derived_pea")
+  expect_equal(i04_diagnostics$pea_source, "derived_from_empleo_desempleo")
+  expect_true("pea" %in% i04_diagnostics$missing_official_source_vars)
+  expect_false("ingrl" %in% i04_diagnostics$source_vars)
+  expect_equal(i04_diagnostics$child_missing_labor_block_n, 1L)
+  expect_equal(i04_diagnostics$adolescent_condact_missing_n, 1L)
+  expect_equal(i04_diagnostics$adolescent_decision_missing_n, 1L)
+  expect_equal(i04_diagnostics$hh_from_p51_missing_n, 1L)
+  expect_equal(i04_diagnostics$household_na_n, 3L)
+})
+
+test_that("IPM i04 can use official-like hours without a PEA gate", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(16, 16, 16),
+    p07 = c(1, 1, 1),
+    empleo = c(0, 0, 0),
+    p20 = c(1, 2, 1),
+    p21 = c(12, 12, 12),
+    p22 = c(2, 1, 2),
+    p24 = c(31, NA, 20),
+    condact = 1L,
+    p51a = c(NA, 20, NA),
+    p51b = c(NA, 20, NA)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  i04_diagnostics <- diagnostics$variables_used$child_adolescent_employment
+
+  expect_equal(out[[component]], c(1L, 1L, 0L))
+  expect_equal(i04_diagnostics$rule_status, "official_like_without_pea_gate")
+  expect_equal(i04_diagnostics$pea_source, "not_available_without_gate")
+  expect_false(i04_diagnostics$pea_used_for_hours)
 })
 
 test_that("IPM i05 uses official condactn in 2:8 syntax", {

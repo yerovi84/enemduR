@@ -573,6 +573,7 @@ enemdu_build_ipm_components <- function(
     p24_var = p24_var,
     pea_var = pea_var,
     condactn_var = condactn_var,
+    unemployment_var = unemployment_var,
     p51_prefix = p51_prefix,
     child_sbu = child_sbu,
     employment_na_as_not_employed = employment_na_as_not_employed,
@@ -1587,6 +1588,7 @@ enemdu_build_ipm_components <- function(
                                                                     p24_var,
                                                                     pea_var,
                                                                     condactn_var,
+                                                                    unemployment_var,
                                                                     p51_prefix,
                                                                     child_sbu,
                                                                     employment_na_as_not_employed,
@@ -1600,7 +1602,7 @@ enemdu_build_ipm_components <- function(
   }
 
   condactn_source_var <- .enemdu_ipm_first_existing_var(data, condactn_var)
-  official_required_vars <- c(
+  official_like_required_vars <- c(
     household_id,
     age_var,
     attendance_var,
@@ -1609,14 +1611,39 @@ enemdu_build_ipm_components <- function(
     p21_var,
     p22_var,
     p24_var,
-    pea_var,
     condactn_source_var
   )
-  official_required_vars <- official_required_vars[!is.na(official_required_vars)]
-  official_available <- !is.na(condactn_source_var) &&
-    all(official_required_vars %in% names(data))
+  official_like_required_vars <- official_like_required_vars[
+    !is.na(official_like_required_vars)
+  ]
+  official_like_available <- !is.na(condactn_source_var) &&
+    all(official_like_required_vars %in% names(data))
+  pea_available <- pea_var %in% names(data)
+  pea_derived_available <- !isTRUE(pea_available) &&
+    all(c(child_work_var, unemployment_var) %in% names(data))
 
-  if (isTRUE(official_available)) {
+  if (isTRUE(official_like_available)) {
+    if (isTRUE(pea_available)) {
+      pea_source <- "provided_pea"
+      rule_status <- "official_syntax_rule"
+    } else if (isTRUE(pea_derived_available)) {
+      pea_source <- "derived_from_empleo_desempleo"
+      rule_status <- "official_like_with_derived_pea"
+    } else {
+      pea_source <- "not_available_without_gate"
+      rule_status <- "official_like_without_pea_gate"
+    }
+    missing_official_source_vars <- setdiff(
+      c(official_like_required_vars, pea_var),
+      names(data)
+    )
+    if (!isTRUE(pea_available) && !isTRUE(pea_derived_available)) {
+      missing_official_source_vars <- unique(c(
+        missing_official_source_vars,
+        setdiff(unemployment_var, names(data))
+      ))
+    }
+
     return(.enemdu_build_ipm_child_adolescent_employment_official_component(
       data = data,
       component_var = component_var,
@@ -1629,7 +1656,11 @@ enemdu_build_ipm_components <- function(
       p22_var = p22_var,
       p24_var = p24_var,
       pea_var = pea_var,
+      unemployment_var = unemployment_var,
       condactn_var = condactn_source_var,
+      pea_source = pea_source,
+      rule_status = rule_status,
+      missing_official_source_vars = missing_official_source_vars,
       p51_prefix = p51_prefix,
       overwrite = overwrite,
       strict = strict
@@ -1787,9 +1818,60 @@ enemdu_build_ipm_components <- function(
         household_na_n = household_na_n,
         output_component = component_var,
         rule_status = "proxy_fallback_not_official_syntax",
-        missing_official_source_vars = setdiff(official_required_vars, names(data))
+        missing_official_source_vars = setdiff(
+          c(official_like_required_vars, pea_var),
+          names(data)
+        )
       )
     )
+  )
+}
+
+.enemdu_ipm_i04_pea_source <- function(age,
+                                       employment,
+                                       unemployment,
+                                       data,
+                                       pea_var,
+                                       pea_source) {
+  pet_derived <- rep(0L, length(age))
+  pet_derived[is.na(age) | age == 99] <- NA_integer_
+  pet_derived[!is.na(age) & age >= 15 & age <= 98] <- 1L
+
+  if (identical(pea_source, "provided_pea")) {
+    pea <- .enemdu_ipm_coerce_source_numeric(data[[pea_var]], pea_var)
+    return(list(
+      pea = pea,
+      pet_derived_n = as.integer(sum(pet_derived == 1L, na.rm = TRUE)),
+      pea_derived_n = NA_integer_,
+      pea_derived_missing_n = NA_integer_
+    ))
+  }
+
+  if (identical(pea_source, "derived_from_empleo_desempleo")) {
+    pea <- rep(0L, length(age))
+    pea[is.na(pet_derived)] <- NA_integer_
+    pet <- !is.na(pet_derived) & pet_derived == 1L
+    employed <- !is.na(employment) & employment == 1
+    unemployed <- !is.na(unemployment) & unemployment == 1
+    both_observed <- !is.na(employment) & !is.na(unemployment)
+
+    pea[pet & (employed | unemployed)] <- 1L
+    pea[pet & both_observed & !employed & !unemployed] <- 0L
+    pea[pet & !both_observed & !employed & !unemployed] <- NA_integer_
+
+    return(list(
+      pea = pea,
+      pet_derived_n = as.integer(sum(pet_derived == 1L, na.rm = TRUE)),
+      pea_derived_n = as.integer(sum(pea == 1L, na.rm = TRUE)),
+      pea_derived_missing_n = as.integer(sum(is.na(pea)))
+    ))
+  }
+
+  list(
+    pea = rep(NA_real_, length(age)),
+    pet_derived_n = as.integer(sum(pet_derived == 1L, na.rm = TRUE)),
+    pea_derived_n = NA_integer_,
+    pea_derived_missing_n = NA_integer_
   )
 }
 
@@ -1804,7 +1886,11 @@ enemdu_build_ipm_components <- function(
                                                                              p22_var,
                                                                              p24_var,
                                                                              pea_var,
+                                                                             unemployment_var,
                                                                              condactn_var,
+                                                                             pea_source,
+                                                                             rule_status,
+                                                                             missing_official_source_vars,
                                                                              p51_prefix,
                                                                              overwrite,
                                                                              strict) {
@@ -1815,12 +1901,28 @@ enemdu_build_ipm_components <- function(
   p21 <- .enemdu_ipm_coerce_source_numeric(data[[p21_var]], p21_var)
   p22 <- .enemdu_ipm_coerce_source_numeric(data[[p22_var]], p22_var)
   p24 <- .enemdu_ipm_coerce_source_numeric(data[[p24_var]], p24_var)
-  pea <- .enemdu_ipm_coerce_source_numeric(data[[pea_var]], pea_var)
   condactn <- .enemdu_ipm_coerce_source_numeric(data[[condactn_var]], condactn_var)
+  unemployment <- if (unemployment_var %in% names(data)) {
+    .enemdu_ipm_coerce_source_numeric(data[[unemployment_var]], unemployment_var)
+  } else {
+    rep(NA_real_, length(age))
+  }
+
+  pea_info <- .enemdu_ipm_i04_pea_source(
+    age = age,
+    employment = employment,
+    unemployment = unemployment,
+    data = data,
+    pea_var = pea_var,
+    pea_source = pea_source
+  )
+  pea <- pea_info$pea
+  use_pea_gate <- !identical(pea_source, "not_available_without_gate")
 
   p51_vars <- grep(paste0("^", p51_prefix), names(data), value = TRUE)
   p51_hours <- rep(NA_real_, length(age))
   p51_sentinel_n <- 0L
+  p51_all_missing_n <- 0L
 
   if (length(p51_vars) > 0) {
     p51_data <- lapply(p51_vars, function(var) {
@@ -1834,18 +1936,24 @@ enemdu_build_ipm_components <- function(
     p51_hours <- rowSums(p51_matrix, na.rm = TRUE)
     p51_hours[p51_non_missing_n == 0] <- NA_real_
     p51_hours[p51_hours < 0] <- NA_real_
+    p51_all_missing_n <- sum(p51_non_missing_n == 0)
   }
 
   horas <- rep(NA_real_, length(age))
   horas[!is.na(employment) & employment == 1] <- 0
-  direct_hours <- !is.na(pea) & pea == 1 &
+  pea_hours_gate <- if (isTRUE(use_pea_gate)) {
+    !is.na(pea) & pea == 1
+  } else {
+    rep(TRUE, length(age))
+  }
+  direct_hours <- pea_hours_gate &
     (
       (!is.na(p20) & p20 == 1) |
         (!is.na(p20) & p20 == 2 & !is.na(p21) & p21 <= 11)
     )
   horas[direct_hours] <- p24[direct_hours]
 
-  p51_hours_rows <- !is.na(pea) & pea == 1 &
+  p51_hours_rows <- pea_hours_gate &
     !is.na(p20) & p20 == 2 &
     !is.na(p21) & p21 == 12 &
     !is.na(p22) & p22 == 1
@@ -1882,6 +1990,9 @@ enemdu_build_ipm_components <- function(
   critical_missing <- (child & is.na(p20) & is.na(p21) & is.na(p22)) |
     (adolescent & is.na(condactn)) |
     adolescent_unknown
+  child_missing_labor_block_n <- sum(child & is.na(p20) & is.na(p21) & is.na(p22))
+  adolescent_condact_missing_n <- sum(adolescent & is.na(condactn))
+  adolescent_decision_missing_n <- sum(adolescent_unknown)
 
   person_deprivation <- rep(0L, length(age))
   person_deprivation[is.na(age)] <- NA_integer_
@@ -1918,15 +2029,36 @@ enemdu_build_ipm_components <- function(
           p21_var,
           p22_var,
           p24_var,
-          pea_var,
+          if (identical(pea_source, "provided_pea")) pea_var else character(),
+          if (identical(pea_source, "derived_from_empleo_desempleo")) unemployment_var else character(),
           condactn_var,
           p51_vars
         ),
         child_age_range = c(5, 14),
         adolescent_age_range = c(15, 17),
+        official_like_policy = rule_status,
+        pea_available = identical(pea_source, "provided_pea"),
+        pea_source = pea_source,
+        pea_derived_available = identical(pea_source, "derived_from_empleo_desempleo"),
+        pea_used_for_hours = isTRUE(use_pea_gate),
+        pet_derived_n = pea_info$pet_derived_n,
+        pea_derived_n = pea_info$pea_derived_n,
+        pea_derived_missing_n = pea_info$pea_derived_missing_n,
+        missing_official_source_vars = missing_official_source_vars,
+        hours_policy = if (isTRUE(use_pea_gate)) {
+          "stata_order_with_pea_gate"
+        } else {
+          "stata_order_without_pea_gate"
+        },
         p51_prefix = p51_prefix,
         p51_vars = p51_vars,
+        p51_vars_used = p51_vars,
         p51_sentinel_999_recode_to_missing_n = p51_sentinel_n,
+        p51_all_missing_n = p51_all_missing_n,
+        hh_from_p51_missing_n = sum(p51_hours_rows & is.na(p51_hours)),
+        child_missing_labor_block_n = child_missing_labor_block_n,
+        adolescent_condact_missing_n = adolescent_condact_missing_n,
+        adolescent_decision_missing_n = adolescent_decision_missing_n,
         critical_missing_n = sum(critical_missing),
         applicable_persons_n = sum(applicable),
         working_adolescents_unknown_hours_n = sum(
@@ -1934,7 +2066,8 @@ enemdu_build_ipm_components <- function(
         ),
         household_na_n = household_na_n,
         output_component = component_var,
-        rule_status = "official_syntax_rule"
+        rule_status = rule_status,
+        official_validation_status = "not_officially_validated"
       )
     ),
     critical_missing = list(
