@@ -595,6 +595,7 @@ enemdu_build_ipm_components <- function(
     age_var = age_var,
     condact_var = condact_var,
     condactn_var = condactn_var,
+    labor_block_vars = c(p20_var, p21_var, p22_var, "p32", "p34", "p35"),
     labor_inadequate_flags = labor_inadequate_flags,
     overwrite = overwrite,
     strict = strict
@@ -1807,7 +1808,9 @@ enemdu_build_ipm_components <- function(
       values
     })
     p51_matrix <- as.data.frame(p51_data, optional = TRUE)
+    p51_non_missing_n <- rowSums(!is.na(p51_matrix))
     p51_hours <- rowSums(p51_matrix, na.rm = TRUE)
+    p51_hours[p51_non_missing_n == 0] <- NA_real_
     p51_hours[p51_hours < 0] <- NA_real_
   }
 
@@ -1916,6 +1919,7 @@ enemdu_build_ipm_components <- function(
                                                          age_var,
                                                          condact_var,
                                                          condactn_var = NULL,
+                                                         labor_block_vars = c("p20", "p21", "p22", "p32", "p34", "p35"),
                                                          labor_inadequate_flags,
                                                          overwrite,
                                                          strict) {
@@ -1941,14 +1945,17 @@ enemdu_build_ipm_components <- function(
   }
 
   condactn_source_var <- .enemdu_ipm_first_existing_var(data, condactn_var)
+  missing_labor_block_vars <- setdiff(labor_block_vars, names(data))
+  labor_block_available <- length(missing_labor_block_vars) == 0
 
-  if (!is.na(condactn_source_var)) {
+  if (!is.na(condactn_source_var) && isTRUE(labor_block_available)) {
     return(.enemdu_build_ipm_labor_inadequate_official_component(
       data = data,
       component_var = component_var,
       household_id = household_id,
       age_var = age_var,
       condactn_var = condactn_source_var,
+      labor_block_vars = labor_block_vars,
       overwrite = overwrite,
       strict = strict
     ))
@@ -1956,9 +1963,14 @@ enemdu_build_ipm_components <- function(
 
   labor_data <- data
   missing_flags <- setdiff(labor_inadequate_flags, names(labor_data))
+  fallback_condact_var <- condact_var
+
+  if (!fallback_condact_var %in% names(labor_data) && !is.na(condactn_source_var)) {
+    fallback_condact_var <- condactn_source_var
+  }
 
   if (length(missing_flags) > 0) {
-    if (!condact_var %in% names(labor_data)) {
+    if (!fallback_condact_var %in% names(labor_data)) {
       return(.enemdu_ipm_pending_component_result(
         data = data,
         component_var = component_var,
@@ -1970,11 +1982,11 @@ enemdu_build_ipm_components <- function(
       ))
     }
 
-    labor_input <- labor_data[, unique(c(condact_var, age_var)), drop = FALSE]
+    labor_input <- labor_data[, unique(c(fallback_condact_var, age_var)), drop = FALSE]
 
     labor_flags_data <- enemdu_build_labor_flags(
       data = labor_input,
-      condact = condact_var,
+      condact = fallback_condact_var,
       age = age_var,
       strict = strict
     )
@@ -2045,7 +2057,7 @@ enemdu_build_ipm_components <- function(
     pending_reasons = list(),
     variables_used = list(
       labor_inadequate_employment = list(
-        source_vars = c(household_id, age_var, condact_var),
+        source_vars = unique(c(household_id, age_var, fallback_condact_var)),
         labor_inadequate_flags = labor_inadequate_flags,
         output_component = component_var,
         rule = "household_has_person_age_18_plus_unemployed_or_inadequately_employed",
@@ -2053,7 +2065,13 @@ enemdu_build_ipm_components <- function(
           "Labor flags are derived only from the consolidated ENEMDU condact variable when needed.",
           "Sector variables such as secemp are intentionally ignored for this IPM component."
         ),
-        rule_status = "proxy_fallback_not_official_syntax"
+        rule_status = "proxy_fallback_not_official_syntax",
+        fallback_reason = if (!is.na(condactn_source_var)) {
+          "raw_labor_block_vars_missing"
+        } else {
+          "official_condition_var_missing"
+        },
+        missing_official_source_vars = missing_labor_block_vars
       )
     )
   )
@@ -2064,9 +2082,9 @@ enemdu_build_ipm_components <- function(
                                                                   household_id,
                                                                   age_var,
                                                                   condactn_var,
+                                                                  labor_block_vars,
                                                                   overwrite,
                                                                   strict) {
-  labor_block_vars <- c("p20", "p21", "p22", "p32", "p34", "p35")
   age <- .enemdu_ipm_coerce_source_numeric(data[[age_var]], age_var)
   condactn <- .enemdu_ipm_coerce_source_numeric(data[[condactn_var]], condactn_var)
 

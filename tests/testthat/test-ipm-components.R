@@ -1128,6 +1128,43 @@ test_that("IPM i04 uses official condactn, hours, and p51 syntax", {
   )
 })
 
+test_that("IPM i04 preserves all-missing p51 hours as critical missing", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(16, 16, 16),
+    p07 = c(1, 1, 1),
+    empleo = 1L,
+    p20 = c(2, 2, 2),
+    p21 = c(12, 12, 12),
+    p22 = c(1, 1, 1),
+    p24 = NA_real_,
+    pea = 1L,
+    condactn = 1L,
+    p51a = c(NA_real_, 999, 20),
+    p51b = c(NA_real_, 999, NA_real_)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  by_component <- diagnostics$critical_missing_by_component
+  i04 <- by_component[
+    by_component$indicator_id == "ipm_i04_empleo_infantil_adolescente",
+    ,
+    drop = FALSE
+  ]
+
+  expect_true(is.na(out[[component]][1]))
+  expect_true(is.na(out[[component]][2]))
+  expect_equal(out[[component]][3], 0L)
+  expect_equal(i04$critical_missing_person_rows, 2L)
+  expect_equal(
+    diagnostics$variables_used$child_adolescent_employment$working_adolescents_unknown_hours_n,
+    2L
+  )
+})
+
 test_that("IPM i05 uses official condactn in 2:8 syntax", {
   component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
   data <- tibble::tibble(
@@ -1137,14 +1174,69 @@ test_that("IPM i05 uses official condactn in 2:8 syntax", {
     condactn = c(2, 1, 7, NA, 1),
     p20 = c(1, 1, 1, 1, NA),
     p21 = c(12, 12, 12, 12, NA),
-    p22 = c(2, 2, 2, 2, NA)
+    p22 = c(2, 2, 2, 2, NA),
+    p32 = c(1, 1, 1, 1, NA),
+    p34 = c(1, 1, 1, 1, NA),
+    p35 = c(1, 1, 1, 1, NA)
   )
 
   out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
 
   expect_equal(out[[component]][1:3], c(1L, 0L, 0L))
   expect_true(is.na(out[[component]][4]))
   expect_true(is.na(out[[component]][5]))
+  expect_equal(
+    diagnostics$variables_used$labor_inadequate_employment$rule_status,
+    "official_syntax_rule"
+  )
+})
+
+test_that("IPM i05 falls back when compact condact lacks raw labor block", {
+  component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(18, 18, 17),
+    condact = c(1, 7, 7)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  labor_diagnostics <- diagnostics$variables_used$labor_inadequate_employment
+
+  expect_equal(out[[component]], c(0L, 1L, 0L))
+  expect_equal(labor_diagnostics$rule_status, "proxy_fallback_not_official_syntax")
+  expect_equal(labor_diagnostics$fallback_reason, "raw_labor_block_vars_missing")
+  expect_equal(
+    labor_diagnostics$missing_official_source_vars,
+    c("p20", "p21", "p22", "p32", "p34", "p35")
+  )
+})
+
+test_that("IPM i05 uses official branch when compact condact has raw labor block", {
+  component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:2),
+    p01 = 1L,
+    p03 = c(18, 18),
+    condact = c(2, 1),
+    p20 = c(1, 1),
+    p21 = c(12, 12),
+    p22 = c(2, 2),
+    p32 = c(1, 1),
+    p34 = c(1, 1),
+    p35 = c(1, 1)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+
+  expect_equal(out[[component]], c(1L, 0L))
+  expect_equal(
+    diagnostics$variables_used$labor_inadequate_employment$rule_status,
+    "official_syntax_rule"
+  )
 })
 
 test_that("IPM i06 uses official p05a/p05b and benefit exceptions", {
