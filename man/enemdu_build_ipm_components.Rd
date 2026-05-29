@@ -13,12 +13,12 @@ enemdu_build_ipm_components(
   hsize_var = "hsize",
   overwrite = FALSE,
   strict = TRUE,
-  extreme_poverty_var = "expobre",
+  extreme_poverty_var = "epobre",
   extreme_poverty_income_var = NULL,
   extreme_poverty_line = NULL,
   build_from_precomputed = TRUE,
   water_public_network_codes = 1,
-  extreme_poverty_alias_vars = "epobreza",
+  extreme_poverty_alias_vars = c("epobreza", "expobre"),
   area_var = "area",
   age_var = "p03",
   attendance_var = "p07",
@@ -36,18 +36,27 @@ enemdu_build_ipm_components(
     "labor_otro_empleo_no_pleno", "labor_empleo_no_remunerado",
     "labor_empleo_no_clasificado"),
   higher_education_reason_var = "p09",
-  higher_education_economic_reason_codes = NULL,
+  higher_education_economic_reason_codes = 3,
   bachillerato_completed_levels = NULL,
   bachillerato_completed_min_grade = NULL,
   child_work_var = "empleo",
   child_hours_var = "p24",
   child_income_var = "ingrl",
+  p20_var = "p20",
+  p21_var = "p21",
+  p22_var = "p22",
+  p24_var = "p24",
+  pea_var = "pea",
+  condactn_var = c("condactn", "condact"),
+  p51_prefix = "p51",
   child_sbu = 470,
   employment_na_as_not_employed = TRUE,
   hours_sentinel_codes = 999,
   income_negative_sentinel_codes = -1,
   income_missing_sentinel_codes = 999999,
   social_security_var = "p61b1",
+  social_security_a_var = "p05a",
+  social_security_b_var = "p05b",
   pension_income_var = "p72a",
   human_development_bonus_var = "p75",
   disability_bonus_var = "p77",
@@ -55,6 +64,9 @@ enemdu_build_ipm_components(
   social_security_no_contribution_codes = 5,
   social_security_unknown_codes = 6,
   unemployment_var = "desempleo",
+  unemployed_var = "desem",
+  inactive_var = "pei",
+  working_age_var = "pet",
   roof_material_var = "vi03a",
   roof_state_var = "vi03b",
   floor_material_var = "vi04a",
@@ -63,6 +75,7 @@ enemdu_build_ipm_components(
   wall_state_var = "vi05b",
   housing_material_valid_codes = NULL,
   housing_state_valid_codes = 1:3,
+  bedrooms_zero_policy = c("official_recode_to_one", "deprived"),
   deficit_roof_material_codes = NULL,
   deficit_floor_material_codes = NULL,
   deficit_wall_material_codes = NULL,
@@ -74,8 +87,8 @@ enemdu_build_ipm_components(
   sanitation_septic_codes = 2,
   sanitation_valid_codes = 1:5,
   garbage_var = "vi13",
-  garbage_collection_codes = c(1, 2),
-  garbage_valid_codes = 1:4
+  garbage_collection_codes = 2,
+  garbage_valid_codes = 1:5
 )
 }
 \arguments{
@@ -101,7 +114,7 @@ from implemented rules.}
 pending or when implemented source values are invalid or missing.}
 
 \item{extreme_poverty_var}{Precomputed binary extreme-income-poverty flag.
-Defaults to \code{"expobre"}.}
+Defaults to \code{"epobre"} for the official-syntax profile.}
 
 \item{extreme_poverty_income_var}{Optional per-capita income variable used
 only to fill missing values in the selected \code{extreme_poverty_var} or alias
@@ -120,8 +133,8 @@ the source water variable. The default \code{1} is profile-specific and still
 requires real-data reproducibility validation.}
 
 \item{extreme_poverty_alias_vars}{Alias variables checked when
-\code{extreme_poverty_var} is absent. Defaults to \code{"epobreza"} for the 2025
-annual ENEMDU profile.}
+\code{extreme_poverty_var} is absent. Defaults to \code{"epobreza"} and \code{"expobre"}
+for the 2025 annual ENEMDU profile.}
 
 \item{area_var}{Urban/rural area variable used by sanitation rules.}
 
@@ -160,8 +173,9 @@ unemployment or inadequate employment.}
 \item{higher_education_reason_var}{Reason for not attending higher education.}
 
 \item{higher_education_economic_reason_codes}{Codes treated as economic
-reasons for not accessing higher education. If \code{NULL}, the builder attempts
-to infer the code from value labels containing economic-resource wording.}
+reasons for not accessing higher education. The default \code{3} follows the
+official-syntax profile. If \code{NULL}, the builder attempts to infer the code
+from value labels containing economic-resource wording.}
 
 \item{bachillerato_completed_levels}{Optional education-level codes that
 identify completed bachillerato when paired with
@@ -177,6 +191,15 @@ adolescents.}
 \item{child_hours_var}{Weekly-hours variable for working adolescents.}
 
 \item{child_income_var}{Labor-income variable for working adolescents.}
+
+\item{p20_var, p21_var, p22_var, p24_var, pea_var}{Official child/adolescent
+employment source variables used when available.}
+
+\item{condactn_var}{Candidate official condition-of-activity variables.
+Defaults to checking \code{"condactn"} and \code{"condact"}.}
+
+\item{p51_prefix}{Prefix for p51 hour variables used in official
+child/adolescent employment hours.}
 
 \item{child_sbu}{Profile-specific basic salary cutoff used for adolescents.
 The default \code{470} is for the 2025 annual profile.}
@@ -196,6 +219,9 @@ sentinels.}
 
 \item{social_security_var}{Social-security contribution variable.}
 
+\item{social_security_a_var, social_security_b_var}{Official social-security
+affiliation/contribution variables used when available.}
+
 \item{pension_income_var}{Retirement or pension receipt variable.}
 
 \item{human_development_bonus_var}{Human-development bonus receipt variable.}
@@ -210,6 +236,9 @@ sentinels.}
 
 \item{unemployment_var}{Binary unemployment variable used for diagnostics in
 the pension component.}
+
+\item{unemployed_var, inactive_var, working_age_var}{Official pension component
+source variables used when available.}
 
 \item{roof_material_var}{Roof-material variable.}
 
@@ -227,6 +256,9 @@ the pension component.}
 \code{NULL}, labels are used when available.}
 
 \item{housing_state_valid_codes}{Confirmed valid state codes.}
+
+\item{bedrooms_zero_policy}{Policy for \code{vi07 == 0} in overcrowding. The
+default \code{"official_recode_to_one"} follows the official syntax.}
 
 \item{deficit_roof_material_codes}{Roof-material codes treated as deficit.}
 
@@ -252,8 +284,8 @@ source variable.}
 \item{garbage_var}{Garbage-disposal source variable.}
 
 \item{garbage_collection_codes}{Garbage-disposal codes treated as collection
-service. The default includes contracted and municipal collection, based on
-2025 SPSS labels, and remains profile-specific.}
+service. The default \code{2} follows the official-syntax profile where only
+\code{vi13 == 2} is non-deprived.}
 
 \item{garbage_valid_codes}{Confirmed valid codes for the garbage-disposal
 source variable.}

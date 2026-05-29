@@ -130,6 +130,9 @@ if (!exists("enemdu_build_ipm_components")) {
     condact = c(0, 1, 0, 7, 1, 9, 4),
     empleo = c(0, 1, 0, 1, 1, 0, 1),
     desempleo = c(0, 0, 0, 1, 0, 0, 0),
+    p20 = c(2, 1, 2, 1, 1, 2, 1),
+    p21 = c(12, 12, 12, 12, 12, 12, 12),
+    p22 = c(2, 2, 2, 2, 2, 2, 2),
     p24 = c(NA, 40, NA, 20, 40, NA, 20),
     ingrl = c(NA, 600, NA, 300, 600, NA, 600),
     p61b1 = c(6, 1, 6, 5, 1, 6, 5),
@@ -328,7 +331,7 @@ test_that("IPM component builder derives garbage collection from vi13", {
   garbage_component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
 
   expect_equal(out[[garbage_component]][out$id_hogar == "h1"], c(0L, 0L))
-  expect_equal(out[[garbage_component]][out$id_hogar == "h3"], c(0L, 0L))
+  expect_equal(out[[garbage_component]][out$id_hogar == "h3"], c(1L, 1L))
   expect_equal(out[[garbage_component]][out$id_hogar == "h2"], c(1L, 1L))
   expect_equal(out[[garbage_component]][out$id_hogar == "h4"], 1L)
 })
@@ -783,8 +786,9 @@ test_that("IPM housing deficit uses state and configured material rules", {
 
   data$vi03b <- 1
   data$vi04b <- 1
-  data$vi05b <- 2
-  data$vi04a[7] <- 9
+  data$vi05b <- 3
+  data$vi04a[7] <- 1
+  data$vi04b[7] <- 3
   out <- .ipm_build_complete_components(
     data,
     housing_material_valid_codes = c(1, 9),
@@ -816,7 +820,7 @@ test_that("IPM housing deficit diagnostics state when material sets are not conf
   diagnostics <- attr(data, "ipm_component_diagnostics")
   housing_rule <- diagnostics$variables_used$housing_deficit$rule
 
-  expect_equal(housing_rule, "deficit_by_bad_state_only_when_material_sets_not_configured")
+  expect_equal(housing_rule, "official_techo_pared_piso_tipviv_classification")
 })
 
 test_that("IPM inadequate employment component uses the official 18+ universe", {
@@ -1005,6 +1009,9 @@ test_that("IPM inadequate employment derivation ignores irrelevant sector variab
     p01 = c(1, 1),
     p03 = c(18, 18),
     condact = c(1, 7),
+    p20 = c(2, 1),
+    p21 = c(12, 12),
+    p22 = c(2, 2),
     secemp = c("invalid_sector", "also_invalid")
   )
 
@@ -1029,4 +1036,237 @@ test_that("IPM inadequate employment derivation ignores irrelevant sector variab
 
   expect_true(component %in% names(result$data))
   expect_false("secemp" %in% result$variables_used$labor_inadequate_employment$source_vars)
+})
+
+test_that("IPM i01 uses official basic and bachillerato attendance syntax", {
+  component <- .ipm_component_name("ipm_i01_inasistencia_basica_bach")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:4),
+    p01 = 1L,
+    p03 = c(5, 15, 10, 17),
+    p07 = c(1, 1, 2, 1),
+    p10a = c(4, 7, 5, 6),
+    p10b = c(1, 1, 3, 4)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]], c(0L, 0L, 1L, 0L))
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expect_equal(diagnostics$variables_used$school_attendance$rule_status, "official_syntax_rule")
+})
+
+test_that("IPM i02 uses official p09 == 3 economic reason syntax", {
+  component <- .ipm_component_name("ipm_i02_no_acceso_superior_economico")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    p03 = c(25, 25, 25),
+    p07 = c(2, 2, 2),
+    p09 = c(3, 2, NA),
+    p10a = c(7, 7, 7),
+    p10b = c(3, 3, 3)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]][1:2], c(1L, 0L))
+  expect_true(is.na(out[[component]][3]))
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expect_equal(
+    diagnostics$variables_used$higher_education_access$economic_reason_codes,
+    3
+  )
+})
+
+test_that("IPM i03 uses official schooling formula and reports zero conversions", {
+  component <- .ipm_component_name("ipm_i03_logro_educativo_incompleto")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:4),
+    p01 = 1L,
+    p03 = c(30, 30, 30, 30),
+    p07 = c(2, 2, 1, 2),
+    p10a = c(4, 7, 4, 99),
+    p10b = c(8, 0, 8, 0)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]], c(1L, 0L, 0L, 1L))
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_unmatched_converted_to_zero_n,
+    1L
+  )
+})
+
+test_that("IPM i04 uses official condactn, hours, and p51 syntax", {
+  component <- .ipm_component_name("ipm_i04_empleo_infantil_adolescente")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:6),
+    p01 = 1L,
+    p03 = c(10, 10, 16, 16, 16, 16),
+    p07 = c(1, 1, 1, 2, 1, 1),
+    empleo = 1L,
+    p20 = c(1, 2, 2, 1, 2, 1),
+    p21 = c(12, 12, 12, 12, 12, 12),
+    p22 = c(2, 2, 2, 2, 1, 2),
+    p24 = c(10, 10, 10, 20, NA, 20),
+    pea = 1L,
+    condactn = c(1, 1, 2, 1, 1, 1),
+    p51a = c(NA, NA, NA, NA, 20, NA),
+    p51b = c(NA, NA, NA, NA, 20, NA)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]], c(1L, 0L, 1L, 1L, 1L, 0L))
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  expect_equal(
+    diagnostics$variables_used$child_adolescent_employment$rule_status,
+    "official_syntax_rule"
+  )
+})
+
+test_that("IPM i05 uses official condactn in 2:8 syntax", {
+  component <- .ipm_component_name("ipm_i05_desempleo_empleo_inadecuado")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:5),
+    p01 = 1L,
+    p03 = c(18, 18, 17, 18, 18),
+    condactn = c(2, 1, 7, NA, 1),
+    p20 = c(1, 1, 1, 1, NA),
+    p21 = c(12, 12, 12, 12, NA),
+    p22 = c(2, 2, 2, 2, NA)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]][1:3], c(1L, 0L, 0L))
+  expect_true(is.na(out[[component]][4]))
+  expect_true(is.na(out[[component]][5]))
+})
+
+test_that("IPM i06 uses official p05a/p05b and benefit exceptions", {
+  component <- .ipm_component_name("ipm_i06_no_contribucion_pensiones")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:7),
+    p01 = 1L,
+    p03 = c(30, 30, 65, 65, 65, 30, 30),
+    empleo = c(1, 1, 1, 0, 0, 1, 1),
+    p05a = c(5, 1, 5, 5, 5, 5, NA),
+    p05b = c(5, 1, 5, 5, 5, 5, 5),
+    p72a = c(2, 2, 1, 2, 2, 2, 2),
+    p75 = c(2, 2, 2, 2, 1, 2, 2),
+    p77 = c(2, 2, 2, 2, 2, 1, 2),
+    desem = c(0, 0, 0, 1, 1, 0, 0),
+    pei = c(0, 0, 0, 0, 0, 0, 0),
+    pet = 1L
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]][1:6], c(1L, 0L, 0L, 1L, 0L, 0L))
+  expect_true(is.na(out[[component]][7]))
+})
+
+test_that("IPM i09 recodes zero bedrooms to one under official policy", {
+  component <- .ipm_component_name("ipm_i09_hacinamiento")
+  data <- tibble::tibble(
+    id_hogar = "h1",
+    p01 = 1:3,
+    vi10 = 1,
+    vi07 = 0
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  expect_equal(out[[component]], c(0L, 0L, 0L))
+
+  out_deprived <- enemdu_build_ipm_components(
+    data,
+    strict = FALSE,
+    overwrite = TRUE,
+    bedrooms_zero_policy = "deprived"
+  )
+  expect_equal(out_deprived[[component]], c(1L, 1L, 1L))
+})
+
+test_that("IPM i10 uses official techo pared piso tipviv syntax", {
+  component <- .ipm_component_name("ipm_i10_deficit_habitacional")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:3),
+    p01 = 1L,
+    vi03a = c(1, 1, 2),
+    vi03b = c(1, 1, 3),
+    vi04a = c(1, 1, 1),
+    vi04b = c(1, 3, 1),
+    vi05a = c(1, 1, 2),
+    vi05b = c(1, 3, 3)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]], c(0L, 1L, 1L))
+})
+
+test_that("IPM i12 treats only vi13 == 2 as non-deprived", {
+  component <- .ipm_component_name("ipm_i12_sin_recoleccion_basura")
+  data <- tibble::tibble(
+    id_hogar = paste0("h", 1:6),
+    p01 = 1L,
+    vi13 = c(1, 2, 3, 4, 5, NA)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+
+  expect_equal(out[[component]][1:5], c(1L, 0L, 1L, 1L, 1L))
+  expect_true(is.na(out[[component]][6]))
+})
+
+test_that("IPM component diagnostics expose missing-critical households", {
+  data <- tibble::tibble(
+    id_hogar = c("h1", "h1", "h2"),
+    p01 = c(1, 2, 1),
+    p03 = c(10, 30, 10),
+    p07 = c(NA, 2, 1),
+    p10a = c(5, 7, 5),
+    p10b = c(3, 3, 5)
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+  by_component <- diagnostics$critical_missing_by_component
+  i01 <- by_component[
+    by_component$indicator_id == "ipm_i01_inasistencia_basica_bach",
+    ,
+    drop = FALSE
+  ]
+
+  expect_true(all(c(
+    "ipm_missing_critical_flag",
+    "ipm_missing_critical_household_flag"
+  ) %in% names(out)))
+  expect_equal(i01$critical_missing_person_rows, 1L)
+  expect_equal(i01$critical_missing_households, 1L)
+  expect_equal(diagnostics$official_validation_status, "not_officially_validated")
+})
+
+test_that("IPM proxy fallback remains explicit when official child variables are unavailable", {
+  data <- tibble::tibble(
+    id_hogar = "h1",
+    p01 = 1L,
+    p03 = 16,
+    p07 = 1,
+    empleo = 1,
+    p24 = 20,
+    ingrl = 600
+  )
+
+  out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
+  diagnostics <- attr(out, "ipm_component_diagnostics")
+
+  expect_equal(
+    diagnostics$variables_used$child_adolescent_employment$rule_status,
+    "proxy_fallback_not_official_syntax"
+  )
 })
