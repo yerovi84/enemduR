@@ -1092,20 +1092,27 @@ test_that("IPM i03 uses official schooling formula and reports zero conversions"
 
   out <- enemdu_build_ipm_components(data, strict = FALSE, overwrite = TRUE)
 
-  expect_equal(out[[component]][1:3], c(1L, 0L, 0L))
-  expect_true(is.na(out[[component]][4]))
+  expect_equal(out[[component]], c(1L, 0L, 0L, 1L))
   diagnostics <- attr(out, "ipm_component_diagnostics")
   expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_unknown_policy,
+    "official_recode_to_zero"
+  )
+  expect_equal(
     diagnostics$variables_used$incomplete_education$schooling_unmatched_converted_to_zero_n,
-    0L
+    1L
   )
   expect_equal(
     diagnostics$variables_used$incomplete_education$schooling_unmatched_observed_n,
     1L
   )
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_unknown_converted_to_zero_n,
+    1L
+  )
 })
 
-test_that("IPM i03 keeps missing schooling inputs unknown and preserves true zero", {
+test_that("IPM i03 official profile recodes unknown schooling to zero and preserves true zero", {
   component <- .ipm_component_name("ipm_i03_logro_educativo_incompleto")
   data <- tibble::tibble(
     id_hogar = paste0("h", 1:3),
@@ -1125,14 +1132,39 @@ test_that("IPM i03 keeps missing schooling inputs unknown and preserves true zer
     drop = FALSE
   ]
 
-  expect_true(is.na(out[[component]][1]))
-  expect_true(is.na(out[[component]][2]))
-  expect_equal(out[[component]][3], 1L)
-  expect_equal(i03$critical_missing_person_rows, 2L)
+  expect_equal(out[[component]], c(1L, 1L, 1L))
+  expect_equal(i03$critical_missing_person_rows, 0L)
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_unknown_policy,
+    "official_recode_to_zero"
+  )
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_missing_inputs_n,
+    2L
+  )
+  expect_equal(
+    diagnostics$variables_used$incomplete_education$schooling_missing_converted_to_zero_n,
+    2L
+  )
   expect_equal(
     diagnostics$variables_used$incomplete_education$schooling_missing_required_grade_n,
     1L
   )
+})
+
+test_that("IPM i03 preserve_na schooling mode keeps unknown values auditable", {
+  info <- .enemdu_ipm_schooling_years_2025_info(
+    education_level = c(NA_real_, 4, 1),
+    education_grade = c(0, NA_real_, 0),
+    unknown_policy = "preserve_na"
+  )
+
+  expect_true(is.na(info$years[1]))
+  expect_true(is.na(info$years[2]))
+  expect_equal(info$years[3], 0)
+  expect_equal(info$unknown_policy, "preserve_na")
+  expect_equal(sum(info$unknown_converted_to_zero), 0L)
+  expect_equal(sum(info$missing_inputs), 2L)
 })
 
 test_that("IPM i04 uses official condactn, hours, and p51 syntax", {

@@ -545,6 +545,7 @@ enemdu_build_ipm_components <- function(
     incomplete_education_age_min = incomplete_education_age_min,
     incomplete_education_age_max = incomplete_education_age_max,
     incomplete_schooling_years = incomplete_schooling_years,
+    schooling_unknown_policy = .enemdu_ipm_schooling_unknown_policy(profile),
     overwrite = overwrite,
     strict = strict
   )
@@ -855,6 +856,14 @@ enemdu_build_ipm_components <- function(
   }
 
   invisible(TRUE)
+}
+
+.enemdu_ipm_schooling_unknown_policy <- function(profile) {
+  if (identical(profile, "enemdu_2025_anual")) {
+    return("official_recode_to_zero")
+  }
+
+  "preserve_na"
 }
 
 .enemdu_accept_precomputed_ipm_components <- function(data,
@@ -1268,6 +1277,7 @@ enemdu_build_ipm_components <- function(
                                                              incomplete_education_age_min,
                                                              incomplete_education_age_max,
                                                              incomplete_schooling_years,
+                                                             schooling_unknown_policy,
                                                              overwrite,
                                                              strict) {
   if (component_var %in% names(data) && !isTRUE(overwrite)) {
@@ -1309,7 +1319,8 @@ enemdu_build_ipm_components <- function(
 
   schooling_info <- .enemdu_ipm_schooling_years_2025_info(
     education_level = education_level,
-    education_grade = education_grade
+    education_grade = education_grade,
+    unknown_policy = schooling_unknown_policy
   )
   schooling_years <- schooling_info$years
 
@@ -1359,14 +1370,23 @@ enemdu_build_ipm_components <- function(
         attendance_no_codes = no_codes,
         applicable_age_range = c(incomplete_education_age_min, incomplete_education_age_max),
         incomplete_schooling_years = incomplete_schooling_years,
-        schooling_unmatched_converted_to_zero_n = sum(schooling_info$converted_to_zero),
+        schooling_unknown_policy = schooling_unknown_policy,
+        schooling_unmatched_converted_to_zero_n = sum(
+          schooling_info$unmatched_observed &
+            schooling_info$unknown_converted_to_zero
+        ),
         schooling_unmatched_observed_n = sum(schooling_info$unmatched_observed),
+        schooling_missing_inputs_n = sum(schooling_info$missing_inputs),
+        schooling_unknown_converted_to_zero_n = sum(schooling_info$unknown_converted_to_zero),
+        schooling_missing_converted_to_zero_n = sum(schooling_info$missing_converted_to_zero),
         schooling_missing_required_grade_n = sum(schooling_info$missing_required_grade),
         critical_missing_n = sum(critical_missing),
         output_component = component_var,
         rule_status = "official_syntax_rule",
         note = paste(
           "Schooling years use the official 2025 p10a/p10b formula.",
+          "Under the official profile, unassigned schooling is recoded to zero following official syntax.",
+          "Conversion counts are reported for auditability.",
           "This is profile-specific and must be compared against benchmarks before validation claims."
         )
       )
@@ -3360,7 +3380,12 @@ enemdu_build_ipm_components <- function(
 }
 
 .enemdu_ipm_schooling_years_2025_info <- function(education_level,
-                                                  education_grade) {
+                                                  education_grade,
+                                                  unknown_policy = c(
+                                                    "preserve_na",
+                                                    "official_recode_to_zero"
+                                                  )) {
+  unknown_policy <- match.arg(unknown_policy)
   years <- rep(NA_real_, length(education_level))
 
   years[!is.na(education_level) & !is.na(education_grade) &
@@ -3405,17 +3430,33 @@ enemdu_build_ipm_components <- function(
   grade_required <- !is.na(education_level) &
     education_level %in% c(1, 2, 4, 5, 6, 7, 8, 9, 10)
   missing_required_grade <- grade_required & is.na(education_grade)
+  missing_inputs <- is.na(education_level) | missing_required_grade
   unmatched_observed <- !is.na(education_level) &
+    !is.na(education_grade) &
     !missing_required_grade &
     !invalid_grade &
     is.na(years)
+  unknown_before_policy <- is.na(years)
   converted_to_zero <- rep(FALSE, length(years))
+  unknown_converted_to_zero <- rep(FALSE, length(years))
+  missing_converted_to_zero <- rep(FALSE, length(years))
+
+  if (identical(unknown_policy, "official_recode_to_zero")) {
+    converted_to_zero <- unknown_before_policy
+    unknown_converted_to_zero <- unknown_before_policy
+    missing_converted_to_zero <- unknown_before_policy & missing_inputs
+    years[unknown_before_policy] <- 0
+  }
 
   list(
     years = years,
     converted_to_zero = converted_to_zero,
     unmatched_observed = unmatched_observed,
-    missing_required_grade = missing_required_grade
+    missing_required_grade = missing_required_grade,
+    missing_inputs = missing_inputs,
+    unknown_converted_to_zero = unknown_converted_to_zero,
+    missing_converted_to_zero = missing_converted_to_zero,
+    unknown_policy = unknown_policy
   )
 }
 
