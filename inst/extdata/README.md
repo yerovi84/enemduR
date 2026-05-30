@@ -14,6 +14,10 @@ This directory stores metadata registries and auxiliary catalogs used by the pac
 - `indicator_registry.csv`: general analytical indicator registry.
 - `labor_indicator_registry.csv`: registry of labor indicators implemented by `enemdu_kpi_employment()`.
 - `labor_official_validation_contract.md`: official-validation contract for the initial labor-indicator block.
+- `ipm_component_registry.csv`: registry of IPM dimensions, components, weights, and expected component columns.
+- `ipm_derivation_contract.md`: technical contract for the implemented IPM/TPM workflow and the `enemdu_2025_anual` profile.
+- `ipm_official_benchmarks.csv`: published IPM/TPM benchmark values for analytical comparison.
+- `official_ipm_reproducibility_evidence_december_2025.md`: local IPM/TPM reproducibility evidence for ENEMDU December 2025 benchmark comparison.
 - `package_hardening_report.md`: Phase 5 package-hardening report.
 - `validation_registry.csv`: structural and substantive validation rule registry.
 - `income_component_registry.csv`: registry of income-construction components.
@@ -40,6 +44,19 @@ Files in this directory should be:
 The registry is intentionally documentary at this stage. It formalizes indicator identifiers, labels, estimator types, numerator or value flags, denominator universes, output scale and domain-scope policy.
 
 The current labor implementation uses the consolidated ENEMDU condition-of-activity variable `condact`. It does not reconstruct labor status from raw questionnaire variables.
+
+## IPM/TPM reproducibility
+
+`ipm_derivation_contract.md` documents the current IPM/TPM implementation for
+the ENEMDU 2025 annual profile. The workflow builds 12 components, aggregates
+component evidence at household level, reports person-level flags, applies the
+registered weights, and estimates TPM, TPEM, deprivation intensity, and IPM.
+
+The December 2025 evidence file records local reproducibility evidence and
+benchmark comparison results. No institutional validation is claimed; any
+official validation would require explicit authorization or confirmation by the
+relevant official authority. The workflow remains marked as
+`not_officially_validated`.
 
 ## Official labor validation
 

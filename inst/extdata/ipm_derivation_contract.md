@@ -2,55 +2,55 @@
 
 ## Purpose
 
-This file establishes a reproducible internal implementation contract for the
-future Ecuador multidimensional poverty module in `enemduR`.
+This file documents the current `enemduR` implementation contract for Ecuador
+multidimensional poverty indicators in the `enemdu_2025_anual` profile.
 
-The module name is IPM. TPM is one output of the IPM module and must not be
-treated as the whole module.
+The module name is IPM. TPM, TPEM, deprivation intensity, and M0/IPM are outputs
+of the IPM module and must not be treated as separate methodologies.
 
-This file does not implement IPM. It documents the official structure that
-future work must preserve before adding calculation functions.
+The implementation provides local reproducibility evidence for ENEMDU December
+2025 benchmark comparison. No institutional validation is claimed; any official
+validation would require explicit authorization or confirmation by the relevant
+official authority. Package outputs continue to report
+`official_validation_status = "not_officially_validated"`.
 
 ## Scope
 
-This contract defines the initial declarative architecture for:
+The current IPM implementation covers:
 
-- the 4 official Ecuador IPM dimensions;
-- the 12 official deprivation indicators;
-- the analytical weights attached to each indicator;
-- the expected applicable populations and identification levels;
-- the expected final analytical variables;
-- the current non-operational derivation status;
-- the validation plan for later real-data reproducibility work.
+- the 4 Ecuador IPM dimensions;
+- the 12 registered deprivation components;
+- official indicator weights declared in `ipm_component_registry.csv`;
+- component derivation for the `enemdu_2025_anual` profile;
+- household-level aggregation of component evidence and person-level reporting;
+- missing-critical diagnostics before scoring;
+- `ipm_score`, `tpm`, `tpem`, deprivation intensity `A`, and M0/IPM;
+- design-aware KPI estimation;
+- published benchmark comparison for ENEMDU December 2025;
+- complete-case reproducibility policy for non-evaluable component evidence.
 
 The supporting machine-readable files are:
 
 - `ipm_component_registry.csv`;
-- `ipm_derivation_registry.csv`.
+- `ipm_derivation_registry.csv`;
+- `ipm_official_benchmarks.csv`.
 
 ## Out Of Scope
 
-This file does not implement IPM.
+This contract does not change NBI methodology. It does not change income poverty
+methodology. It does not modify survey estimators, benchmarks, weights,
+thresholds, or official source files. It does not store or redistribute
+microdata.
 
-This file does not create:
-
-- `enemdu_build_ipm_components()`;
-- `enemdu_build_ipm_flags()`;
-- `enemdu_kpi_ipm()`;
-- `enemdu_official_ipm_benchmarks()`;
-- `enemdu_compare_official_ipm()`;
-- `enemdu_run_ipm_reproducibility()`.
-
-This file does not change NBI methodology. It does not change income poverty
-methodology. It does not reconstruct `condact` from raw questionnaire
-variables. It does not compute poverty indicators without explicit auditable
-poverty lines. It does not add official benchmarks or claim official
-institutional validation.
+This contract does not claim institutional validation. Local benchmark
+comparison evidence is useful for reproducibility review, but it is not an
+institutional certification, INEC endorsement, or official production-system
+status.
 
 ## Official IPM Structure
 
-Ecuador's official multidimensional poverty structure uses 4 dimensions and 12
-indicators.
+Ecuador's multidimensional poverty structure uses 4 dimensions and 12
+deprivation indicators.
 
 | Dimension | Dimension weight | Indicator | Indicator weight |
 |---|---:|---|---:|
@@ -67,127 +67,134 @@ indicators.
 | Habitat housing and healthy environment | 0.25 | Sin saneamiento de excretas | 0.0625 |
 | Habitat housing and healthy environment | 0.25 | Sin servicio de recoleccion de basura | 0.0625 |
 
-## Identification And Analysis Levels
-
-Most IPM deprivations are identified at household level or by person-level
-conditions that are then assigned to the household. Official reporting is
-person-level: people inherit the household IPM status for estimation.
-
-The registries therefore separate:
-
-- `identification_level`: where the deprivation is identified;
-- `analysis_level`: where the final indicator is estimated.
-
-Future implementation must distinguish a non-applicable population from a
-missing value. A person outside an indicator universe should not be silently
-treated as deprived.
-
-## Weighting Structure
-
-Each dimension has weight `0.25`.
-
-The first 6 indicators have weight `0.0833333333333333`.
-
-The next 2 indicators have weight `0.125`.
-
-The final 4 indicators have weight `0.0625`.
-
 The indicator weights sum to `1`.
 
-## Cutoff Structure
+## Identification And Analysis Levels
 
-The TPM cutoff is `0.3333333333333333`.
+IPM component derivation starts from person-level or household-level evidence.
+Components are aggregated at household level. The household component value is
+then repeated to all persons in that household, because official reporting is
+person-level.
 
-A household is multidimensionally poor when its weighted deprivation score is
-greater than or equal to `0.3333333333333333`.
+The component builder preserves row count and row order. It does not drop rows.
+Exclusions for reproducibility are handled later by
+`enemdu_run_ipm_reproducibility()` when an explicit missing-component policy is
+selected.
 
-The TPEM cutoff is `0.5`.
+## Score And Cutoffs
 
-A household is extremely multidimensionally poor when its weighted deprivation
-score is greater than or equal to `0.5`.
+`enemdu_build_ipm_flags()` builds the weighted deprivation score and final flags
+from the 12 component columns.
 
-## Expected Output Variables
+- `ipm_score` is the weighted deprivation score.
+- `tpm` is `1` when `ipm_score >= 4 / 12`.
+- `tpem` is `1` when `ipm_score >= 6 / 12`.
+- `A` is the average deprivation intensity among multidimensionally poor
+  persons.
+- M0/IPM is `TPM * A`.
 
-Future implementation should produce:
+The TPM cutoff is therefore `4 / 12`, equivalent to
+`0.3333333333333333` or one third of total deprivation weight. The TPEM cutoff
+is `6 / 12`, equivalent to `0.5` or one half of total deprivation weight.
 
-- `ipm_score`: weighted deprivation score for each household repeated to the
-  analysis unit;
-- `tpm`: binary multidimensional poverty flag based on the TPM cutoff;
-- `tpem`: binary extreme multidimensional poverty flag based on the TPEM
-  cutoff;
-- `A`: deprivation intensity among the multidimensionally poor;
-- `ipm`: multidimensional poverty index calculated as `TPM * A`.
+## Missing-Critical Policy
 
-## Difference Between NBI And IPM
+The component builder records missing-critical evidence without dropping rows.
+Diagnostics include component-level missing-critical person rows and households.
 
-NBI uses 5 unsatisfied-basic-needs components and identifies poverty when a
-household has at least one NBI deprivation. The current NBI workflow derives
-`comp1` through `comp5`, then builds `knbi`, `nbi`, and `xnbi`.
+For reproducibility runs, `enemdu_run_ipm_reproducibility()` supports an
+explicit complete-case policy. In complete-case mode, rows with incomplete IPM
+component or score evidence are excluded before KPI estimation and benchmark
+comparison. The result reports:
 
-IPM uses 12 weighted deprivation indicators across 4 dimensions. TPM depends on
-a weighted score cutoff rather than a simple count of basic needs. IPM also
-includes extreme income poverty as one deprivation input. Therefore IPM must
-not reuse NBI water sanitation housing or education rules without explicit
-methodological verification.
+- total, complete, and excluded rows;
+- total, complete, and excluded weighted population;
+- domain-level complete and incomplete diagnostics when `by` is supplied;
+- `official_validation_status = "not_officially_validated"`.
 
-## Implementation Roadmap
+Rows are not dropped unless the reproducibility workflow is called with an
+explicit missing-component policy that permits exclusion.
 
-Future work should proceed in small auditable phases:
+## Profile-Specific Component Policies
 
-1. Validate the IPM registries against official methodological documentation.
-2. Confirm source variables and coding rules for the `enemdu_2025_anual`
-   profile.
-3. Implement `enemdu_build_ipm_components()` as a component builder only after
-   the rules are auditable.
-4. Implement `enemdu_build_ipm_flags()` to compute `ipm_score`, `tpm`, `tpem`,
-   `A`, and `ipm`.
-5. Implement `enemdu_kpi_ipm()` using the package survey-design estimators.
-6. Add `enemdu_official_ipm_benchmarks()` only when published benchmark values
-   are documented.
-7. Add `enemdu_compare_official_ipm()` with explicit tolerances and comparison
-   evidence.
-8. Add `enemdu_run_ipm_reproducibility()` only after all source and benchmark
-   contracts are closed.
+The `enemdu_2025_anual` profile implements official-syntax or official-like
+rules where the required ENEMDU variables are available.
 
-## Methodological Risks
+### i03 incomplete educational attainment
 
-Main risks for later implementation are:
+For `ipm_i03_logro_educativo_incompleto`, the official profile uses
+`schooling_unknown_policy = "official_recode_to_zero"`.
 
-- confusing TPM with the full IPM module;
-- treating non-applicable populations as missing or as deprived;
-- reusing NBI water and sanitation rules without IPM-specific verification;
-- implementing labor indicators without respecting consolidated ENEMDU labor
-  derivations;
-- reconstructing `condact` from raw questionnaire variables;
-- computing the extreme-income-poverty component without explicit poverty
-  lines;
-- claiming official validation without retained comparison evidence.
+This mirrors the official syntax behavior where unassigned schooling is
+recoded to zero after the schooling-years construction. Diagnostics preserve
+traceability through counts for unmatched observed schooling, missing schooling
+inputs, and conversion to zero. This policy is profile-specific and does not
+imply institutional validation.
 
-## Validation Plan
+### i04 child and adolescent employment
 
-Later validation must document:
+For `ipm_i04_empleo_infantil_adolescente`, the rule status can be:
 
-- the official methodological source used for each indicator;
-- the ENEMDU period and survey type;
-- source variables and derived inputs;
-- applicable populations and non-applicability treatment;
-- survey design variables and expansion weight;
-- national and domain estimates;
-- published official benchmark values;
-- package estimates;
-- absolute and relative differences;
-- tolerance rules and pass or fail status.
+- `official_syntax_rule` when `pea` is available and used as the official PEA
+  gate for hours;
+- `official_like_with_derived_pea` when `pea` is missing but `empleo` and
+  `desempleo` are available;
+- `official_like_without_pea_gate` when `pea` is not available and cannot be
+  derived, but the child/adolescent labor source variables are sufficient for
+  an official-like decision;
+- `proxy_fallback_not_official_syntax` only when the official-like source set is
+  not available.
 
-Real-data reproducibility must be validated later against published benchmarks.
+The derived PEA used by i04 is internal to the IPM component. It is not a public
+labor-market API and does not reconstruct the full ENEMDU labor module.
+
+### i06 pension contribution
+
+For `ipm_i06_no_contribucion_pensiones`, the rule status can be:
+
+- `official_syntax_rule` when `pet`, `pei`, and `desem` are available;
+- `official_like_with_derived_labor_status` when those compact official status
+  variables are missing but labor status can be derived internally for this
+  component.
+
+In the official-like path:
+
+- PET is derived from age as ages 15 to 98;
+- PEA is derived from `empleo` or `desempleo` membership flags;
+- PEI is derived as PET minus PEA;
+- `desem` is derived from `desempleo`;
+- `empleo` and `desempleo` are treated as `1`/`NA` membership flags for this
+  profile;
+- consistency against `condact` is reported diagnostically through
+  `labor_status_validation` and mismatch counts.
+
+The i06 derivation remains branch-specific. Benefits such as retirement pension
+or bonuses are required only in the branches where they are needed to decide
+the component. Observed contribution evidence for occupied persons is not
+overwritten by structurally irrelevant benefit missingness.
+
+## December 2025 Local Reproducibility Evidence
+
+The post-PR #40 local ENEMDU December 2025 smoke test produced strong local
+reproducibility evidence for TPM, TPEM, and IPM benchmark comparison.
+
+Residual non-evaluable component evidence was limited to
+`ipm_i07_pobreza_extrema_ingresos_flag`, with 133 person rows and 62
+households. Components i04 and i06 had zero residual missing values in that
+run.
+
+All national, urban, and rural TPM/TPEM/IPM comparisons were within tolerance
+or matched published rounding. The retained evidence is documented in
+`official_ipm_reproducibility_evidence_december_2025.md`.
 
 ## Non-Official Validation Statement
 
-This file does not claim official institutional validation.
+`enemduR` provides local reproducibility evidence and benchmark comparison
+infrastructure against published benchmarks. This documentation file does not implement IPM; implementation lives in the package R code and registries. The
+workflow does not claim official institutional validation by INEC or any other
+official authority. Any official validation would require explicit
+authorization or confirmation by the relevant official authority.
 
-This file establishes a reproducible internal implementation contract.
-
-The registries created with this contract are non-operational until future code
-implements and validates the derivation rules.
-
-Official validation must not be claimed until real-data reproducibility is
-tested against published official benchmarks and the evidence is retained.
+Use the terms "local reproducibility evidence", "benchmark comparison",
+"official-like implementation", and "not officially validated" when describing
+this workflow.

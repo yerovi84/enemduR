@@ -10,7 +10,7 @@ Survey Statistics | Policy Analytics | Reporting Automation | R
 
 [Reference](reference/index.html) | [Articles](articles/index.html) | [News](news/index.html) | [GitHub](https://github.com/yerovi84/enemduR) | [v0.1.0-alpha](https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha)
 
-`enemduR` is an R package for reproducible analytical work with Ecuador's ENEMDU microdata. It provides infrastructure for reading, validation, derivation, survey-design-aware estimation, representativity assessment, official labor-tabulation comparison workflows, and Quarto-ready analytical outputs.
+`enemduR` is an R package for reproducible analytical work with Ecuador's ENEMDU microdata. It provides infrastructure for reading, validation, derivation, survey-design-aware estimation, representativity assessment, benchmark comparison workflows, IPM/TPM local reproducibility evidence, and Quarto-ready analytical outputs.
 
 The package is an analytical engine. It is not a dashboard, not a replacement for official statistical production systems, and not an official endorsement layer. Its role is to make technical ENEMDU workflows more reproducible, auditable, and easier to review.
 
@@ -36,6 +36,7 @@ This public package demonstrates a professional analytical stack built around of
 - Labor indicators based on the consolidated `condact` variable.
 - Metadata registries for variables, indicators, missing codes, domains, poverty lines, optional bonuses, and official dictionaries.
 - Income, quintile, poverty-flag, household-profile, optional-bonus, and social-bonus infrastructure under explicit contract rules.
+- IPM/TPM component, flag, KPI, and benchmark-comparison infrastructure for the ENEMDU 2025 annual profile, with outputs marked as not officially validated.
 
 ## Methodological Guardrails
 
@@ -43,7 +44,8 @@ This public package demonstrates a professional analytical stack built around of
 - Sentinel values are not globally recoded unless a registry authorizes the rule.
 - Weighted population counts are kept distinct from effective sample size.
 - Presentation layers consume analytical outputs; they do not govern computation.
-- Official validation claims are limited to workflows that have actually been run and documented.
+- Benchmark comparisons are local reproducibility evidence; no institutional validation is claimed.
+- Any official validation would require explicit authorization or confirmation by the relevant official authority.
 
 ## Start Here
 

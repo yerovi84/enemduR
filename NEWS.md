@@ -2,6 +2,12 @@
 
 ## Current development version
 
+- Documented the final ENEMDU December 2025 IPM/TPM local reproducibility
+  evidence, including the complete-case policy, benchmark comparison results,
+  and the not-officially-validated status of the workflow.
+- Updated the IPM derivation contract for the implemented `enemdu_2025_anual`
+  profile, including the i03 official schooling recode policy, i04 derived-PEA
+  official-like path, and i06 traceable derived labor-status path.
 - Added a controlled NBI source-join helper for appending household/housing
   variables to person-level ENEMDU files without changing person row order.
 - Added NBI raw-component derivation for the `enemdu_2025_anual` profile,

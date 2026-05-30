@@ -40,6 +40,7 @@ The current development version includes:
 - representativity and precision-evaluation infrastructure;
 - official dictionary reading and microdata validation against dictionary files;
 - income, quintile, household-profile, poverty-flag, optional-bonus, and social-bonus infrastructure;
+- IPM/TPM component, flag, KPI, benchmark-comparison, and local reproducibility infrastructure for the ENEMDU 2025 annual profile;
 - an initial labor indicator module based on the consolidated `condact` variable;
 - a formal labor indicator registry with 32 implemented labor indicators;
 - official labor-market tabulation parsing;
@@ -476,6 +477,36 @@ However:
 - income and transfer scenarios must avoid double counting.
 
 This is especially important when working with social bonuses, transfer variables, and alternative income scenarios.
+
+## IPM/TPM reproducibility
+
+`enemduR` includes a profile-specific IPM workflow for the ENEMDU 2025 annual profile. The workflow builds 12 deprivation components, applies the registered IPM weights, builds the weighted deprivation score, and estimates TPM, TPEM, deprivation intensity, and M0/IPM with the ENEMDU survey design.
+
+The IPM score and poverty flags follow these cutoffs:
+
+| Output | Rule |
+|---|---|
+| `ipm_score` | Weighted deprivation score across the 12 components |
+| `tpm` | `ipm_score >= 4 / 12` |
+| `tpem` | `ipm_score >= 6 / 12` |
+| `A` | Average deprivation intensity among multidimensionally poor persons |
+| `ipm` | `TPM * A` |
+
+Component evidence is aggregated at household level and reported at person level. Missing-critical households are diagnosed before score calculation. For strict local reproducibility runs, `enemdu_run_ipm_reproducibility()` can use an explicit complete-case component policy that excludes incomplete IPM evidence before KPI estimation and benchmark comparison.
+
+The ENEMDU December 2025 smoke test provides strong local reproducibility evidence for TPM, TPEM, and IPM benchmark comparison. No institutional validation is claimed; any official validation would require explicit authorization or confirmation by the relevant official authority. Package outputs retain:
+
+```text
+official_validation_status = "not_officially_validated"
+```
+
+Important profile-specific implementation details are:
+
+- i03 uses `official_recode_to_zero` for unknown schooling in `profile = "enemdu_2025_anual"`, mirroring the profile-specific official syntax while preserving diagnostic counts.
+- i04 uses `official_syntax_rule` when `pea` is available and `official_like_with_derived_pea` when `pea` is missing but `empleo` and `desempleo` are available. The derived PEA is internal to the i04 component and does not create a public labor-market API.
+- i06 uses `official_syntax_rule` when `pet`, `pei`, and `desem` are available and `official_like_with_derived_labor_status` when labor status can be derived internally from age, `empleo`, and `desempleo`. Consistency against `condact` is reported diagnostically.
+
+The retained December 2025 evidence is documented in `inst/extdata/official_ipm_reproducibility_evidence_december_2025.md`.
 
 ## Quarto-ready analytical consumption
 
