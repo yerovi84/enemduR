@@ -2,35 +2,45 @@
 
 ## Purpose
 
-This document audits the current `enemduR` repository state to guide a future
-implementation of `enemdu_build_ipm_components()`.
+This document is a historical audit that guided the implementation of
+`enemdu_build_ipm_components()`.
+
+The current implemented contract for the IPM/TPM workflow is documented in
+`ipm_derivation_contract.md`. The retained ENEMDU December 2025 local
+reproducibility evidence is documented in
+`official_ipm_reproducibility_evidence_december_2025.md`.
 
 The audit maps the 12 official Ecuador IPM deprivation indicators declared in
 `ipm_component_registry.csv` to available repository assets, likely ENEMDU
 source variables, reusable helpers, methodological risks, and implementation
-questions. It is a design document only.
+questions. Sections below that use future-tense implementation language should
+be read as historical planning context, not as the current package state.
 
-This file does not implement IPM component derivation, does not change any
-public API, and does not claim official institutional validation.
+This file does not change any public API and does not claim institutional
+validation.
 
 ## Current State Of The IPM Module
 
-The IPM module currently has a declarative and row-level flag layer:
+The IPM module currently has implemented derivation, scoring, KPI, benchmark
+comparison, and reproducibility layers:
 
 - `inst/extdata/ipm_component_registry.csv` declares the official IPM structure:
   4 dimensions, 12 indicators, analytical weights, applicable populations, and
   expected component names.
-- `inst/extdata/ipm_derivation_registry.csv` declares a non-operational
-  derivation contract for profile `enemdu_2025_anual`.
-- `inst/extdata/ipm_derivation_contract.md` documents the conceptual IPM
-  contract and explicitly separates architecture from calculation.
+- `inst/extdata/ipm_derivation_registry.csv` records source-variable and caveat
+  metadata for the `enemdu_2025_anual` profile.
+- `inst/extdata/ipm_derivation_contract.md` documents the implemented IPM/TPM
+  architecture and profile-specific policies.
+- `R/ipm_components.R` implements the 12 component builder for the current
+  profile.
 - `R/ipm_flags.R` implements `enemdu_build_ipm_flags()`, which computes
   row-level `ipm_score`, `tpm`, and `tpem` from already-built binary component
   columns using the registered weights.
+- `R/ipm_reproducibility.R` implements complete-case reproducibility
+  diagnostics and benchmark comparison.
 
-The current IPM implementation does not derive the 12 component indicators from
-raw ENEMDU questions. It also does not compute KPI-level `A` or aggregate `ipm`;
-those require survey-design-aware aggregation in a later phase.
+The ENEMDU December 2025 local reproducibility run remains marked as
+`not_officially_validated`.
 
 ## Methodological Boundaries
 
@@ -50,8 +60,11 @@ The future component builder must respect these boundaries:
 - Non-applicable populations must be handled explicitly by each component.
   They must not be silently treated as deprived, and missing values must not be
   silently treated as non-deprived.
-- This audit does not establish official validation. Real-data reproducibility
-  must be validated later against published benchmarks.
+- This audit does not establish institutional validation. Current
+  reproducibility evidence is retained as local benchmark comparison evidence.
+  Any official validation would require explicit authorization or confirmation
+  by the relevant official authority, and package outputs remain marked as not
+  officially validated.
 
 ## Repository Assets Already Available
 
@@ -60,11 +73,15 @@ The future component builder must respect these boundaries:
 - `ipm_component_registry.csv`: authoritative source for component IDs,
   expected component names, dimensions, weights, and applicable-population
   labels.
-- `ipm_derivation_registry.csv`: non-operational source-variable and caveat
-  registry for the initial `enemdu_2025_anual` profile.
-- `ipm_derivation_contract.md`: methodological boundary document.
+- `ipm_derivation_registry.csv`: source-variable and caveat registry for the
+  `enemdu_2025_anual` profile.
+- `ipm_derivation_contract.md`: implemented IPM/TPM methodological boundary
+  document.
+- `enemdu_build_ipm_components()`: profile-specific component builder.
 - `enemdu_build_ipm_flags()`: downstream row-level scoring and TPM/TPEM flag
-  builder that should be called only after all 12 component flags exist.
+  builder that is called after component flags exist.
+- `enemdu_run_ipm_reproducibility()`: complete-case reproducibility and
+  benchmark comparison workflow.
 
 ### Registry And Validation Helpers
 
@@ -108,7 +125,7 @@ different definitions.
   component derivation should not assume a usable period-specific line is
   present unless it is supplied or registered.
 - Poverty reproducibility evidence exists for December 2025, but it is local
-  reproducibility evidence and not institutional validation.
+  reproducibility evidence and no institutional validation is claimed.
 
 ### Labor Assets
 
@@ -293,7 +310,7 @@ around the existing controlled join mechanics.
 - NBI `comp5` economic-capacity rule for any IPM labor or income indicator.
 - Raw labor questionnaire reconstruction of `condact`.
 - Poverty-line assumptions without an auditable line source.
-- Any local reproducibility evidence as an official validation claim.
+- Any local reproducibility evidence as an institutional certification claim.
 
 ## Implementation Risk Classification
 
@@ -466,12 +483,11 @@ The implementation phase should validate in layers:
 
 ## Non-Official Validation Statement
 
-This audit establishes a reproducible internal implementation design for future
-IPM component derivation. It does not implement IPM, does not validate results
-against official institutional outputs, and does not claim endorsement by INEC
-or any other public institution.
+This audit is retained as historical implementation context. It does not claim
+endorsement by INEC or any other public institution.
 
-Any future IPM implementation must remain marked as not officially validated
-until real ENEMDU microdata are processed, published benchmark values are
-registered or supplied, comparison tolerances are documented, and reproducibility
-evidence is reviewed.
+The implemented IPM workflow provides local reproducibility evidence and
+benchmark comparison outputs. No institutional validation is claimed; any
+official validation would require explicit authorization or confirmation by the
+relevant official authority. The workflow remains marked as not officially
+validated.
