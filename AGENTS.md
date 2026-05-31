@@ -40,9 +40,11 @@ Rscript -e "devtools::test()"
 When feasible, also run:
 
 ```sh
-R CMD build .
-R CMD check enemduR_0.0.1.9000.tar.gz --no-manual --as-cran
+Rscript -e "devtools::check()"
 ```
+
+If a source tarball check is needed, build it first and pass the generated
+tarball path explicitly instead of relying on a hard-coded package version.
 
 If a command cannot run because of local tooling or network constraints, report
 the exact blocker.

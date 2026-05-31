@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Polished public portfolio documentation and pkgdown homepage styling,
+  including the roadmap, pre-release wording, and dark logo presentation.
 - Documented the final ENEMDU December 2025 IPM/TPM local reproducibility
   evidence, including the complete-case policy, benchmark comparison results,
   and the not-officially-validated status of the workflow.

@@ -3,17 +3,23 @@
 `enemduR` is an R package for reproducible analytical infrastructure using
 Ecuador ENEMDU microdata. The package is an analytical engine for reading,
 validation, derivation, survey-design-aware estimation, representativity
-assessment, official validation workflows, and downstream Quarto-ready
+assessment, official-reference comparison workflows, and downstream Quarto-ready
 analytical outputs.
 
-## Current Status
+## Current State
 
-`enemduR` is in active development. The repository has the core package
-structure, user documentation, generated manual pages, a labor vignette,
-GitHub Actions for R package checks, a published pkgdown documentation site,
-and lightweight agent governance.
+`enemduR` is in active development and is now suitable for public portfolio
+review as an analytical infrastructure project. The repository includes the
+core package structure, user documentation, generated manual pages, a labor
+vignette, GitHub Actions for R package checks, a published pkgdown
+documentation site, and lightweight agent governance.
 
-## Completed Foundations
+The post-Phase-7 codebase includes implemented infrastructure for labor,
+income, poverty, NBI, and IPM/TPM workflows. The package remains an analytical
+engine, not a dashboard, official production system, or official endorsement
+layer.
+
+## Implemented Analytical Infrastructure
 
 - Reading support for `.sav`, `.dta`, and `.csv` ENEMDU files.
 - Metadata registries for variables, domains, indicators, missing codes,
@@ -23,55 +29,78 @@ and lightweight agent governance.
 - Representativity and precision-evaluation infrastructure.
 - Labor indicator infrastructure based on the consolidated `condact` variable.
 - Official labor-tabulation parsing and comparison helpers.
+- Income, household-profile, quintile, poverty-flag, optional-bonus, and
+  social-bonus infrastructure under explicit contract rules.
+- Poverty KPI and benchmark-comparison helpers driven by auditable poverty
+  lines.
+- NBI component, flag, KPI, benchmark-comparison, source-join, and local
+  reproducibility infrastructure for the ENEMDU 2025 annual profile.
+- IPM/TPM component, flag, KPI, benchmark-comparison, and local
+  reproducibility infrastructure for the ENEMDU 2025 annual profile.
 - Quarto-ready analytical outputs while keeping presentation separate from
   computation.
 - Package hardening through README, NEWS, roxygen/manual pages, vignette,
   GitHub Actions, pkgdown publication, and agent guidance.
 
+## Reproducibility Evidence
+
+The repository retains local reproducibility evidence and comparison workflows
+for December 2025 poverty, NBI, and IPM/TPM benchmarks. These comparisons are
+evidence for local reproducibility under explicit inputs, contracts, and
+benchmark rows; they are not official institutional validation.
+
+Any official validation claim would require explicit authorization or
+confirmation by the relevant official authority. Until then, outputs that
+carry validation metadata should continue to preserve the
+`not_officially_validated` status when that status applies.
+
+## Release Hardening And Portfolio Readiness
+
+Near-term work should keep the public surface polished without changing
+statistical methodology, indicator definitions, survey-design logic, benchmark
+values, or package APIs.
+
+Priorities include:
+
+- Keep validation checks clean and report their exact results.
+- Keep pkgdown, README, NEWS, and roadmap language aligned with the actual
+  development state.
+- Improve examples that demonstrate complete analytical workflows with
+  synthetic or otherwise shareable data.
+- Refine pkgdown reference organization only where it improves navigation.
+- Keep the alpha release clearly framed as a pre-release, not a final
+  production release.
+- Preserve the analytical-engine identity and avoid turning documentation into
+  a dashboard or presentation-first product.
+
 ## Next Milestones
 
 - Keep future work scoped through issue templates, pull request templates, and
   small Codex-ready task cards.
-- Expand examples that demonstrate complete analytical workflows with synthetic
-  or otherwise shareable data.
-- Continue Phase 7 income and poverty work from explicit contracts; the income
-  poverty KPI wrapper is implemented for auditable user-supplied poverty lines,
-  official poverty benchmark comparison readiness is implemented for published
-  December 2025 reference values, and a local reproducibility workflow scaffold
-  is available for December 2025 income-poverty indicators.
-- Run the December 2025 reproducibility workflow with official microdata and
-  review benchmark differences before any official poverty validation claim.
-- Continue Phase 7 NBI work from final NBI components only; the initial module
-  builds `knbi`, `nbi`, and `xnbi`, estimates NBI KPIs, and prepares benchmark
-  and reproducibility scaffolding without reconstructing raw questionnaire
-  variables.
-- Add and review raw ENEMDU-to-NBI component derivation for the
-  `enemdu_2025_anual` profile, then compare results against audited official
-  NBI benchmarks before any validation claim.
-- Use the controlled NBI source-join helper when person and housing files are
-  delivered separately, preserving person rows before component derivation.
-- Strengthen tests around metadata contracts, official tabulation parsers, and
-  representativity edge cases.
-- Refine pkgdown reference organization without turning documentation into a
-  dashboard or visual product.
-- Improve release-readiness checks and review discipline before any public
-  release decision.
+- Strengthen tests around metadata contracts, official tabulation parsers,
+  reproducibility inputs, and representativity edge cases.
+- Review benchmark-comparison outputs whenever official microdata and
+  user-supplied inputs are available locally.
+- Formalize any official validation pathway only if authorization or
+  confirmation from the relevant authority is available.
+- Improve release-readiness checks and review discipline before any broader
+  public release decision.
 
 ## Future Analytical Modules
 
-Possible future modules should be added only when variables, methodological
-rules, registries, and validation strategies are explicit and auditable.
-Candidate areas include:
+Future modules should be added only when variables, methodological rules,
+registries, and validation strategies are explicit and auditable. Possible
+expansion areas include:
 
-- income and household analytical summaries;
-- poverty-line-driven poverty indicators;
-- NBI benchmark intake and official comparison workflows once audited official
-  benchmark rows are available;
-- TPM, TPEM, intensity, and IPM under a separate multidimensional poverty
-  contract;
-- social bonus and optional bonus workflows;
+- historical harmonization across ENEMDU questionnaire changes;
+- broader income and household analytical summaries;
+- additional poverty-line scenario workflows beyond the current explicit-line
+  infrastructure;
+- expanded social bonus and optional bonus workflows;
 - survey-domain representativity reports;
-- official dictionary and metadata quality diagnostics.
+- official dictionary and metadata quality diagnostics;
+- downstream Quarto/reporting helpers that consume stable analytical outputs
+  without controlling computation.
 
 ## Governance And Quality Improvements
 

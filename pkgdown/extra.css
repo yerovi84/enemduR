@@ -67,11 +67,11 @@ main,
 .template-home main > .float:first-child,
 .template-home .contents > p:first-child {
   margin: 1.25rem 0 0.25rem;
-  padding: 1rem 1.25rem;
+  padding: 0.5rem 0 0.75rem;
   text-align: center;
-  background: #f8fafc;
-  border: 1px solid rgba(203, 213, 225, 0.55);
-  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .template-home main > .float:first-child img,
