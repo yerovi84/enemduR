@@ -1,0 +1,175 @@
+---
+title: "Survey design and representativity"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Survey design and representativity}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Purpose
+
+ENEMDU is a complex survey. `enemduR` treats survey design, precision, and
+representativity as part of the analytical contract rather than as display
+metadata added at the end of a report.
+
+This vignette explains the main concepts used by the package. It does not claim
+that any placeholder example has been validated against official microdata.
+
+## Core design variables
+
+The default ENEMDU design contract uses three variables.
+
+| Role | Variable | Meaning |
+|---|---|---|
+| Primary sampling unit | `upm` | Sampling cluster used by the survey design |
+| Strata | `estrato` | Stratification variable |
+| Expansion factor | `fexp` | Survey weight used to expand the sample to the population |
+
+These defaults are used by survey-design-aware functions such as:
+
+```r
+enemdu_declare_design()
+enemdu_survey_total()
+enemdu_survey_mean()
+enemdu_survey_proportion()
+enemdu_survey_tabulate()
+enemdu_kpi_employment()
+```
+
+## Declaring a survey design
+
+When a workflow needs a survey design object directly, use
+`enemdu_declare_design()`.
+
+```r
+microdata <- enemdu_read_data(
+  path = "path/to/authorized/enemdu_persona_2026_03.sav",
+  survey_type = "mensual",
+  period = "2026-03"
+)
+
+design <- enemdu_declare_design(
+  data = microdata,
+  ids = "upm",
+  strata = "estrato",
+  weights = "fexp"
+)
+```
+
+Most high-level KPI functions use the same design variables internally.
+
+## Design domains and observed domains
+
+`enemduR` distinguishes between two related but different ideas.
+
+| Concept | Package meaning |
+|---|---|
+| Design domains | Domains recognized by the survey design contract for the declared survey type |
+| Observed analysis domains | Values observed in the data for the grouping variables requested by the analyst |
+
+For example, monthly ENEMDU workflows support national and urban-rural area
+representativity. Quarterly workflows can include the five main city domains.
+Annual workflows can include provinces.
+
+`domain_scope = "design"` estimates with the full input microdata and filters
+the output to recognized design domains.
+
+```r
+labor_area <- enemdu_kpi_employment(
+  data = microdata,
+  survey_type = "mensual",
+  group_vars = "area",
+  domain_scope = "design"
+)
+```
+
+`domain_scope = "observed"` keeps observed analytical groups after estimation.
+This is useful for exploratory or custom analytical cuts.
+
+```r
+labor_observed <- enemdu_kpi_employment(
+  data = microdata,
+  survey_type = "mensual",
+  group_vars = "area",
+  domain_scope = "observed"
+)
+```
+
+The design-domain mode does not prefilter the microdata before estimation.
+This matters because prefiltering can change the survey design available to the
+estimator.
+
+## Sample counts and weighted population counts
+
+Many `enemduR` outputs include both `unweighted_n` and `weighted_n`.
+
+| Field | Meaning |
+|---|---|
+| `unweighted_n` | Number of sample records contributing to the estimate |
+| `weighted_n` | Expanded population count based on survey weights |
+
+`weighted_n` is not an effective sample size. It should not be interpreted as
+the number of independent observations supporting an estimate.
+
+Some estimators may also expose design-effect or adjusted sample-size
+diagnostics when those quantities are available. Those diagnostics support
+precision review, but they do not change the meaning of `weighted_n`.
+
+## Quality and precision flags
+
+The package uses quality and precision fields to make downstream review easier.
+At a conceptual level, these fields can indicate:
+
+- whether an estimate has enough unweighted sample support;
+- whether a coefficient of variation falls into an acceptable range;
+- whether an estimate should be treated as reduced precision;
+- whether an estimate should not be recommended for analytical use;
+- whether an estimate could not be evaluated with the available inputs.
+
+The exact thresholds are part of package metadata and helper logic. Analysts
+should review the returned flags before using estimates in reports or
+dashboards.
+
+## Example: survey-aware proportion
+
+The lower-level survey estimator helpers can be used when an analyst already
+has an audited binary variable.
+
+```r
+poverty_rate_area <- enemdu_survey_proportion(
+  data = microdata,
+  value = "poverty_flag",
+  group_vars = "area",
+  survey_type = "mensual",
+  indicator_id = "poverty_rate_area",
+  measure = "Poverty rate by area"
+)
+```
+
+This example assumes that `poverty_flag` already exists and was built from
+explicit, auditable poverty lines. `enemduR` does not treat poverty computation
+as a generic recoding task.
+
+## Practical review checklist
+
+Before using an output table, check:
+
+- the declared `survey_type`;
+- the design variables used for estimation;
+- whether `domain_scope` matches the analytical question;
+- whether the relevant grouping variables represent design domains or custom
+  analysis domains;
+- `unweighted_n`, `weighted_n`, and any precision diagnostics;
+- `quality_flag`, `precision_flag`, and warning fields when present.
+
+This keeps analytical outputs traceable before they flow into Quarto, dashboard,
+or reporting layers.

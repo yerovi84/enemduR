@@ -1,0 +1,214 @@
+---
+title: "Poverty, NBI, and IPM/TPM reproducibility"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Poverty, NBI, and IPM/TPM reproducibility}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Purpose
+
+`enemduR` includes infrastructure for income poverty, NBI, and IPM/TPM
+workflows. These workflows are designed for reproducible local analysis and
+benchmark comparison, not for declaring institutional validation.
+
+This vignette explains how to interpret those workflows at a portfolio level.
+It uses placeholder paths and environment variables only. It does not include,
+download, or request official microdata.
+
+## Data and authorization
+
+Official ENEMDU microdata and official reference materials must be obtained by
+the user from authorized sources. Local scripts should read those files from
+user-controlled paths, not from committed repository data.
+
+For reproducibility scripts, prefer environment variables such as:
+
+```r
+Sys.getenv("ENEMDU_PERSONAS_PATH")
+Sys.getenv("ENEMDU_HOGARES_PATH")
+Sys.getenv("ENEMDU_VIVIENDA_PATH")
+```
+
+These values can point to authorized local files without exposing sensitive or
+restricted data in the repository.
+
+## Income poverty
+
+Income poverty indicators require explicit and auditable poverty lines. The
+package does not derive poverty lines implicitly, does not ingest CPI series as
+part of the KPI wrapper, and does not treat poverty as a generic binary recode.
+
+A manual workflow should state the poverty line, the extreme poverty line, the
+period, and the source note.
+
+```r
+microdata <- enemdu_read_data(
+  path = Sys.getenv("ENEMDU_PERSONAS_PATH"),
+  survey_type = "mensual",
+  period = "2025-12"
+)
+
+poverty_kpis <- enemdu_kpi_income_poverty(
+  data = microdata,
+  period = "2025-12",
+  mode = "manual",
+  poverty_line = 92.40,
+  extreme_poverty_line = 52.07,
+  line_source = "INEC poverty bulletin, December 2025: poverty line 92.40 and extreme poverty line 52.07.",
+  survey_type = "mensual"
+)
+```
+
+For the December 2025 reproducibility workflow, the package provides a helper
+that estimates national and urban-rural outputs and compares them with retained
+benchmark rows.
+
+```r
+poverty_reproducibility <- enemdu_run_poverty_reproducibility(
+  data = microdata,
+  period = "2025-12",
+  survey_type = "mensual",
+  strict = FALSE
+)
+```
+
+Benchmark comparison output is an audit aid. It does not establish official
+institutional validation.
+
+## NBI
+
+NBI workflows are profile-specific. The package includes infrastructure for
+the ENEMDU 2025 annual profile, including component, flag, KPI, benchmark, and
+local reproducibility helpers.
+
+The NBI reproducibility helper works from final NBI components by default.
+Those components must be present, audited, and appropriate for the selected
+profile.
+
+```r
+annual_people <- enemdu_read_data(
+  path = Sys.getenv("ENEMDU_PERSONAS_ANUAL_PATH"),
+  survey_type = "anual",
+  period = "2025"
+)
+
+nbi_reproducibility <- enemdu_run_nbi_reproducibility(
+  data = annual_people,
+  period = "2025",
+  benchmark_set = "nbi_2025_anual",
+  survey_type = "anual",
+  component_vars = c("comp1", "comp2", "comp3", "comp4", "comp5"),
+  strict = FALSE
+)
+```
+
+When person and housing files are delivered separately, a controlled source
+join should preserve person rows before component derivation.
+
+```r
+people_path <- Sys.getenv("ENEMDU_PERSONAS_ANUAL_PATH")
+housing_path <- Sys.getenv("ENEMDU_VIVIENDA_ANUAL_PATH")
+
+people <- enemdu_read_data(
+  path = people_path,
+  survey_type = "anual",
+  period = "2025"
+)
+
+housing <- enemdu_read_data(
+  path = housing_path,
+  survey_type = "anual",
+  period = "2025"
+)
+
+nbi_sources <- enemdu_join_nbi_sources(
+  person_data = people,
+  household_data = housing
+)
+```
+
+This is a reproducibility scaffold. It is not a claim that local outputs have
+been officially validated.
+
+## IPM/TPM
+
+IPM/TPM workflows are also profile-specific. The current infrastructure is
+oriented to the ENEMDU 2025 annual profile and includes component, flag, KPI,
+benchmark comparison, and local reproducibility helpers.
+
+```r
+ipm_microdata <- enemdu_read_data(
+  path = Sys.getenv("ENEMDU_PERSONAS_ANUAL_PATH"),
+  survey_type = "anual",
+  period = "2025"
+)
+
+ipm_reproducibility <- enemdu_run_ipm_reproducibility(
+  data = ipm_microdata,
+  period = "2025-12",
+  survey_type = "anual",
+  by = "area",
+  build_components = FALSE,
+  build_flags = TRUE,
+  missing_component_policy = "complete_case",
+  strict = FALSE
+)
+```
+
+The workflow can consume already-built score and flag variables, or it can
+build flags from registered component columns when those inputs are available.
+It does not make new official validation claims.
+
+## Local evidence versus official validation
+
+The repository retains local reproducibility evidence for December 2025
+poverty, NBI, and IPM/TPM workflows. That evidence documents how local
+workflows compare against retained benchmark rows under explicit inputs and
+contracts.
+
+This is different from official institutional validation.
+
+Benchmark comparisons are audit aids. They help reviewers inspect alignment,
+differences, tolerances, missing inputs, and workflow assumptions. They are not
+official endorsement and should not be described as official validation unless
+the relevant official authority explicitly authorizes or confirms that status.
+
+Where package outputs include validation metadata, the appropriate status
+should remain:
+
+```text
+official_validation_status = "not_officially_validated"
+```
+
+unless official validation has actually been authorized, run, and documented.
+
+## Practical interpretation
+
+Use these workflows to:
+
+- make assumptions explicit;
+- keep poverty lines auditable;
+- keep NBI and IPM/TPM profile rules visible;
+- compare local estimates against retained benchmark rows;
+- document tolerances and differences;
+- prepare evidence for review.
+
+Do not use these workflows to:
+
+- reconstruct official status without authorization;
+- publish official results from package outputs alone;
+- treat benchmark alignment as institutional endorsement;
+- hide missing inputs or profile-specific assumptions.
+
+The package provides analytical infrastructure. Review, authorization, and
+official publication decisions remain outside the package.

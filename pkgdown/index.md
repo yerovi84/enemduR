@@ -51,7 +51,10 @@ This public package demonstrates a professional analytical stack built around of
 
 ## Start Here
 
+- Start with the [getting started guide](articles/getting-started.html).
+- Review [survey design and representativity](articles/survey-design-and-representativity.html).
 - Browse the [function reference](reference/index.html).
 - Read the [labor indicators vignette](articles/labor-indicators.html).
+- Read the [poverty, NBI, and IPM/TPM reproducibility guide](articles/poverty-nbi-ipm-reproducibility.html).
 - Review the [release notes](news/index.html).
 - Inspect the source repository on [GitHub](https://github.com/yerovi84/enemduR).

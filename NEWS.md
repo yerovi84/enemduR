@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Added portfolio-oriented vignettes for onboarding, survey design,
+  representativity, and poverty/NBI/IPM reproducibility workflows.
 - Polished public portfolio documentation and pkgdown homepage styling,
   including the roadmap, pre-release wording, and dark logo presentation.
 - Documented the final ENEMDU December 2025 IPM/TPM local reproducibility
