@@ -22,6 +22,14 @@ navbar:
     left: [reference, articles, news]
     right: [search]
 
+articles:
+- title: Portfolio guides
+  contents:
+  - getting-started
+  - survey-design-and-representativity
+  - labor-indicators
+  - poverty-nbi-ipm-reproducibility
+
 footer:
   structure:
     left: built_by

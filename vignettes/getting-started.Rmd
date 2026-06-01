@@ -1,0 +1,148 @@
+---
+title: "Getting started with enemduR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with enemduR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Purpose
+
+`enemduR` is an analytical infrastructure package for reproducible work with
+Ecuador ENEMDU microdata.
+
+The package is designed to support technical workflows: reading files,
+validating structure, deriving analytical variables, declaring the complex
+survey design, estimating indicators, assessing representativity, and producing
+stable outputs for downstream reporting.
+
+It is not a dashboard and it is not a replacement for official statistical
+production systems. Quarto reports, dashboards, and other visual products are
+downstream consumers of the analytical outputs.
+
+## Data access
+
+Official ENEMDU microdata must be obtained by the user from authorized sources.
+This vignette does not include, download, or request official microdata.
+
+The paths below are placeholders. They are intended as workflow templates for
+local files that the user is authorized to use.
+
+## Supported file formats
+
+`enemdu_read_data()` supports:
+
+| Format | Role |
+|---|---|
+| `.sav` | Operational primary format for recent official ENEMDU microdata workflows |
+| `.dta` | Interoperability format |
+| `.csv` | Interoperability format |
+
+## Minimal workflow
+
+A typical workflow starts by loading a local ENEMDU file.
+
+```r
+library(enemduR)
+
+microdata <- enemdu_read_data(
+  path = "path/to/authorized/enemdu_persona_2026_03.sav",
+  survey_type = "mensual",
+  period = "2026-03"
+)
+```
+
+Run a structural validation step before estimating indicators.
+
+```r
+structure_report <- enemdu_validate_structure(microdata)
+structure_report
+```
+
+Declare the ENEMDU complex survey design when a workflow needs a design object
+directly.
+
+```r
+design <- enemdu_declare_design(
+  data = microdata,
+  ids = "upm",
+  strata = "estrato",
+  weights = "fexp"
+)
+```
+
+Estimate an initial labor KPI table with the package labor module.
+
+```r
+labor_kpis <- enemdu_kpi_employment(
+  data = microdata,
+  survey_type = "mensual",
+  domain_scope = "design"
+)
+
+labor_kpis
+```
+
+## Working by domain
+
+For monthly ENEMDU files, area outputs can be requested with `group_vars =
+"area"` and `domain_scope = "design"`.
+
+```r
+labor_area <- enemdu_kpi_employment(
+  data = microdata,
+  survey_type = "mensual",
+  group_vars = "area",
+  domain_scope = "design"
+)
+```
+
+For quarterly city-domain workflows, use the official comparison field
+available in the analytical workflow, such as `dominio`, rather than assuming
+that `ciudad` is equivalent to official published city domains.
+
+```r
+quarterly_microdata <- enemdu_read_data(
+  path = "path/to/authorized/enemdu_persona_2026_I_trimestre.sav",
+  survey_type = "trimestral",
+  period = "2026-I"
+)
+
+labor_city_domains <- enemdu_kpi_employment(
+  data = quarterly_microdata,
+  survey_type = "trimestral",
+  group_vars = "dominio",
+  domain_scope = "observed"
+)
+```
+
+## Output use
+
+Most analytical outputs are long-format tables intended for downstream use in:
+
+- Quarto documents;
+- validation notebooks;
+- dashboards;
+- technical reports;
+- institutional analytical pipelines.
+
+The package keeps analytical computation separate from presentation. Reporting
+layers should consume the output tables rather than control how indicators are
+computed.
+
+## Next steps
+
+After this introduction, read:
+
+- the survey design and representativity vignette;
+- the labor indicators vignette;
+- the poverty, NBI, and IPM/TPM reproducibility vignette.
