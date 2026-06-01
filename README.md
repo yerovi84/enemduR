@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://yerovi84.github.io/enemduR/">Documentation</a> |
   <a href="https://github.com/yerovi84/enemduR">GitHub</a> |
-  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha">v0.1.0-alpha pre-release</a> |
+  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha.2">v0.1.0-alpha.2 pre-release</a> |
   <a href="LICENSE">MIT license</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
@@ -28,8 +28,9 @@ The package is designed as an analytical engine, not as a dashboard or final vis
 
 `enemduR` is currently in active development.
 
-The tagged `v0.1.0-alpha` build is a public pre-release for review and
-portfolio demonstration, not a final production release.
+The planned `v0.1.0-alpha.2` GitHub pre-release is the current public
+portfolio preview for review and demonstration. It is not a final production
+release and does not imply official institutional validation.
 
 The current development version includes:
 
