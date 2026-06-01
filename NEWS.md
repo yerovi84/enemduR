@@ -2,6 +2,8 @@
 
 ## Current development version
 
+- Aligned README and pkgdown release links with the planned
+  `v0.1.0-alpha.2` portfolio pre-release.
 - Added portfolio-oriented vignettes for onboarding, survey design,
   representativity, and poverty/NBI/IPM reproducibility workflows.
 - Polished public portfolio documentation and pkgdown homepage styling,
