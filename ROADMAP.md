@@ -8,16 +8,16 @@ analytical outputs.
 
 ## Current State
 
-`enemduR` is in active development and is now suitable for public portfolio
-review as an analytical infrastructure project. The repository includes the
-core package structure, user documentation, generated manual pages, a labor
-vignette, GitHub Actions for R package checks, a published pkgdown
-documentation site, and lightweight agent governance.
+`enemduR` 0.1.0 is the first stable portfolio release of the package and
+remains suitable for public portfolio review as an analytical infrastructure
+project. The repository includes the core package structure, user
+documentation, generated manual pages, portfolio vignettes, GitHub Actions for
+R package checks, a published pkgdown documentation site, and lightweight
+agent governance.
 
-The post-Phase-7 codebase includes implemented infrastructure for labor,
-income, poverty, NBI, and IPM/TPM workflows. The package remains an analytical
-engine, not a dashboard, official production system, or official endorsement
-layer.
+The v0.1.0 codebase includes implemented infrastructure for labor, income,
+poverty, NBI, and IPM/TPM workflows. The package remains an analytical engine,
+not a dashboard, official production system, or official endorsement layer.
 
 ## Implemented Analytical Infrastructure
 
@@ -54,22 +54,22 @@ confirmation by the relevant official authority. Until then, outputs that
 carry validation metadata should continue to preserve the
 `not_officially_validated` status when that status applies.
 
-## Release Hardening And Portfolio Readiness
+## Post-v0.1.0 Hardening And Portfolio Maintenance
 
-Near-term work should keep the public surface polished without changing
-statistical methodology, indicator definitions, survey-design logic, benchmark
-values, or package APIs.
+Future work after v0.1.0 should keep the public surface polished without
+changing statistical methodology, indicator definitions, survey-design logic,
+benchmark values, or package APIs unless a specific reviewed task requires it.
 
 Priorities include:
 
 - Keep validation checks clean and report their exact results.
 - Keep pkgdown, README, NEWS, and roadmap language aligned with the actual
-  development state.
+  release and development state.
 - Improve examples that demonstrate complete analytical workflows with
   synthetic or otherwise shareable data.
 - Refine pkgdown reference organization only where it improves navigation.
-- Keep the alpha release clearly framed as a pre-release, not a final
-  production release.
+- Prepare broader production hardening and CRAN-readiness reviews as future
+  work, without implying that v0.1.0 is an official production release.
 - Preserve the analytical-engine identity and avoid turning documentation into
   a dashboard or presentation-first product.
 
@@ -84,7 +84,7 @@ Priorities include:
 - Formalize any official validation pathway only if authorization or
   confirmation from the relevant authority is available.
 - Improve release-readiness checks and review discipline before any broader
-  public release decision.
+  production or CRAN release decision.
 
 ## Future Analytical Modules
 
@@ -93,6 +93,8 @@ registries, and validation strategies are explicit and auditable. Possible
 expansion areas include:
 
 - historical harmonization across ENEMDU questionnaire changes;
+- raw labor-status reconstruction only if a future methodology task explicitly
+  authorizes variables, rules, and validation evidence;
 - broader income and household analytical summaries;
 - additional poverty-line scenario workflows beyond the current explicit-line
   infrastructure;
@@ -101,6 +103,8 @@ expansion areas include:
 - official dictionary and metadata quality diagnostics;
 - downstream Quarto/reporting helpers that consume stable analytical outputs
   without controlling computation.
+- dashboard products as downstream consumers, not as replacements for the
+  analytical engine.
 
 ## Governance And Quality Improvements
 

@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://yerovi84.github.io/enemduR/">Documentation</a> |
   <a href="https://github.com/yerovi84/enemduR">GitHub</a> |
-  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha.2">v0.1.0-alpha.2 pre-release</a> |
+  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0">v0.1.0 stable portfolio release</a> |
   <a href="LICENSE">MIT license</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
@@ -26,13 +26,12 @@ The package is designed as an analytical engine, not as a dashboard or final vis
 
 ## Project status
 
-`enemduR` is currently in active development.
+`enemduR` 0.1.0 is the first stable portfolio release of the package. It is a
+GitHub-based release for reproducible analytical workflows and portfolio
+demonstration; it is not a CRAN release, an official statistical production
+system, or official institutional validation.
 
-The planned `v0.1.0-alpha.2` GitHub pre-release is the current public
-portfolio preview for review and demonstration. It is not a final production
-release and does not imply official institutional validation.
-
-The current development version includes:
+The v0.1.0 release includes:
 
 - reading support for `.sav`, `.dta`, and `.csv` ENEMDU files;
 - `.sav` as the operational primary format for recent official ENEMDU microdata workflows;
@@ -48,7 +47,7 @@ The current development version includes:
 - an initial labor indicator module based on the consolidated `condact` variable;
 - a formal labor indicator registry with 32 implemented labor indicators;
 - official labor-market tabulation parsing;
-- comparison helpers for official labor-market validation workflows;
+- comparison helpers for official labor-market reference workflows;
 - stable analytical outputs ready for downstream Quarto consumption;
 - a basic GitHub Actions R package check workflow;
 - a published pkgdown documentation site for package reference and vignettes.
@@ -113,7 +112,13 @@ These variables are used by survey-design-aware functions such as:
 
 ## Installation
 
-During active development, load the package locally from the project root:
+Install the first stable portfolio release from its GitHub tag:
+
+```r
+remotes::install_github("yerovi84/enemduR@v0.1.0")
+```
+
+For local development, load the package from the project root:
 
 ```r
 devtools::load_all(reset = TRUE)
@@ -283,7 +288,7 @@ labor_area <- enemdu_kpi_employment(
 
 ### Quarterly city-domain indicators
 
-For official quarterly city-domain validation, use `dominio`, not `ciudad`.
+For official quarterly city-domain comparison, use `dominio`, not `ciudad`.
 The current validation examples keep `domain_scope = "observed"` for
 `dominio` because `dominio` is the official city-domain comparison field; the
 estimator still uses the full input microdata.
@@ -353,10 +358,10 @@ This distinction is important because analysis domains and design domains are no
 
 Do not use `domain_scope = "design"` as a substitute for mapping `ciudad` to
 published official city-domain tabulations. For official city-domain
-validation, use `dominio` when that field is available in the analytical
+comparison, use `dominio` when that field is available in the analytical
 workflow.
 
-## Official labor tabulation validation workflow
+## Official labor tabulation comparison workflow
 
 `enemduR` includes helper infrastructure for reading and comparing official labor-market tabulations.
 
@@ -378,7 +383,7 @@ comparison <- enemdu_compare_labor_tabulados(
 )
 ```
 
-The validation workflow is intentionally conservative. It compares only official rows that can be mapped to implemented package indicators.
+The comparison workflow is intentionally conservative. It compares only official rows that can be mapped to implemented package indicators.
 
 Rates are stored internally as proportions in `[0, 1]`. Official tabulations may publish rates as percentages, so official values are converted to package scale before comparison.
 
@@ -391,9 +396,9 @@ Examples:
 
 Counts remain in count scale.
 
-## Official validation coverage for the current labor block
+## Official-reference comparison coverage for the current labor block
 
-The current labor validation workflow covers the following official comparison targets:
+The current labor comparison workflow covers the following official reference targets:
 
 | Source | Domains covered |
 |---|---|
@@ -401,7 +406,7 @@ The current labor validation workflow covers the following official comparison t
 | Quarterly First Quarter 2026 | National, urban area, rural area, five main cities |
 | Annual 2025 | National, urban area, rural area, five main cities, 24 provinces |
 
-For the annual provincial comparison, the following label alias is accepted only for validation alignment:
+For the annual provincial comparison, the following label alias is accepted only for comparison alignment:
 
 ```text
 Santo Domingo -> Santo Domingo de los Tsáchilas
@@ -538,7 +543,7 @@ enemdu_section_header()
 
 ## Current limitations
 
-The current development version does not yet provide:
+The v0.1.0 release does not provide:
 
 - full reconstruction of labor status from raw questionnaire variables;
 - a complete historical harmonization engine for all ENEMDU questionnaire changes;
@@ -546,7 +551,7 @@ The current development version does not yet provide:
 - a full custom documentation design system beyond the restrained portfolio identity;
 - fully implemented Quarto helper objects;
 - a complete visual dashboard layer;
-- full release hardening.
+- broader production hardening for institutional deployment.
 
 These are future development areas.
 
@@ -579,6 +584,6 @@ pkgdown::build_site()
 
 ## Portfolio summary
 
-`enemduR` demonstrates a reproducible analytical infrastructure for official microdata workflows. It combines package engineering, survey-design-aware estimation, metadata contracts, validation against official labor tabulations, and Quarto-ready analytical outputs.
+`enemduR` demonstrates reproducible analytical infrastructure for official microdata workflows. It combines package engineering, survey-design-aware estimation, metadata contracts, benchmark comparison workflows, and Quarto-ready analytical outputs.
 
-The project is designed to support technical reporting, institutional dashboards, policy intelligence, and reproducible research while preserving methodological traceability and a strict separation between computation and presentation.
+The project is designed to support technical reporting, downstream dashboards, policy intelligence, and reproducible research while preserving methodological traceability and a strict separation between computation and presentation. It does not replace official statistical production systems or claim official institutional validation.
