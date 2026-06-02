@@ -8,13 +8,13 @@ Built by Alejandro Yerovi | Big Y Productions
 
 Survey Statistics | Policy Analytics | Reporting Automation | R
 
-[Reference](reference/index.html) | [Articles](articles/index.html) | [News](news/index.html) | [GitHub](https://github.com/yerovi84/enemduR) | [v0.1.0-alpha.2 pre-release](https://github.com/yerovi84/enemduR/releases/tag/v0.1.0-alpha.2)
+[Reference](reference/index.html) | [Articles](articles/index.html) | [News](news/index.html) | [GitHub](https://github.com/yerovi84/enemduR) | [v0.1.0 stable portfolio release](https://github.com/yerovi84/enemduR/releases/tag/v0.1.0)
 
 `enemduR` is an R package for reproducible analytical work with Ecuador's ENEMDU microdata. It provides infrastructure for reading, validation, derivation, survey-design-aware estimation, representativity assessment, benchmark comparison workflows, IPM/TPM local reproducibility evidence, and Quarto-ready analytical outputs.
 
 The package is an analytical engine. It is not a dashboard, not a replacement for official statistical production systems, and not an official endorsement layer. Its role is to make technical ENEMDU workflows more reproducible, auditable, and easier to review.
 
-The planned `v0.1.0-alpha.2` GitHub pre-release is the current public portfolio preview for review and demonstration. It is not a final production release and does not imply official institutional validation.
+`enemduR` 0.1.0 is the first stable portfolio release of the package. It is a GitHub-based release for reproducible analytical workflows and portfolio demonstration; it is not a CRAN release, an official statistical production system, or official institutional validation.
 
 ## Portfolio Signal
 

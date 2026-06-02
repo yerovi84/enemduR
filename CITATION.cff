@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use enemduR in your work, please cite the package."
 type: software
 title: "enemduR"
-version: 0.1.0.9000
+version: 0.1.0
 authors:
   - family-names: "Yerovi"
     given-names: "Alejandro"
