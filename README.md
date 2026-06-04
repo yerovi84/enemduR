@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://yerovi84.github.io/enemduR/">Documentation</a> |
   <a href="https://github.com/yerovi84/enemduR">GitHub</a> |
-  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.0">v0.1.0 stable portfolio release</a> |
+  <a href="https://github.com/yerovi84/enemduR/releases/tag/v0.1.1">v0.1.1 documentation-only patch release</a> |
   <a href="LICENSE">MIT license</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
@@ -26,12 +26,13 @@ The package is designed as an analytical engine, not as a dashboard or final vis
 
 ## Project status
 
-`enemduR` 0.1.0 is the first stable portfolio release of the package. It is a
-GitHub-based release for reproducible analytical workflows and portfolio
-demonstration; it is not a CRAN release, an official statistical production
-system, or official institutional validation.
+`enemduR` 0.1.1 is a documentation-only patch release following the first
+stable portfolio release. It is a GitHub-based release for reproducible
+analytical workflows and portfolio demonstration; it is not a CRAN release, an
+official statistical production system, or official institutional validation.
 
-The v0.1.0 release includes:
+The v0.1.1 release includes the v0.1.0 analytical surface plus strengthened
+documentation for official-source alignment:
 
 - reading support for `.sav`, `.dta`, and `.csv` ENEMDU files;
 - `.sav` as the operational primary format for recent official ENEMDU microdata workflows;
@@ -53,6 +54,22 @@ The v0.1.0 release includes:
 - a published pkgdown documentation site for package reference and vignettes.
 
 The package is not intended to replace official statistical production systems or official published results. It is an analytical infrastructure project designed to improve reproducibility, transparency, and methodological consistency in downstream ENEMDU workflows.
+
+## Official-source alignment
+
+Several implemented workflows are traceable to public INEC methodological
+documentation, syntax files, dictionaries, and benchmark tabulations. The
+package uses labels such as official-source-documented,
+official-syntax-aligned, official-methodology-aligned, benchmark-compared, and
+benchmark-reproduced only where supporting documentation exists.
+
+These labels describe source traceability, implementation alignment, benchmark
+comparison, or local reproducibility evidence. They do not imply official
+institutional validation, certification, endorsement, or homologation.
+
+See
+[`inst/extdata/official_source_alignment_taxonomy.md`](inst/extdata/official_source_alignment_taxonomy.md)
+for the recommended taxonomy and wording guardrails.
 
 ## Design principles
 
@@ -112,10 +129,10 @@ These variables are used by survey-design-aware functions such as:
 
 ## Installation
 
-Install the first stable portfolio release from its GitHub tag:
+Install the documentation-only patch release from its GitHub tag:
 
 ```r
-remotes::install_github("yerovi84/enemduR@v0.1.0")
+remotes::install_github("yerovi84/enemduR@v0.1.1")
 ```
 
 For local development, load the package from the project root:
@@ -543,7 +560,7 @@ enemdu_section_header()
 
 ## Current limitations
 
-The v0.1.0 release does not provide:
+The v0.1.1 documentation-only patch release does not provide:
 
 - full reconstruction of labor status from raw questionnaire variables;
 - a complete historical harmonization engine for all ENEMDU questionnaire changes;

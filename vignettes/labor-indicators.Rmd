@@ -169,7 +169,7 @@ kpi_area <- enemdu_kpi_employment(
 
 The variable `ciudad` must not be assumed to be equivalent to the official published city-domain tabulations.
 
-For official city-domain validation, the package workflow uses:
+For official city-domain benchmark comparison, the package workflow uses:
 
 ```r
 dominio
@@ -177,7 +177,7 @@ dominio
 
 This is especially important for quarterly and annual official tabulations that publish the five main cities as official domains.
 
-The validated city domains are:
+The benchmark-compared city domains are:
 
 - Quito;
 - Guayaquil;
@@ -185,7 +185,7 @@ The validated city domains are:
 - Machala;
 - Ambato.
 
-For official city-domain validation:
+For official city-domain benchmark comparison:
 
 - use `dominio`;
 - do not use `ciudad` as an automatic substitute.
@@ -234,7 +234,7 @@ kpi_trimestral_dominio <- enemdu_kpi_employment(
 )
 ```
 
-`domain_scope = "observed"` is used here because the official city-domain validation is performed through the derived `dominio` variable.
+`domain_scope = "observed"` is used here because the official city-domain benchmark comparison is performed through the derived `dominio` variable.
 
 ## Annual province example
 
@@ -287,7 +287,7 @@ labor_registry
 
 The registry documents indicator identifiers, labels, estimator type, universe, required variables, scale, and domain policy.
 
-## Official validation workflow
+## Official benchmark comparison workflow
 
 The package includes helper functions for reading and comparing official INEC labor-market tabulations:
 
@@ -316,9 +316,9 @@ comparacion_mensual_nacional <- enemdu_compare_labor_tabulados(
 )
 ```
 
-## Validation tolerances
+## Benchmark comparison tolerances
 
-The validation workflow uses:
+The benchmark comparison workflow uses:
 
 ```r
 tolerance_count = 1
@@ -335,13 +335,13 @@ Therefore:
 
 This tolerance is used because official tabulations publish rounded percentages.
 
-The tolerance is only used for validation against published tabulations. It does not change the internal estimator.
+The tolerance is only used for benchmark comparison against published tabulations. It does not change the internal estimator.
 
 ## Published dash handling
 
 Official tabulations may publish `-` in some cells.
 
-The validation workflow accepts `-` as a match only under all of the following conditions:
+The benchmark comparison workflow accepts `-` as a match only under all of the following conditions:
 
 - the official value is exactly `-`;
 - the package scale is `count`;
@@ -370,7 +370,7 @@ The corresponding labelled value in the official microdata is:
 Santo Domingo de los Tsáchilas
 ```
 
-For validation purposes, the accepted alias is:
+For benchmark comparison purposes, the accepted alias is:
 
 ```text
 Santo Domingo -> Santo Domingo de los Tsáchilas
@@ -378,13 +378,13 @@ Santo Domingo -> Santo Domingo de los Tsáchilas
 
 This is a label-alignment rule. It is not a statistical transformation.
 
-## Validation coverage achieved
+## Benchmark comparison coverage documented
 
-The initial labor block has been validated against official INEC labor-market tabulations for the following cuts and domains.
+The initial labor block has documented official benchmark comparisons against official INEC labor-market tabulations for the following cuts and domains. These comparisons are local reproducibility evidence; they do not imply official institutional validation, certification, endorsement, or homologation.
 
 ### Monthly March 2026
 
-Validated domains:
+Benchmark-compared domains:
 
 - national;
 - urban area;
@@ -392,7 +392,7 @@ Validated domains:
 
 ### Quarterly First Quarter 2026
 
-Validated domains:
+Benchmark-compared domains:
 
 - national;
 - urban area;
@@ -405,7 +405,7 @@ Validated domains:
 
 ### Annual 2025
 
-Validated domains:
+Benchmark-compared domains:
 
 - national;
 - urban area;
@@ -422,11 +422,11 @@ Validated domains:
 The current labor module does not yet cover:
 
 - reconstruction of `condact` from raw questionnaire variables;
-- validation of all historical periods;
-- validation of poverty indicators;
-- validation of income aggregates;
-- validation of non-labor indicators;
-- publication of official INEC results beyond the validated labor block.
+- benchmark comparison for all historical periods;
+- benchmark comparison for poverty indicators;
+- benchmark comparison for income aggregates;
+- benchmark comparison for non-labor indicators;
+- publication of official INEC results from package outputs.
 
 ## Recommended workflow
 
@@ -475,8 +475,9 @@ The labor module demonstrates that `enemduR` is not only a convenience wrapper. 
 - explicit domain control;
 - a formal labor-indicator registry;
 - official-tabulation parsers;
-- reproducible validation against published INEC outputs;
+- reproducible validation against published INEC outputs, interpreted here as documented benchmark comparison and local reproducibility evidence rather than official institutional validation;
+- local reproducibility evidence from benchmark comparison against published INEC outputs;
 - documented handling of publication-format differences;
 - a clear separation between analytical computation and reporting reconciliation.
 
-This makes the package suitable as an analytical infrastructure component for institutional reporting, Quarto pipelines, dashboards, technical reports, and reproducible statistical validation.
+This makes the package suitable as an analytical infrastructure component for institutional reporting, Quarto pipelines, dashboards, technical reports, and reproducible statistical review.
