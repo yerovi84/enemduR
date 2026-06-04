@@ -1,3 +1,28 @@
+# enemduR 0.1.1
+
+## Documentation-only patch: official-source alignment
+
+`enemduR` 0.1.1 is a documentation-only patch release focused on
+official-source alignment language and governance.
+
+- Adds an official-source alignment taxonomy for documenting how implemented
+  workflows relate to public INEC methodological sheets, public syntax files,
+  dictionaries, published tables, and benchmark tabulations.
+- Strengthens documentation around the distinction between official source
+  documentation, methodology alignment, syntax alignment, official benchmark
+  comparison, local reproducibility evidence, and official institutional
+  validation.
+- Clarifies that labels such as official-source-documented,
+  official-syntax-aligned, official-methodology-aligned,
+  benchmark-compared, and benchmark-reproduced are used only where supporting
+  documentation exists.
+- Preserves the guardrail that the package, its code, and its outputs are not
+  officially validated, certified, endorsed, or homologated by INEC.
+- Changes documentation only.
+- Does not change calculations, registries, benchmarks, dependencies, APIs,
+  statistical methods, indicator definitions, survey-design logic, or package
+  data.
+
 # enemduR 0.1.0
 
 ## First stable portfolio release

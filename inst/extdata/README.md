@@ -13,7 +13,8 @@ This directory stores metadata registries and auxiliary catalogs used by the pac
 - `variable_catalog.csv`: package-level variable catalog.
 - `indicator_registry.csv`: general analytical indicator registry.
 - `labor_indicator_registry.csv`: registry of labor indicators implemented by `enemdu_kpi_employment()`.
-- `labor_official_validation_contract.md`: official-validation contract for the initial labor-indicator block.
+- `official_source_alignment_taxonomy.md`: taxonomy for official-source documentation, implementation alignment, benchmark comparison, local reproducibility evidence, and non-validation guardrails.
+- `labor_official_validation_contract.md`: benchmark-comparison contract for the initial labor-indicator block.
 - `ipm_component_registry.csv`: registry of IPM dimensions, components, weights, and expected component columns.
 - `ipm_derivation_contract.md`: technical contract for the implemented IPM/TPM workflow and the `enemdu_2025_anual` profile.
 - `ipm_official_benchmarks.csv`: published IPM/TPM benchmark values for analytical comparison.
@@ -58,20 +59,20 @@ official validation would require explicit authorization or confirmation by the
 relevant official authority. The workflow remains marked as
 `not_officially_validated`.
 
-## Official labor validation
+## Official labor benchmark comparison
 
-`labor_official_validation_contract.md` documents the validation contract used to compare the initial labor-indicator block against official INEC labor-market tabulations.
+`labor_official_validation_contract.md` documents the benchmark-comparison contract used to compare the initial labor-indicator block against official INEC labor-market tabulations.
 
 The contract records:
 
-- validated survey cuts;
-- validated domains;
+- benchmark-compared survey cuts;
+- benchmark-compared domains;
 - accepted comparison tolerances;
 - publication-format handling rules;
 - official dash handling for zero counts;
 - period-label normalization;
-- the use of `dominio` for official city-domain validation;
-- the `Santo Domingo` label alias used for annual province validation.
+- the use of `dominio` for official city-domain comparison;
+- the `Santo Domingo` label alias used for annual province comparison.
 
 ## Warning
 
@@ -84,3 +85,16 @@ A file may document one of three situations:
 - or a template requiring period-specific official information before calculation.
 
 Rules that depend on official methodology, official dictionaries or published tabulations must remain traceable to their source or be explicitly marked as project-internal decisions.
+
+## Official-source alignment taxonomy
+
+`official_source_alignment_taxonomy.md` defines the recommended labels for
+interpreting official-source documents, registries, benchmarks, and
+reproducibility evidence in this directory.
+
+Use the taxonomy to distinguish public source traceability, public syntax
+alignment, public methodology alignment, official benchmark comparison, local
+reproducibility evidence, and official institutional validation. The presence
+of a registry, benchmark, contract, or reproducibility file does not mean that
+the package, code, or outputs have been officially validated, certified,
+endorsed, or homologated.

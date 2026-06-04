@@ -18,8 +18,9 @@ knitr::opts_chunk$set(
 ## Purpose
 
 `enemduR` includes infrastructure for income poverty, NBI, and IPM/TPM
-workflows. These workflows are designed for reproducible local analysis and
-benchmark comparison, not for declaring institutional validation.
+workflows. These workflows are designed for official-source alignment,
+reproducible local analysis, and official benchmark comparison, not for
+declaring institutional validation.
 
 This vignette explains how to interpret those workflows at a portfolio level.
 It uses placeholder paths and environment variables only. It does not include,
@@ -82,8 +83,8 @@ poverty_reproducibility <- enemdu_run_poverty_reproducibility(
 )
 ```
 
-Benchmark comparison output is an audit aid. It does not establish official
-institutional validation.
+Official benchmark comparison output is an audit aid. It does not establish
+official institutional validation.
 
 ## NBI
 
@@ -137,8 +138,8 @@ nbi_sources <- enemdu_join_nbi_sources(
 )
 ```
 
-This is a reproducibility scaffold. It is not a claim that local outputs have
-been officially validated.
+This is a reproducibility scaffold. It is local reproducibility evidence, not
+a claim that local outputs have been officially validated.
 
 ## IPM/TPM
 
@@ -173,15 +174,16 @@ It does not make new official validation claims.
 
 The repository retains local reproducibility evidence for December 2025
 poverty, NBI, and IPM/TPM workflows. That evidence documents how local
-workflows compare against retained benchmark rows under explicit inputs and
-contracts.
+workflows compare against retained official benchmark rows under explicit
+inputs and contracts.
 
 This is different from official institutional validation.
 
-Benchmark comparisons are audit aids. They help reviewers inspect alignment,
-differences, tolerances, missing inputs, and workflow assumptions. They are not
-official endorsement and should not be described as official validation unless
-the relevant official authority explicitly authorizes or confirms that status.
+Official benchmark comparisons are audit aids. They help reviewers inspect
+alignment, differences, tolerances, missing inputs, and workflow assumptions.
+They are not official endorsement and should not be described as official
+validation unless the relevant official authority explicitly authorizes or
+confirms that status.
 
 Where package outputs include validation metadata, the appropriate status
 should remain:

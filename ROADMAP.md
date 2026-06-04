@@ -8,16 +8,18 @@ analytical outputs.
 
 ## Current State
 
-`enemduR` 0.1.0 is the first stable portfolio release of the package and
-remains suitable for public portfolio review as an analytical infrastructure
-project. The repository includes the core package structure, user
-documentation, generated manual pages, portfolio vignettes, GitHub Actions for
-R package checks, a published pkgdown documentation site, and lightweight
-agent governance.
+`enemduR` 0.1.1 is a documentation-only patch release following the first
+stable portfolio release. It strengthens official-source alignment
+documentation while keeping the package suitable for public portfolio review
+as an analytical infrastructure project. The repository includes the core
+package structure, user documentation, generated manual pages, portfolio
+vignettes, GitHub Actions for R package checks, a published pkgdown
+documentation site, and lightweight agent governance.
 
-The v0.1.0 codebase includes implemented infrastructure for labor, income,
+The v0.1.1 codebase includes implemented infrastructure for labor, income,
 poverty, NBI, and IPM/TPM workflows. The package remains an analytical engine,
-not a dashboard, official production system, or official endorsement layer.
+not a dashboard, institutional production environment, official validation
+product, or official endorsement layer.
 
 ## Implemented Analytical Infrastructure
 
@@ -54,9 +56,25 @@ confirmation by the relevant official authority. Until then, outputs that
 carry validation metadata should continue to preserve the
 `not_officially_validated` status when that status applies.
 
-## Post-v0.1.0 Hardening And Portfolio Maintenance
+## v0.1.1 Documentation-Only Patch
 
-Future work after v0.1.0 should keep the public surface polished without
+The v0.1.1 patch strengthens official-source alignment documentation. It
+clarifies how public official sources, implementation alignment, official
+benchmark comparison, local reproducibility evidence, and official
+institutional validation should be interpreted.
+
+This patch does not change calculations, registries, benchmarks, dependencies,
+APIs, indicator definitions, statistical methods, or survey-design logic.
+
+Future work may formalize more granular metadata status fields only when the
+project needs machine-readable governance and the supporting evidence is
+explicit. Any such governance work should preserve the rule that benchmark
+comparison and local reproducibility evidence do not imply official
+institutional validation.
+
+## Post-v0.1.1 Hardening And Portfolio Maintenance
+
+Future work after v0.1.1 should keep the public surface polished without
 changing statistical methodology, indicator definitions, survey-design logic,
 benchmark values, or package APIs unless a specific reviewed task requires it.
 
@@ -69,7 +87,7 @@ Priorities include:
   synthetic or otherwise shareable data.
 - Refine pkgdown reference organization only where it improves navigation.
 - Prepare broader production hardening and CRAN-readiness reviews as future
-  work, without implying that v0.1.0 is an official production release.
+  work, without implying that v0.1.1 is an official production release.
 - Preserve the analytical-engine identity and avoid turning documentation into
   a dashboard or presentation-first product.
 
